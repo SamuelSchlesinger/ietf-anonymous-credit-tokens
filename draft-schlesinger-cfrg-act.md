@@ -54,7 +54,7 @@ author:
  -
     fullname: Jonathan Katz
     organization: Google
-    email: jkatz@google.com
+    email: jkcrypto@google.com
 
 normative:
   RFC2119:
