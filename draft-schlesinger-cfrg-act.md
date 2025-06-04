@@ -190,16 +190,16 @@ The protocol uses the Ristretto group {{RISTRETTO}}, which provides a prime-orde
 
 The protocol requires the following system parameters:
 
-```
+~~~
 Parameters:
   - G: Generator of the Ristretto group
   - H1, H2, H3: Additional generators for commitments
   - L: Bit length for credit values (configurable, must satisfy L < 252)
-```
+~~~
 
 The generators H1, H2, and H3 MUST be generated deterministically from a nothing-up-my-sleeve value to ensure they are independent of each other and of G. This prevents attacks where malicious parameters could compromise security. Note that these generators are independent of the choice of L:
 
-```
+~~~
 GenerateParameters(domain_separator):
   Input:
     - domain_separator: ByteString identifying the deployment
@@ -213,13 +213,13 @@ GenerateParameters(domain_separator):
     4. H2 = HashToRistretto(rng.next())
     5. H3 = HashToRistretto(rng.next())
     6. return (H1, H2, H3)
-```
+~~~
 
 ## Key Generation
 
 The issuer generates a key pair as follows:
 
-```
+~~~
 KeyGen():
   Input: None
   Output:
@@ -232,7 +232,7 @@ KeyGen():
     3. sk = x
     4. pk = W
     5. return (sk, pk)
-```
+~~~
 
 ## Token Issuance
 
@@ -240,7 +240,7 @@ The issuance protocol is an interactive protocol between a client and the issuer
 
 ### Client: Issuance Request
 
-```
+~~~
 IssueRequest(pk, c):
   Input:
     - pk: Issuer's public key
@@ -266,11 +266,11 @@ IssueRequest(pk, c):
     14. request = (K, gamma, k_bar, r_bar)
     15. state = (k, r, c)
     16. return (request, state)
-```
+~~~
 
 ### Issuer: Issuance Response
 
-```
+~~~
 Issue(sk, request, c):
   Input:
     - sk: Issuer's private key
@@ -309,11 +309,11 @@ Issue(sk, request, c):
     27. z = gamma_resp * (sk + e) + alpha
     28. response = (A, e, gamma_resp, z, c)
     29. return response
-```
+~~~
 
 ### Client: Token Verification
 
-```
+~~~
 VerifyIssuance(pk, request, response, state):
   Input:
     - pk: Issuer's public key
@@ -346,7 +346,7 @@ VerifyIssuance(pk, request, response, state):
     20.     return INVALID
     21. token = (A, e, k, r, c)
     22. return token
-```
+~~~
 
 ## Token Spending
 
@@ -354,7 +354,7 @@ The spending protocol allows a client to spend s credits from a token containing
 
 ### Client: Spend Proof Generation
 
-```
+~~~
 ProveSpend(token, s):
   Input:
     - token: Credit token (A, e, k, r, c)
@@ -373,22 +373,22 @@ ProveSpend(token, s):
 
     7. // Decompose c - s into bits
     8. m = c - s
-    9. (i\[0\], ..., i\[L-1\]) = BitDecompose(m)  // See Section 3.7
+    9. (i[0], ..., i[L-1]) = BitDecompose(m)  // See Section 3.7
 
     10. // Create commitments for each bit
     11. k* <- Zq
     12. For j = 0 to L-1:
-    13.     s\[j\] <- Zq
+    13.     s[j] <- Zq
     14.     if j == 0:
-    15.         Com\[j\] = H1 * i\[j\] + H2 * k* + H3 * s\[j\]
+    15.         Com[j] = H1 * i[j] + H2 * k* + H3 * s[j]
     16.     else:
-    17.         Com\[j\] = H1 * i\[j\] + H3 * s\[j\]
+    17.         Com[j] = H1 * i[j] + H3 * s[j]
 
     18. // Generate range proof (see Section 3.5.1)
     19. range_proof = GenerateRangeProof(i, k*, s, Com)
 
     20. // Complete sigma protocol
-    21. K' = Product(Com\[j\] * 2^j for j in \[L\])
+    21. K' = Product(Com[j] * 2^j for j in [L])
     22. // Generate remaining proof components
     23. c' <- Zq
     24. r' <- Zq
@@ -413,10 +413,10 @@ ProveSpend(token, s):
     43. AddToTranscript(transcript, A1)
     44. AddToTranscript(transcript, A2)
     45. For j = 0 to L-1:
-    46.     AddToTranscript(transcript, Com\[j\])
+    46.     AddToTranscript(transcript, Com[j])
     47. For j = 0 to L-1:
-    48.     AddToTranscript(transcript, range_proof.C'\[j\]\[0\])
-    49.     AddToTranscript(transcript, range_proof.C'\[j\]\[1\])
+    48.     AddToTranscript(transcript, range_proof.C'[j][0])
+    49.     AddToTranscript(transcript, range_proof.C'[j][1])
     50. AddToTranscript(transcript, C)
     51. gamma = GetChallenge(transcript)
     52.
@@ -427,7 +427,7 @@ ProveSpend(token, s):
     57. c_bar = -gamma * c + c'
     58. r_bar = -gamma * r + r'
     59. k_bar = gamma * k* + k'
-    60. r* = Sum(2^j * s\[j\] for j in \[L\])
+    60. r* = Sum(2^j * s[j] for j in [L])
     61. s_bar = gamma * r* + s'
     62.
     63. // Construct proof
@@ -438,11 +438,11 @@ ProveSpend(token, s):
     68.                    k_bar, s_bar)
     69. state = (k*, r*, m)
     70. return (proof, state)
-```
+~~~
 
 ### Issuer: Spend Verification and Refund
 
-```
+~~~
 VerifyAndRefund(sk, proof):
   Input:
     - sk: Issuer's private key
@@ -461,16 +461,16 @@ VerifyAndRefund(sk, proof):
     8. // Record nullifier
     9. used_nullifiers.add(k)
     10. // Issue refund for remaining balance
-    11. K' = Product(Com\[j\] * 2^j for j in \[L\])
+    11. K' = Product(Com[j] * 2^j for j in [L])
     12. refund = IssueRefund(sk, K')
     13. return refund
-```
+~~~
 
 ### Refund Issuance {#refund-issuance}
 
 After verifying a spend proof, the issuer creates a refund token for the remaining balance:
 
-```
+~~~
 IssueRefund(sk, K'):
   Input:
     - sk: Issuer's private key
@@ -505,13 +505,13 @@ IssueRefund(sk, K'):
 
     21. refund = (A*, e*, gamma, z)
     22. return refund
-```
+~~~
 
 ### Client: Refund Token Construction
 
 The client verifies the refund and constructs a new credit token:
 
-```
+~~~
 ConstructRefundToken(pk, spend_proof, refund, state):
   Input:
     - pk: Issuer's public key
@@ -526,7 +526,7 @@ ConstructRefundToken(pk, spend_proof, refund, state):
     2. Parse state as (k*, r*, m)
 
     3. // Reconstruct commitment
-    4. K' = Product(spend_proof.Com\[j\] * 2^j for j in \[L\])
+    4. K' = Product(spend_proof.Com[j] * 2^j for j in [L])
     5. X_A* = G + K'
     6. X_G = G * e* + pk
 
@@ -548,13 +548,13 @@ ConstructRefundToken(pk, spend_proof, refund, state):
     20. // Construct new token
     21. token = (A*, e*, k*, r*, m)
     22. return token
-```
+~~~
 
 ### Spend Proof Verification {#spend-verification}
 
 The issuer verifies a spend proof as follows:
 
-```
+~~~
 VerifySpendProof(pk, proof):
   Input:
     - pk: Issuer's public key
@@ -581,21 +581,21 @@ VerifySpendProof(pk, proof):
 
     11. // Verify range proof
     12. For j = 0 to L-1:
-    13.     gamma1\[j\] = gamma - gamma0\[j\]
-    14.     C\[j\]\[0\] = Com\[j\]
-    15.     C\[j\]\[1\] = Com\[j\] / H1
+    13.     gamma1[j] = gamma - gamma0[j]
+    14.     C[j][0] = Com[j]
+    15.     C[j][1] = Com[j] / H1
 
     16. // Verify bit 0 (with k* component)
-    17. C'\[0\]\[0\] = H2 * w00 + H3 * z\[0\]\[0\] - C\[0\]\[0\] * gamma0\[0\]
-    18. C'\[0\]\[1\] = H2 * w01 + H3 * z\[0\]\[1\] - C\[0\]\[1\] * gamma1\[0\]
+    17. C'[0][0] = H2 * w00 + H3 * z[0][0] - C[0][0] * gamma0[0]
+    18. C'[0][1] = H2 * w01 + H3 * z[0][1] - C[0][1] * gamma1[0]
 
     19. // Verify remaining bits
     20. For j = 1 to L-1:
-    21.     C'\[j\]\[0\] = H3 * z\[j\]\[0\] - C\[j\]\[0\] * gamma0\[j\]
-    22.     C'\[j\]\[1\] = H3 * z\[j\]\[1\] - C\[j\]\[1\] * gamma1\[j\]
+    21.     C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
+    22.     C'[j][1] = H3 * z[j][1] - C[j][1] * gamma1[j]
 
     23. // Verify final commitment
-    24. K' = Product(Com\[j\] * 2^j for j in \[L\])
+    24. K' = Product(Com[j] * 2^j for j in [L])
     25. Com_total = H1 * s + K'
     26. C_final = H1 * (-c_bar) + H2 * k_bar + H3 * s_bar - Com_total * gamma
 
@@ -607,10 +607,10 @@ VerifySpendProof(pk, proof):
     32. AddToTranscript(transcript, A1)
     33. AddToTranscript(transcript, A2)
     34. For j = 0 to L-1:
-    35.     AddToTranscript(transcript, Com\[j\])
+    35.     AddToTranscript(transcript, Com[j])
     36. For j = 0 to L-1:
-    37.     AddToTranscript(transcript, C'\[j\]\[0\])
-    38.     AddToTranscript(transcript, C'\[j\]\[1\])
+    37.     AddToTranscript(transcript, C'[j][0])
+    38.     AddToTranscript(transcript, C'[j][1])
     39. AddToTranscript(transcript, C_final)
     40. gamma_check = GetChallenge(transcript)
 
@@ -619,13 +619,13 @@ VerifySpendProof(pk, proof):
     43.     return false
 
     44. return true
-```
+~~~
 
 ### Range Proof Generation {#range-proof}
 
 The range proof demonstrates that c - s >= 0 without revealing the actual values. It uses a binary decomposition and proves each bit is either 0 or 1:
 
-```
+~~~
 GenerateRangeProof(bits, k*, s, Com):
   Input:
     - bits: Binary decomposition of c - s
@@ -636,79 +636,79 @@ GenerateRangeProof(bits, k*, s, Com):
 
   Steps:
     1. // Initialize arrays for proof components
-    2. C = array\[L\]\[2\]
-    3. C' = array\[L\]\[2\]
-    4. gamma0 = array\[L\]
-    5. w = array\[L\]
-    6. z = array\[L\]\[2\]
+    2. C = array[L][2]
+    3. C' = array[L][2]
+    4. gamma0 = array[L]
+    5. w = array[L]
+    6. z = array[L][2]
 
     7. // Process bit 0 (includes k*)
-    8. C\[0\]\[0\] = Com\[0\]
-    9. C\[0\]\[1\] = Com\[0\] / H1
+    8. C[0][0] = Com[0]
+    9. C[0][1] = Com[0] / H1
     10. k0' <- Zq
     11. s0' <- Zq
-    12. gamma0\[0\] <- Zq
-    13. w\[0\] <- Zq
-    14. z\[0\]\[0\] <- Zq
-    15. z\[0\]\[1\] <- Zq
+    12. gamma0[0] <- Zq
+    13. w[0] <- Zq
+    14. z[0][0] <- Zq
+    15. z[0][1] <- Zq
     16.
-    17. if bits\[0\] == 0:
-    18.     C'\[0\]\[0\] = H2 * k0' + H3 * s0'
-    19.     C'\[0\]\[1\] = H2 * w\[0\] + H3 * z\[0\]\[1\] - C\[0\]\[1\] * gamma0\[0\]
+    17. if bits[0] == 0:
+    18.     C'[0][0] = H2 * k0' + H3 * s0'
+    19.     C'[0][1] = H2 * w[0] + H3 * z[0][1] - C[0][1] * gamma0[0]
     20. else:
-    21.     C'\[0\]\[0\] = H2 * w\[0\] + H3 * z\[0\]\[0\] - C\[0\]\[0\] * gamma0\[0\]
-    22.     C'\[0\]\[1\] = H2 * k0' + H3 * s0'
+    21.     C'[0][0] = H2 * w[0] + H3 * z[0][0] - C[0][0] * gamma0[0]
+    22.     C'[0][1] = H2 * k0' + H3 * s0'
 
     23. // Process remaining bits (no k* component)
     24. For j = 1 to L-1:
-    25.     C\[j\]\[0\] = Com\[j\]
-    26.     C\[j\]\[1\] = Com\[j\] / H1
+    25.     C[j][0] = Com[j]
+    26.     C[j][1] = Com[j] / H1
     27.     sj' <- Zq
-    28.     gamma0\[j\] <- Zq
-    29.     z\[j\]\[0\] <- Zq
-    30.     z\[j\]\[1\] <- Zq
+    28.     gamma0[j] <- Zq
+    29.     z[j][0] <- Zq
+    30.     z[j][1] <- Zq
     31.
-    32.     if bits\[j\] == 0:
-    33.         C'\[j\]\[0\] = H3 * sj'
-    34.         C'\[j\]\[1\] = H3 * z\[j\]\[1\] - C\[j\]\[1\] * gamma0\[j\]
+    32.     if bits[j] == 0:
+    33.         C'[j][0] = H3 * sj'
+    34.         C'[j][1] = H3 * z[j][1] - C[j][1] * gamma0[j]
     35.     else:
-    36.         C'\[j\]\[0\] = H3 * z\[j\]\[0\] - C\[j\]\[0\] * gamma0\[j\]
-    37.         C'\[j\]\[1\] = H3 * sj'
+    36.         C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
+    37.         C'[j][1] = H3 * sj'
 
     38. // After challenge gamma is computed (externally):
     39. // Complete the proof with proper response values
     40.
     41. // For bit 0:
-    42. if bits\[0\] == 0:
-    43.     gamma0\[0\] = gamma - gamma0\[0\]
-    44.     w00 = gamma0\[0\] * k* + k0'
-    45.     w01 = w\[0\]
-    46.     z\[0\]\[0\] = gamma0\[0\] * s\[0\] + s0'
+    42. if bits[0] == 0:
+    43.     gamma0[0] = gamma - gamma0[0]
+    44.     w00 = gamma0[0] * k* + k0'
+    45.     w01 = w[0]
+    46.     z[0][0] = gamma0[0] * s[0] + s0'
     47. else:
-    48.     w00 = w\[0\]
-    49.     w01 = (gamma - gamma0\[0\]) * k* + k0'
-    50.     z\[0\]\[1\] = (gamma - gamma0\[0\]) * s\[0\] + s0'
+    48.     w00 = w[0]
+    49.     w01 = (gamma - gamma0[0]) * k* + k0'
+    50.     z[0][1] = (gamma - gamma0[0]) * s[0] + s0'
 
     51. // For remaining bits:
     52. For j = 1 to L-1:
-    53.     if bits\[j\] == 0:
-    54.         gamma0\[j\] = gamma - gamma0\[j\]
-    55.         z\[j\]\[0\] = gamma0\[j\] * s\[j\] + sj'
+    53.     if bits[j] == 0:
+    54.         gamma0[j] = gamma - gamma0[j]
+    55.         z[j][0] = gamma0[j] * s[j] + sj'
     56.     else:
-    57.         z\[j\]\[1\] = (gamma - gamma0\[j\]) * s\[j\] + sj'
+    57.         z[j][1] = (gamma - gamma0[j]) * s[j] + sj'
 
     58. range_proof = (C', w00, w01, gamma0, z)
     59. return range_proof
-```
+~~~
 
 ## Cryptographic Primitives
 
 ### Protocol Version
 
 The protocol version string for domain separation is:
-```
+~~~
 PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
-```
+~~~
 
 This version string MUST be used consistently across all implementations for interoperability. The curve specification is included to prevent cross-curve attacks and ensure implementations using different curves cannot accidentally interact.
 
@@ -718,7 +718,7 @@ Note: The reference implementation currently uses version "v0.2.0" while this sp
 
 The protocol uses BLAKE3 {{BLAKE3}} as the underlying hash function for the Fiat-Shamir transform {{ORRU-FS}}. Following the sigma protocol framework {{ORRU-SIGMA}}, challenges are generated using a transcript that accumulates all protocol messages:
 
-```
+~~~
 CreateTranscript(label):
   Input:
     - label: ASCII string identifying the proof type
@@ -753,7 +753,7 @@ GetChallenge(transcript):
     1. seed = transcript.hasher.finalize()
     2. rng = ChaCha20RNG(seed)
     3. return Scalar.random(rng)
-```
+~~~
 
 This approach ensures:
 - Domain separation through the label and protocol version
@@ -765,7 +765,7 @@ This approach ensures:
 
 Elements and scalars are encoded as follows:
 
-```
+~~~
 Encode(value):
   Input:
     - value: Element or Scalar
@@ -777,7 +777,7 @@ Encode(value):
     2.     return value.compress()  // 32 bytes, compressed Ristretto point
     3. If value is a Scalar:
     4.     return value.to_bytes_le()  // 32 bytes, little-endian
-```
+~~~
 
 Note: Implementations MAY use standard serialization formats (e.g., bincode, CBOR) for complex structures, but MUST ensure deterministic encoding for hash inputs.
 
@@ -785,7 +785,7 @@ Note: Implementations MAY use standard serialization formats (e.g., bincode, CBO
 
 To decompose a scalar into its binary representation:
 
-```
+~~~
 BitDecompose(s):
   Input:
     - s: Scalar value
@@ -798,17 +798,17 @@ BitDecompose(s):
     3.     byte_index = i / 8
     4.     bit_position = i % 8
     5.     bit = (bytes[byte_index] >> bit_position) & 1
-    6.     bits\[i\] = Scalar(bit)
+    6.     bits[i] = Scalar(bit)
     7. return bits
-```
+~~~
 
-Note: This algorithm produces bits in LSB-first order (i.e., bits\[0\] is the least significant bit). The algorithm works for any L < 252, as the scalar is represented in 32 bytes (256 bits), which accommodates the full range of the Ristretto group order.
+Note: This algorithm produces bits in LSB-first order (i.e., `bits[0]` is the least significant bit). The algorithm works for any L < 252, as the scalar is represented in 32 bytes (256 bits), which accommodates the full range of the Ristretto group order.
 
 ### Scalar Conversion
 
 Converting between credit amounts and scalars:
 
-```
+~~~
 CreditToScalar(amount):
   Input:
     - amount: Integer credit amount (0 <= amount < 2^L)
@@ -830,11 +830,11 @@ ScalarToCredit(s):
     1. bytes = s.to_bytes_le()
     2. // Check high bytes are zero
     3. For i = 16 to 31:
-    4.     if bytes\[i\] != 0:
+    4.     if bytes[i] != 0:
     5.         return ERROR
-    6. amount = bytes\[0..15\] as u128
+    6. amount = bytes[0..15] as u128
     7. return amount
-```
+~~~
 
 # Protocol Messages and Wire Format
 
@@ -844,18 +844,18 @@ All protocol messages SHOULD be encoded using deterministic CBOR (RFC 8949) for 
 
 ### Issuance Request Message
 
-```
+~~~
 IssuanceRequestMsg = {
     1: bstr,  ; K (compressed Ristretto point, 32 bytes)
     2: bstr,  ; gamma (scalar, 32 bytes)
     3: bstr,  ; k_bar (scalar, 32 bytes)
     4: bstr   ; r_bar (scalar, 32 bytes)
 }
-```
+~~~
 
 ### Issuance Response Message
 
-```
+~~~
 IssuanceResponseMsg = {
     1: bstr,  ; A (compressed Ristretto point, 32 bytes)
     2: bstr,  ; e (scalar, 32 bytes)
@@ -863,11 +863,11 @@ IssuanceResponseMsg = {
     4: bstr,  ; z (scalar, 32 bytes)
     5: bstr   ; c (scalar, 32 bytes)
 }
-```
+~~~
 
 ### Spend Proof Message
 
-```
+~~~
 SpendProofMsg = {
     1: bstr,           ; k (nullifier, 32 bytes)
     2: bstr,           ; s (spend amount, 32 bytes)
@@ -887,29 +887,29 @@ SpendProofMsg = {
     16: bstr,          ; k_bar (scalar, 32 bytes)
     17: bstr           ; s_bar (scalar, 32 bytes)
 }
-```
+~~~
 
 ### Refund Message
 
-```
+~~~
 RefundMsg = {
     1: bstr,  ; A* (compressed Ristretto point, 32 bytes)
     2: bstr,  ; e* (scalar, 32 bytes)
     3: bstr,  ; gamma (scalar, 32 bytes)
     4: bstr   ; z (scalar, 32 bytes)
 }
-```
+~~~
 
 ## Error Responses
 
 Error responses SHOULD use the following format:
 
-```
+~~~
 ErrorMsg = {
     1: uint,   ; error_code
     2: tstr    ; error_message (for debugging only)
 }
-```
+~~~
 
 Error codes are defined in Section 5.3.
 
@@ -917,7 +917,7 @@ Error codes are defined in Section 5.3.
 
 The complete protocol flow with message types:
 
-```
+~~~
 Client                                          Issuer
   |                                               |
   |-- IssuanceRequestMsg ------------------------>|
@@ -930,7 +930,7 @@ Client                                          Issuer
   |                                               |
   |<-- RefundMsg or ErrorMsg ---------------------|
   |                                               |
-```
+~~~
 
 # Implementation Considerations
 
@@ -952,12 +952,12 @@ To prevent timing attacks, implementations MUST use constant-time operations for
 
 In particular, the range proof generation MUST use constant-time conditional selection when choosing between bit values 0 and 1. The following pattern should be used:
 
-```
+~~~
 ConstantTimeSelect(condition, value_if_true, value_if_false):
   // Returns value_if_true if condition is true (1),
   // value_if_false if condition is false (0)
   // Must execute in constant time regardless of condition
-```
+~~~
 
 This is critical in the range proof generation where bit values must not leak through timing channels.
 
@@ -995,7 +995,7 @@ All Ristretto points received from external sources MUST be validated:
 3. **Subgroup Check**: Ristretto guarantees prime-order subgroup membership
 
 Example validation:
-```
+~~~
 ValidatePoint(P):
   1. If P fails to deserialize:
   2.     return INVALID
@@ -1003,13 +1003,13 @@ ValidatePoint(P):
   4.     return INVALID
   5. // Ristretto ensures prime-order subgroup membership
   6. return VALID
-```
+~~~
 
 All implementations MUST validate points at these locations:
 - When receiving `K` in issuance request
 - When receiving `A` in issuance response
 - When receiving `A'` and `B_bar` in spend proof
-- When receiving `Com\[j\]` commitments in spend proof
+- When receiving `Com[j]` commitments in spend proof
 - When receiving `A*` in refund response
 
 ## Error Handling
@@ -1238,12 +1238,12 @@ This appendix provides test vectors for implementers to verify their implementat
 
 ## Test Configuration
 
-```
+~~~
 RNG Seed: 0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
 Domain Separator: "anonymous-credit-tokens-v1"
 Protocol Version: "curve25519-ristretto anonymous-credentials v1.0"
 L: 128 (configurable parameter for this example)
-```
+~~~
 
 ## Complete Protocol Flow Example
 
@@ -1251,16 +1251,16 @@ This example demonstrates issuing 100 credits and spending 30.
 
 ### 1. Issuance Phase (100 credits)
 
-```
+~~~
 Credits to issue: 100
 Token successfully created
 Token balance: 100
 Token nullifier (k): 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
-```
+~~~
 
 ### 2. Spending Phase (30 credits)
 
-```
+~~~
 Amount to spend: 30
 Nullifier revealed: 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
 Spend amount (s): 30
@@ -1268,37 +1268,37 @@ Spend amount (s): 30
 Refund issued successfully
 New token balance: 70
 New token nullifier (k*): 0xe844bad01bd4f034fcdd5c594960b7860abf46f8f5b876f600ffff16e0de1b07
-```
+~~~
 
 ## Edge Cases
 
 ### Zero Credit Token
 
-```
+~~~
 Zero credit token created
 Balance: 0
 Nullifier: 0x603fdef3d44fbc72098e638618daf2079f9034f803492794791cdc77d9909b04
-```
+~~~
 
 ### Maximum Credit Token
 
-```
+~~~
 Maximum credit token created
 Balance: 340282366920938463463374607431768211455 (2^128 - 1)
 Nullifier: 0x4997bd7475c72eed6065c545e791475d4192059d6f41279f794504233df19a06
-```
+~~~
 
 ### Invalid Operation: Overspend
 
-```
+~~~
 Token balance: 20
 Attempting to spend: 30
 Result: INVALID (correctly rejected)
-```
+~~~
 
 ### Double-Spend Prevention
 
-```
+~~~
 Original token balance: 50
 First spend: 20
 Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804
@@ -1307,7 +1307,7 @@ Attempting second spend from original token: 15
 Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804
 Same nullifier: true
 Result: Would be rejected by nullifier database
-```
+~~~
 
 ## Intermediate Test Values
 
@@ -1315,22 +1315,22 @@ For debugging implementations, here are the expected intermediate values for the
 
 ### Binary Decomposition of c - s = 70
 
-```
+~~~
 m = 70 = 0x46
 Binary: 01000110 (LSB first)
-i\[0\] = 0, i\[1\] = 1, i\[2\] = 1, i\[3\] = 0,
-i\[4\] = 0, i\[5\] = 0, i\[6\] = 1, i\[7\] = 0
-i\[8..L-1\] = 0 (where L = 128 for this example)
-```
+i[0] = 0, i[1] = 1, i[2] = 1, i[3] = 0,
+i[4] = 0, i[5] = 0, i[6] = 1, i[7] = 0
+i[8..L-1] = 0 (where L = 128 for this example)
+~~~
 
 ### Protocol Message Sizes
 
-```
+~~~
 IssuanceRequestMsg: 4 × 32 = 128 bytes
 IssuanceResponseMsg: 5 × 32 = 160 bytes
 SpendProofMsg: O(L) × 32 bytes (e.g., ~4,096 bytes with L=128)
 RefundMsg: 4 × 32 = 128 bytes
-```
+~~~
 
 ## Test Vector Summary
 

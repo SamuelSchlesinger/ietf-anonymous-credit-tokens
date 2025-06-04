@@ -1653,27 +1653,32 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-system-parameters" class="section-name selfRef">System Parameters</a>
         </h3>
 <p id="section-3.1-1">The protocol requires the following system parameters:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.1-2"><code>
+<div class="alignLeft art-text artwork" id="section-3.1-2">
+<pre>
 Parameters:
   - G: Generator of the Ristretto group
   - H1, H2, H3: Additional generators for commitments
   - L: Bit length for credit values (configurable, must satisfy L &lt; 252)
-</code><a href="#section-3.1-2" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.1-2" class="pilcrow">¶</a>
+</div>
 <p id="section-3.1-3">The generators H1, H2, and H3 <span class="bcp14">MUST</span> be generated deterministically from a nothing-up-my-sleeve value to ensure they are independent of each other and of G. This prevents attacks where malicious parameters could compromise security. Note that these generators are independent of the choice of L:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
-<p id="section-3.1-4">```
+<div class="alignLeft art-text artwork" id="section-3.1-4">
+<pre>
 GenerateParameters(domain_separator):
   Input:
     - domain_separator: ByteString identifying the deployment
   Output:
-    - params: System parameters (H1, H2, H3)<a href="#section-3.1-4" class="pilcrow">¶</a></p>
-<p id="section-3.1-5">Steps:
+    - params: System parameters (H1, H2, H3)
+
+  Steps:
     1. seed = BLAKE3(domain_separator)
     2. rng = ChaCha20RNG(seed)
     3. H1 = HashToRistretto(rng.next())
     4. H2 = HashToRistretto(rng.next())
     5. H3 = HashToRistretto(rng.next())
     6. return (H1, H2, H3)
-```<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.1-4" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="key-generation">
@@ -1682,19 +1687,22 @@ GenerateParameters(domain_separator):
 <a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-key-generation" class="section-name selfRef">Key Generation</a>
         </h3>
 <p id="section-3.2-1">The issuer generates a key pair as follows:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.2-2">```
+<div class="alignLeft art-text artwork" id="section-3.2-2">
+<pre>
 KeyGen():
   Input: None
   Output:
     - sk: Private key (Scalar)
-    - pk: Public key (Element)<a href="#section-3.2-2" class="pilcrow">¶</a></p>
-<p id="section-3.2-3">Steps:
+    - pk: Public key (Element)
+
+  Steps:
     1. x &lt;- Zq
     2. W = G * x
     3. sk = x
     4. pk = W
     5. return (sk, pk)
-```<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.2-2" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="token-issuance">
@@ -1708,15 +1716,17 @@ KeyGen():
           <h4 id="name-client-issuance-request">
 <a href="#section-3.3.1" class="section-number selfRef">3.3.1. </a><a href="#name-client-issuance-request" class="section-name selfRef">Client: Issuance Request</a>
           </h4>
-<p id="section-3.3.1-1">```
+<div class="alignLeft art-text artwork" id="section-3.3.1-1">
+<pre>
 IssueRequest(pk, c):
   Input:
     - pk: Issuer's public key
     - c: Credit amount (0 &lt;= c &lt; 2^L)
   Output:
     - request: Issuance request
-    - state: Client state for later verification<a href="#section-3.3.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.3.1-2">Steps:
+    - state: Client state for later verification
+
+  Steps:
     1. k &lt;- Zq  // Token identifier
     2. r &lt;- Zq  // Blinding factor
     3. K = H2 * k + H3 * r
@@ -1733,7 +1743,8 @@ IssueRequest(pk, c):
     14. request = (K, gamma, k_bar, r_bar)
     15. state = (k, r, c)
     16. return (request, state)
-```<a href="#section-3.3.1-2" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.3.1-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="issuer-issuance-response">
@@ -1741,15 +1752,17 @@ IssueRequest(pk, c):
           <h4 id="name-issuer-issuance-response">
 <a href="#section-3.3.2" class="section-number selfRef">3.3.2. </a><a href="#name-issuer-issuance-response" class="section-name selfRef">Issuer: Issuance Response</a>
           </h4>
-<p id="section-3.3.2-1">```
+<div class="alignLeft art-text artwork" id="section-3.3.2-1">
+<pre>
 Issue(sk, request, c):
   Input:
     - sk: Issuer's private key
     - request: Client's issuance request
     - c: Credit amount to issue
   Output:
-    - response: Issuance response or INVALID<a href="#section-3.3.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.3.2-2">Steps:
+    - response: Issuance response or INVALID
+
+  Steps:
     1. Parse request as (K, gamma, k_bar, r_bar)
     2. // Verify proof of knowledge
     3. K1 = H2 * k_bar + H3 * r_bar - K * gamma
@@ -1779,7 +1792,8 @@ Issue(sk, request, c):
     27. z = gamma_resp * (sk + e) + alpha
     28. response = (A, e, gamma_resp, z, c)
     29. return response
-```<a href="#section-3.3.2-2" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.3.2-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="client-token-verification">
@@ -1787,7 +1801,8 @@ Issue(sk, request, c):
           <h4 id="name-client-token-verification">
 <a href="#section-3.3.3" class="section-number selfRef">3.3.3. </a><a href="#name-client-token-verification" class="section-name selfRef">Client: Token Verification</a>
           </h4>
-<p id="section-3.3.3-1">```
+<div class="alignLeft art-text artwork" id="section-3.3.3-1">
+<pre>
 VerifyIssuance(pk, request, response, state):
   Input:
     - pk: Issuer's public key
@@ -1795,8 +1810,9 @@ VerifyIssuance(pk, request, response, state):
     - response: Issuer's response
     - state: Client state from request generation
   Output:
-    - token: Credit token or INVALID<a href="#section-3.3.3-1" class="pilcrow">¶</a></p>
-<p id="section-3.3.3-2">Steps:
+    - token: Credit token or INVALID
+
+  Steps:
     1. Parse response as (A, e, gamma_resp, z, c_resp)
     2. Parse state as (k, r, c)
     3. if c_resp != c:
@@ -1819,7 +1835,8 @@ VerifyIssuance(pk, request, response, state):
     20.     return INVALID
     21. token = (A, e, k, r, c)
     22. return token
-```<a href="#section-3.3.3-2" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.3.3-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 </section>
@@ -1835,91 +1852,92 @@ VerifyIssuance(pk, request, response, state):
           <h4 id="name-client-spend-proof-generati">
 <a href="#section-3.4.1" class="section-number selfRef">3.4.1. </a><a href="#name-client-spend-proof-generati" class="section-name selfRef">Client: Spend Proof Generation</a>
           </h4>
-<p id="section-3.4.1-1">```
+<div class="alignLeft art-text artwork" id="section-3.4.1-1">
+<pre>
 ProveSpend(token, s):
   Input:
     - token: Credit token (A, e, k, r, c)
     - s: Amount to spend (0 &lt;= s &lt;= c)
   Output:
     - proof: Spend proof
-    - state: Client state for receiving change<a href="#section-3.4.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.4.1-2">Steps:
+    - state: Client state for receiving change
+
+  Steps:
     1. // Randomize the signature
     2. r1, r2 &lt;- Zq
     3. B = G + H1 * c + H2 * k + H3 * r
     4. A' = A * r1 * r2
     5. B_bar = B * r1
-    6. r3 = 1/r1<a href="#section-3.4.1-2" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-3.4.1-3">
-<pre>
-7. // Decompose c - s into bits
-8. m = c - s
-9. (i\[0\], ..., i\[L-1\]) = BitDecompose(m)  // See Section 3.7
+    6. r3 = 1/r1
 
-10. // Create commitments for each bit
-11. k* &lt;- Zq
-12. For j = 0 to L-1:
-13.     s\[j\] &lt;- Zq
-14.     if j == 0:
-15.         Com\[j\] = H1 * i\[j\] + H2 * k* + H3 * s\[j\]
-16.     else:
-17.         Com\[j\] = H1 * i\[j\] + H3 * s\[j\]
+    7. // Decompose c - s into bits
+    8. m = c - s
+    9. (i[0], ..., i[L-1]) = BitDecompose(m)  // See Section 3.7
 
-18. // Generate range proof (see Section 3.5.1)
-19. range_proof = GenerateRangeProof(i, k*, s, Com)
+    10. // Create commitments for each bit
+    11. k* &lt;- Zq
+    12. For j = 0 to L-1:
+    13.     s[j] &lt;- Zq
+    14.     if j == 0:
+    15.         Com[j] = H1 * i[j] + H2 * k* + H3 * s[j]
+    16.     else:
+    17.         Com[j] = H1 * i[j] + H3 * s[j]
 
-20. // Complete sigma protocol
-21. K' = Product(Com\[j\] * 2^j for j in \[L\])
-22. // Generate remaining proof components
-23. c' &lt;- Zq
-24. r' &lt;- Zq
-25. e' &lt;- Zq
-26. r2' &lt;- Zq
-27. r3' &lt;- Zq
-28.
-29. // Compute first round messages
-30. A1 = A' * e' + B_bar * r2'
-31. A2 = B_bar * r3' + H1 * c' + H3 * r'
-32.
-33. // Prepare range proof challenges
-34. k' &lt;- Zq
-35. s' &lt;- Zq
-36. C = H1 * (-c') + H2 * k' + H3 * s'
-37.
-38. // Generate challenge using transcript
-39. transcript = CreateTranscript("spend")
-40. AddToTranscript(transcript, k)
-41. AddToTranscript(transcript, A')
-42. AddToTranscript(transcript, B_bar)
-43. AddToTranscript(transcript, A1)
-44. AddToTranscript(transcript, A2)
-45. For j = 0 to L-1:
-46.     AddToTranscript(transcript, Com\[j\])
-47. For j = 0 to L-1:
-48.     AddToTranscript(transcript, range_proof.C'\[j\]\[0\])
-49.     AddToTranscript(transcript, range_proof.C'\[j\]\[1\])
-50. AddToTranscript(transcript, C)
-51. gamma = GetChallenge(transcript)
-52.
-53. // Compute responses
-54. e_bar = -gamma * e + e'
-55. r2_bar = gamma * r2 + r2'
-56. r3_bar = gamma * r3 + r3'
-57. c_bar = -gamma * c + c'
-58. r_bar = -gamma * r + r'
-59. k_bar = gamma * k* + k'
-60. r* = Sum(2^j * s\[j\] for j in \[L\])
-61. s_bar = gamma * r* + s'
-62.
-63. // Construct proof
-64. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar,
-65.                    r2_bar, r3_bar, c_bar, r_bar,
-66.                    range_proof.w00, range_proof.w01,
-67.                    range_proof.gamma0, range_proof.z,
-68.                    k_bar, s_bar)
-69. state = (k*, r*, m)
-70. return (proof, state) ```
-</pre><a href="#section-3.4.1-3" class="pilcrow">¶</a>
+    18. // Generate range proof (see Section 3.5.1)
+    19. range_proof = GenerateRangeProof(i, k*, s, Com)
+
+    20. // Complete sigma protocol
+    21. K' = Product(Com[j] * 2^j for j in [L])
+    22. // Generate remaining proof components
+    23. c' &lt;- Zq
+    24. r' &lt;- Zq
+    25. e' &lt;- Zq
+    26. r2' &lt;- Zq
+    27. r3' &lt;- Zq
+    28.
+    29. // Compute first round messages
+    30. A1 = A' * e' + B_bar * r2'
+    31. A2 = B_bar * r3' + H1 * c' + H3 * r'
+    32.
+    33. // Prepare range proof challenges
+    34. k' &lt;- Zq
+    35. s' &lt;- Zq
+    36. C = H1 * (-c') + H2 * k' + H3 * s'
+    37.
+    38. // Generate challenge using transcript
+    39. transcript = CreateTranscript("spend")
+    40. AddToTranscript(transcript, k)
+    41. AddToTranscript(transcript, A')
+    42. AddToTranscript(transcript, B_bar)
+    43. AddToTranscript(transcript, A1)
+    44. AddToTranscript(transcript, A2)
+    45. For j = 0 to L-1:
+    46.     AddToTranscript(transcript, Com[j])
+    47. For j = 0 to L-1:
+    48.     AddToTranscript(transcript, range_proof.C'[j][0])
+    49.     AddToTranscript(transcript, range_proof.C'[j][1])
+    50. AddToTranscript(transcript, C)
+    51. gamma = GetChallenge(transcript)
+    52.
+    53. // Compute responses
+    54. e_bar = -gamma * e + e'
+    55. r2_bar = gamma * r2 + r2'
+    56. r3_bar = gamma * r3 + r3'
+    57. c_bar = -gamma * c + c'
+    58. r_bar = -gamma * r + r'
+    59. k_bar = gamma * k* + k'
+    60. r* = Sum(2^j * s[j] for j in [L])
+    61. s_bar = gamma * r* + s'
+    62.
+    63. // Construct proof
+    64. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar,
+    65.                    r2_bar, r3_bar, c_bar, r_bar,
+    66.                    range_proof.w00, range_proof.w01,
+    67.                    range_proof.gamma0, range_proof.z,
+    68.                    k_bar, s_bar)
+    69. state = (k*, r*, m)
+    70. return (proof, state)
+</pre><a href="#section-3.4.1-1" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -1928,14 +1946,16 @@ ProveSpend(token, s):
           <h4 id="name-issuer-spend-verification-a">
 <a href="#section-3.4.2" class="section-number selfRef">3.4.2. </a><a href="#name-issuer-spend-verification-a" class="section-name selfRef">Issuer: Spend Verification and Refund</a>
           </h4>
-<p id="section-3.4.2-1">```
+<div class="alignLeft art-text artwork" id="section-3.4.2-1">
+<pre>
 VerifyAndRefund(sk, proof):
   Input:
     - sk: Issuer's private key
     - proof: Client's spend proof
   Output:
-    - refund: Refund for remaining credits or INVALID<a href="#section-3.4.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.4.2-2">Steps:
+    - refund: Refund for remaining credits or INVALID
+
+  Steps:
     1. Parse proof and extract nullifier k
     2. // Check nullifier hasn't been used
     3. if k in used_nullifiers:
@@ -1949,7 +1969,8 @@ VerifyAndRefund(sk, proof):
     11. K' = Product(Com[j] * 2^j for j in [L])
     12. refund = IssueRefund(sk, K')
     13. return refund
-```<a href="#section-3.4.2-2" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.4.2-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="refund-issuance">
@@ -1958,42 +1979,43 @@ VerifyAndRefund(sk, proof):
 <a href="#section-3.4.3" class="section-number selfRef">3.4.3. </a><a href="#name-refund-issuance" class="section-name selfRef">Refund Issuance</a>
           </h4>
 <p id="section-3.4.3-1">After verifying a spend proof, the issuer creates a refund token for the remaining balance:<a href="#section-3.4.3-1" class="pilcrow">¶</a></p>
-<p id="section-3.4.3-2">```
+<div class="alignLeft art-text artwork" id="section-3.4.3-2">
+<pre>
 IssueRefund(sk, K'):
   Input:
     - sk: Issuer's private key
     - K': Commitment to remaining balance and new nullifier
   Output:
-    - refund: Refund response<a href="#section-3.4.3-2" class="pilcrow">¶</a></p>
-<p id="section-3.4.3-3">Steps:
+    - refund: Refund response
+
+  Steps:
     1. // Create new BBS signature on remaining balance
     2. e* &lt;- Zq
     3. X_A* = G + K'
-    4. A* = X_A* ^ (1/(e* + sk))<a href="#section-3.4.3-3" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-3.4.3-4">
-<pre>
-5. // Generate proof of correct computation
-6. alpha &lt;- Zq
-7. Y_A = A* * alpha
-8. Y_G = G * alpha
-9. X_G = G * e* + pk
+    4. A* = X_A* ^ (1/(e* + sk))
 
-10. // Create challenge using transcript
-11. transcript = CreateTranscript("refund")
-12. AddToTranscript(transcript, e*)
-13. AddToTranscript(transcript, A*)
-14. AddToTranscript(transcript, X_A*)
-15. AddToTranscript(transcript, X_G)
-16. AddToTranscript(transcript, Y_A)
-17. AddToTranscript(transcript, Y_G)
-18. gamma = GetChallenge(transcript)
+    5. // Generate proof of correct computation
+    6. alpha &lt;- Zq
+    7. Y_A = A* * alpha
+    8. Y_G = G * alpha
+    9. X_G = G * e* + pk
 
-19. // Compute response
-20. z = gamma * (sk + e*) + alpha
+    10. // Create challenge using transcript
+    11. transcript = CreateTranscript("refund")
+    12. AddToTranscript(transcript, e*)
+    13. AddToTranscript(transcript, A*)
+    14. AddToTranscript(transcript, X_A*)
+    15. AddToTranscript(transcript, X_G)
+    16. AddToTranscript(transcript, Y_A)
+    17. AddToTranscript(transcript, Y_G)
+    18. gamma = GetChallenge(transcript)
 
-21. refund = (A*, e*, gamma, z)
-22. return refund ```
-</pre><a href="#section-3.4.3-4" class="pilcrow">¶</a>
+    19. // Compute response
+    20. z = gamma * (sk + e*) + alpha
+
+    21. refund = (A*, e*, gamma, z)
+    22. return refund
+</pre><a href="#section-3.4.3-2" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -2003,44 +2025,45 @@ IssueRefund(sk, K'):
 <a href="#section-3.4.4" class="section-number selfRef">3.4.4. </a><a href="#name-client-refund-token-constru" class="section-name selfRef">Client: Refund Token Construction</a>
           </h4>
 <p id="section-3.4.4-1">The client verifies the refund and constructs a new credit token:<a href="#section-3.4.4-1" class="pilcrow">¶</a></p>
-<p id="section-3.4.4-2">```
+<div class="alignLeft art-text artwork" id="section-3.4.4-2">
+<pre>
 ConstructRefundToken(pk, spend_proof, refund, state):
   Input:
     - pk: Issuer's public key
     - spend_proof: The spend proof sent to issuer
     - refund: Issuer's refund response
-    - state: Client state (k<em>, r</em>, m)
+    - state: Client state (k*, r*, m)
   Output:
-    - token: New credit token or INVALID<a href="#section-3.4.4-2" class="pilcrow">¶</a></p>
-<p id="section-3.4.4-3">Steps:
-    1. Parse refund as (A<em>, e</em>, gamma, z)
-    2. Parse state as (k<em>, r</em>, m)<a href="#section-3.4.4-3" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-3.4.4-4">
-<pre>
-3. // Reconstruct commitment
-4. K' = Product(spend_proof.Com\[j\] * 2^j for j in \[L\])
-5. X_A* = G + K'
-6. X_G = G * e* + pk
+    - token: New credit token or INVALID
 
-7. // Verify proof
-8. Y_A = A* * z - X_A* * gamma
-9. Y_G = G * z - X_G * gamma
+  Steps:
+    1. Parse refund as (A*, e*, gamma, z)
+    2. Parse state as (k*, r*, m)
 
-10. // Check challenge using transcript
-11. transcript = CreateTranscript("refund")
-12. AddToTranscript(transcript, e*)
-13. AddToTranscript(transcript, A*)
-14. AddToTranscript(transcript, X_A*)
-15. AddToTranscript(transcript, X_G)
-16. AddToTranscript(transcript, Y_A)
-17. AddToTranscript(transcript, Y_G)
-18. if GetChallenge(transcript) != gamma:
-19.     return INVALID
+    3. // Reconstruct commitment
+    4. K' = Product(spend_proof.Com[j] * 2^j for j in [L])
+    5. X_A* = G + K'
+    6. X_G = G * e* + pk
 
-20. // Construct new token
-21. token = (A*, e*, k*, r*, m)
-22. return token ```
-</pre><a href="#section-3.4.4-4" class="pilcrow">¶</a>
+    7. // Verify proof
+    8. Y_A = A* * z - X_A* * gamma
+    9. Y_G = G * z - X_G * gamma
+
+    10. // Check challenge using transcript
+    11. transcript = CreateTranscript("refund")
+    12. AddToTranscript(transcript, e*)
+    13. AddToTranscript(transcript, A*)
+    14. AddToTranscript(transcript, X_A*)
+    15. AddToTranscript(transcript, X_G)
+    16. AddToTranscript(transcript, Y_A)
+    17. AddToTranscript(transcript, Y_G)
+    18. if GetChallenge(transcript) != gamma:
+    19.     return INVALID
+
+    20. // Construct new token
+    21. token = (A*, e*, k*, r*, m)
+    22. return token
+</pre><a href="#section-3.4.4-2" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -2050,72 +2073,73 @@ ConstructRefundToken(pk, spend_proof, refund, state):
 <a href="#section-3.4.5" class="section-number selfRef">3.4.5. </a><a href="#name-spend-proof-verification" class="section-name selfRef">Spend Proof Verification</a>
           </h4>
 <p id="section-3.4.5-1">The issuer verifies a spend proof as follows:<a href="#section-3.4.5-1" class="pilcrow">¶</a></p>
-<p id="section-3.4.5-2">```
+<div class="alignLeft art-text artwork" id="section-3.4.5-2">
+<pre>
 VerifySpendProof(pk, proof):
   Input:
     - pk: Issuer's public key
     - proof: Spend proof from client
   Output:
-    - valid: Boolean indicating if proof is valid<a href="#section-3.4.5-2" class="pilcrow">¶</a></p>
-<p id="section-3.4.5-3">Steps:
+    - valid: Boolean indicating if proof is valid
+
+  Steps:
     1. Parse proof as (k, s, A', B_bar, Com, gamma, e_bar,
                       r2_bar, r3_bar, c_bar, r_bar, w00, w01,
-                      gamma0, z, k_bar, s_bar)<a href="#section-3.4.5-3" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-3.4.5-4">
-<pre>
-2. // Check A' is not identity
-3. if A' == Identity:
-4.     return false
+                      gamma0, z, k_bar, s_bar)
 
-5. // Compute issuer's view of signature
-6. A_bar = A' * sk  // This requires the issuer's private key
-7. H1_prime = G + H2 * k  // Spending amount s is added to this later
+    2. // Check A' is not identity
+    3. if A' == Identity:
+    4.     return false
 
-8. // Verify sigma protocol
-9. A1 = A' * e_bar + B_bar * r2_bar - A_bar * gamma
-10. A2 = B_bar * r3_bar + H1 * c_bar + H3 * r_bar - H1_prime * gamma
+    5. // Compute issuer's view of signature
+    6. A_bar = A' * sk  // This requires the issuer's private key
+    7. H1_prime = G + H2 * k  // Spending amount s is added to this later
 
-11. // Verify range proof
-12. For j = 0 to L-1:
-13.     gamma1\[j\] = gamma - gamma0\[j\]
-14.     C\[j\]\[0\] = Com\[j\]
-15.     C\[j\]\[1\] = Com\[j\] / H1
+    8. // Verify sigma protocol
+    9. A1 = A' * e_bar + B_bar * r2_bar - A_bar * gamma
+    10. A2 = B_bar * r3_bar + H1 * c_bar + H3 * r_bar - H1_prime * gamma
 
-16. // Verify bit 0 (with k* component)
-17. C'\[0\]\[0\] = H2 * w00 + H3 * z\[0\]\[0\] - C\[0\]\[0\] * gamma0\[0\]
-18. C'\[0\]\[1\] = H2 * w01 + H3 * z\[0\]\[1\] - C\[0\]\[1\] * gamma1\[0\]
+    11. // Verify range proof
+    12. For j = 0 to L-1:
+    13.     gamma1[j] = gamma - gamma0[j]
+    14.     C[j][0] = Com[j]
+    15.     C[j][1] = Com[j] / H1
 
-19. // Verify remaining bits
-20. For j = 1 to L-1:
-21.     C'\[j\]\[0\] = H3 * z\[j\]\[0\] - C\[j\]\[0\] * gamma0\[j\]
-22.     C'\[j\]\[1\] = H3 * z\[j\]\[1\] - C\[j\]\[1\] * gamma1\[j\]
+    16. // Verify bit 0 (with k* component)
+    17. C'[0][0] = H2 * w00 + H3 * z[0][0] - C[0][0] * gamma0[0]
+    18. C'[0][1] = H2 * w01 + H3 * z[0][1] - C[0][1] * gamma1[0]
 
-23. // Verify final commitment
-24. K' = Product(Com\[j\] * 2^j for j in \[L\])
-25. Com_total = H1 * s + K'
-26. C_final = H1 * (-c_bar) + H2 * k_bar + H3 * s_bar - Com_total * gamma
+    19. // Verify remaining bits
+    20. For j = 1 to L-1:
+    21.     C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
+    22.     C'[j][1] = H3 * z[j][1] - C[j][1] * gamma1[j]
 
-27. // Recompute challenge using transcript
-28. transcript = CreateTranscript("spend")
-29. AddToTranscript(transcript, k)
-30. AddToTranscript(transcript, A')
-31. AddToTranscript(transcript, B_bar)
-32. AddToTranscript(transcript, A1)
-33. AddToTranscript(transcript, A2)
-34. For j = 0 to L-1:
-35.     AddToTranscript(transcript, Com\[j\])
-36. For j = 0 to L-1:
-37.     AddToTranscript(transcript, C'\[j\]\[0\])
-38.     AddToTranscript(transcript, C'\[j\]\[1\])
-39. AddToTranscript(transcript, C_final)
-40. gamma_check = GetChallenge(transcript)
+    23. // Verify final commitment
+    24. K' = Product(Com[j] * 2^j for j in [L])
+    25. Com_total = H1 * s + K'
+    26. C_final = H1 * (-c_bar) + H2 * k_bar + H3 * s_bar - Com_total * gamma
 
-41. // Verify challenge matches
-42. if gamma != gamma_check:
-43.     return false
+    27. // Recompute challenge using transcript
+    28. transcript = CreateTranscript("spend")
+    29. AddToTranscript(transcript, k)
+    30. AddToTranscript(transcript, A')
+    31. AddToTranscript(transcript, B_bar)
+    32. AddToTranscript(transcript, A1)
+    33. AddToTranscript(transcript, A2)
+    34. For j = 0 to L-1:
+    35.     AddToTranscript(transcript, Com[j])
+    36. For j = 0 to L-1:
+    37.     AddToTranscript(transcript, C'[j][0])
+    38.     AddToTranscript(transcript, C'[j][1])
+    39. AddToTranscript(transcript, C_final)
+    40. gamma_check = GetChallenge(transcript)
 
-44. return true ```
-</pre><a href="#section-3.4.5-4" class="pilcrow">¶</a>
+    41. // Verify challenge matches
+    42. if gamma != gamma_check:
+    43.     return false
+
+    44. return true
+</pre><a href="#section-3.4.5-2" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -2125,81 +2149,82 @@ VerifySpendProof(pk, proof):
 <a href="#section-3.4.6" class="section-number selfRef">3.4.6. </a><a href="#name-range-proof-generation" class="section-name selfRef">Range Proof Generation</a>
           </h4>
 <p id="section-3.4.6-1">The range proof demonstrates that c - s &gt;= 0 without revealing the actual values. It uses a binary decomposition and proves each bit is either 0 or 1:<a href="#section-3.4.6-1" class="pilcrow">¶</a></p>
-<p id="section-3.4.6-2">```
-GenerateRangeProof(bits, k<em>, s, Com):
+<div class="alignLeft art-text artwork" id="section-3.4.6-2">
+<pre>
+GenerateRangeProof(bits, k*, s, Com):
   Input:
     - bits: Binary decomposition of c - s
-    - k</em>, s: Randomness values
+    - k*, s: Randomness values
     - Com: Commitments to each bit
   Output:
-    - range_proof: Zero-knowledge range proof<a href="#section-3.4.6-2" class="pilcrow">¶</a></p>
-<p id="section-3.4.6-3">Steps:
+    - range_proof: Zero-knowledge range proof
+
+  Steps:
     1. // Initialize arrays for proof components
     2. C = array[L][2]
     3. C' = array[L][2]
     4. gamma0 = array[L]
     5. w = array[L]
-    6. z = array[L][2]<a href="#section-3.4.6-3" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-3.4.6-4">
-<pre>
-7. // Process bit 0 (includes k*)
-8. C\[0\]\[0\] = Com\[0\]
-9. C\[0\]\[1\] = Com\[0\] / H1
-10. k0' &lt;- Zq
-11. s0' &lt;- Zq
-12. gamma0\[0\] &lt;- Zq
-13. w\[0\] &lt;- Zq
-14. z\[0\]\[0\] &lt;- Zq
-15. z\[0\]\[1\] &lt;- Zq
-16.
-17. if bits\[0\] == 0:
-18.     C'\[0\]\[0\] = H2 * k0' + H3 * s0'
-19.     C'\[0\]\[1\] = H2 * w\[0\] + H3 * z\[0\]\[1\] - C\[0\]\[1\] * gamma0\[0\]
-20. else:
-21.     C'\[0\]\[0\] = H2 * w\[0\] + H3 * z\[0\]\[0\] - C\[0\]\[0\] * gamma0\[0\]
-22.     C'\[0\]\[1\] = H2 * k0' + H3 * s0'
+    6. z = array[L][2]
 
-23. // Process remaining bits (no k* component)
-24. For j = 1 to L-1:
-25.     C\[j\]\[0\] = Com\[j\]
-26.     C\[j\]\[1\] = Com\[j\] / H1
-27.     sj' &lt;- Zq
-28.     gamma0\[j\] &lt;- Zq
-29.     z\[j\]\[0\] &lt;- Zq
-30.     z\[j\]\[1\] &lt;- Zq
-31.
-32.     if bits\[j\] == 0:
-33.         C'\[j\]\[0\] = H3 * sj'
-34.         C'\[j\]\[1\] = H3 * z\[j\]\[1\] - C\[j\]\[1\] * gamma0\[j\]
-35.     else:
-36.         C'\[j\]\[0\] = H3 * z\[j\]\[0\] - C\[j\]\[0\] * gamma0\[j\]
-37.         C'\[j\]\[1\] = H3 * sj'
+    7. // Process bit 0 (includes k*)
+    8. C[0][0] = Com[0]
+    9. C[0][1] = Com[0] / H1
+    10. k0' &lt;- Zq
+    11. s0' &lt;- Zq
+    12. gamma0[0] &lt;- Zq
+    13. w[0] &lt;- Zq
+    14. z[0][0] &lt;- Zq
+    15. z[0][1] &lt;- Zq
+    16.
+    17. if bits[0] == 0:
+    18.     C'[0][0] = H2 * k0' + H3 * s0'
+    19.     C'[0][1] = H2 * w[0] + H3 * z[0][1] - C[0][1] * gamma0[0]
+    20. else:
+    21.     C'[0][0] = H2 * w[0] + H3 * z[0][0] - C[0][0] * gamma0[0]
+    22.     C'[0][1] = H2 * k0' + H3 * s0'
 
-38. // After challenge gamma is computed (externally):
-39. // Complete the proof with proper response values
-40.
-41. // For bit 0:
-42. if bits\[0\] == 0:
-43.     gamma0\[0\] = gamma - gamma0\[0\]
-44.     w00 = gamma0\[0\] * k* + k0'
-45.     w01 = w\[0\]
-46.     z\[0\]\[0\] = gamma0\[0\] * s\[0\] + s0'
-47. else:
-48.     w00 = w\[0\]
-49.     w01 = (gamma - gamma0\[0\]) * k* + k0'
-50.     z\[0\]\[1\] = (gamma - gamma0\[0\]) * s\[0\] + s0'
+    23. // Process remaining bits (no k* component)
+    24. For j = 1 to L-1:
+    25.     C[j][0] = Com[j]
+    26.     C[j][1] = Com[j] / H1
+    27.     sj' &lt;- Zq
+    28.     gamma0[j] &lt;- Zq
+    29.     z[j][0] &lt;- Zq
+    30.     z[j][1] &lt;- Zq
+    31.
+    32.     if bits[j] == 0:
+    33.         C'[j][0] = H3 * sj'
+    34.         C'[j][1] = H3 * z[j][1] - C[j][1] * gamma0[j]
+    35.     else:
+    36.         C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
+    37.         C'[j][1] = H3 * sj'
 
-51. // For remaining bits:
-52. For j = 1 to L-1:
-53.     if bits\[j\] == 0:
-54.         gamma0\[j\] = gamma - gamma0\[j\]
-55.         z\[j\]\[0\] = gamma0\[j\] * s\[j\] + sj'
-56.     else:
-57.         z\[j\]\[1\] = (gamma - gamma0\[j\]) * s\[j\] + sj'
+    38. // After challenge gamma is computed (externally):
+    39. // Complete the proof with proper response values
+    40.
+    41. // For bit 0:
+    42. if bits[0] == 0:
+    43.     gamma0[0] = gamma - gamma0[0]
+    44.     w00 = gamma0[0] * k* + k0'
+    45.     w01 = w[0]
+    46.     z[0][0] = gamma0[0] * s[0] + s0'
+    47. else:
+    48.     w00 = w[0]
+    49.     w01 = (gamma - gamma0[0]) * k* + k0'
+    50.     z[0][1] = (gamma - gamma0[0]) * s[0] + s0'
 
-58. range_proof = (C', w00, w01, gamma0, z)
-59. return range_proof ```
-</pre><a href="#section-3.4.6-4" class="pilcrow">¶</a>
+    51. // For remaining bits:
+    52. For j = 1 to L-1:
+    53.     if bits[j] == 0:
+    54.         gamma0[j] = gamma - gamma0[j]
+    55.         z[j][0] = gamma0[j] * s[j] + sj'
+    56.     else:
+    57.         z[j][1] = (gamma - gamma0[j]) * s[j] + sj'
+
+    58. range_proof = (C', w00, w01, gamma0, z)
+    59. return range_proof
+</pre><a href="#section-3.4.6-2" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -2216,9 +2241,9 @@ GenerateRangeProof(bits, k<em>, s, Com):
 <a href="#section-3.5.1" class="section-number selfRef">3.5.1. </a><a href="#name-protocol-version" class="section-name selfRef">Protocol Version</a>
           </h4>
 <p id="section-3.5.1-1">The protocol version string for domain separation is:
-<code>
+~~~
 PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
-</code><a href="#section-3.5.1-1" class="pilcrow">¶</a></p>
+~~~<a href="#section-3.5.1-1" class="pilcrow">¶</a></p>
 <p id="section-3.5.1-2">This version string <span class="bcp14">MUST</span> be used consistently across all implementations for interoperability. The curve specification is included to prevent cross-curve attacks and ensure implementations using different curves cannot accidentally interact.<a href="#section-3.5.1-2" class="pilcrow">¶</a></p>
 <p id="section-3.5.1-3">Note: The reference implementation currently uses version "v0.2.0" while this specification defines version "v1.0". Implementations <span class="bcp14">MUST</span> use the exact version string for the protocol version they implement. Different version strings create incompatible protocols, which is intentional to prevent version downgrade attacks and ensure implementations are explicitly compatible.<a href="#section-3.5.1-3" class="pilcrow">¶</a></p>
 </section>
@@ -2229,42 +2254,49 @@ PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
 <a href="#section-3.5.2" class="section-number selfRef">3.5.2. </a><a href="#name-hash-function-and-fiat-sham" class="section-name selfRef">Hash Function and Fiat-Shamir Transform</a>
           </h4>
 <p id="section-3.5.2-1">The protocol uses BLAKE3 <span>[<a href="#BLAKE3" class="cite xref">BLAKE3</a>]</span> as the underlying hash function for the Fiat-Shamir transform <span>[<a href="#ORRU-FS" class="cite xref">ORRU-FS</a>]</span>. Following the sigma protocol framework <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>, challenges are generated using a transcript that accumulates all protocol messages:<a href="#section-3.5.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.5.2-2">```
+<div class="alignLeft art-text artwork" id="section-3.5.2-2">
+<pre>
 CreateTranscript(label):
   Input:
     - label: ASCII string identifying the proof type
   Output:
-    - transcript: A new transcript object<a href="#section-3.5.2-2" class="pilcrow">¶</a></p>
-<p id="section-3.5.2-3">Steps:
+    - transcript: A new transcript object
+
+  Steps:
     1. hasher = BLAKE3.new()
     2. hasher.update(PROTOCOL_VERSION)
     3. hasher.update(Encode(H1))
     4. hasher.update(Encode(H2))
     5. hasher.update(Encode(H3))
     6. hasher.update(len(label).to_be_bytes() || label)
-    7. return transcript with hasher<a href="#section-3.5.2-3" class="pilcrow">¶</a></p>
-<p id="section-3.5.2-4">AddToTranscript(transcript, value):
+    7. return transcript with hasher
+
+AddToTranscript(transcript, value):
   Input:
     - transcript: Existing transcript
-    - value: Element or Scalar to add<a href="#section-3.5.2-4" class="pilcrow">¶</a></p>
-<p id="section-3.5.2-5">Steps:
+    - value: Element or Scalar to add
+
+  Steps:
     1. encoded = Encode(value)
-    2. transcript.hasher.update(len(encoded).to_be_bytes() || encoded)<a href="#section-3.5.2-5" class="pilcrow">¶</a></p>
-<p id="section-3.5.2-6">GetChallenge(transcript):
+    2. transcript.hasher.update(len(encoded).to_be_bytes() || encoded)
+
+GetChallenge(transcript):
   Input:
     - transcript: Completed transcript
   Output:
-    - challenge: Scalar challenge value<a href="#section-3.5.2-6" class="pilcrow">¶</a></p>
-<p id="section-3.5.2-7">Steps:
+    - challenge: Scalar challenge value
+
+  Steps:
     1. seed = transcript.hasher.finalize()
     2. rng = ChaCha20RNG(seed)
     3. return Scalar.random(rng)
-```<a href="#section-3.5.2-7" class="pilcrow">¶</a></p>
-<p id="section-3.5.2-8">This approach ensures:
+</pre><a href="#section-3.5.2-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3.5.2-3">This approach ensures:
 - Domain separation through the label and protocol version
 - Inclusion of all public parameters to prevent parameter substitution attacks
 - Proper ordering with length prefixes to prevent ambiguity
-- Deterministic challenge generation from the complete transcript<a href="#section-3.5.2-8" class="pilcrow">¶</a></p>
+- Deterministic challenge generation from the complete transcript<a href="#section-3.5.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="encoding-functions">
@@ -2273,19 +2305,22 @@ CreateTranscript(label):
 <a href="#section-3.5.3" class="section-number selfRef">3.5.3. </a><a href="#name-encoding-functions" class="section-name selfRef">Encoding Functions</a>
           </h4>
 <p id="section-3.5.3-1">Elements and scalars are encoded as follows:<a href="#section-3.5.3-1" class="pilcrow">¶</a></p>
-<p id="section-3.5.3-2">```
+<div class="alignLeft art-text artwork" id="section-3.5.3-2">
+<pre>
 Encode(value):
   Input:
     - value: Element or Scalar
   Output:
-    - encoding: ByteString<a href="#section-3.5.3-2" class="pilcrow">¶</a></p>
-<p id="section-3.5.3-3">Steps:
+    - encoding: ByteString
+
+  Steps:
     1. If value is an Element:
     2.     return value.compress()  // 32 bytes, compressed Ristretto point
     3. If value is a Scalar:
     4.     return value.to_bytes_le()  // 32 bytes, little-endian
-```<a href="#section-3.5.3-3" class="pilcrow">¶</a></p>
-<p id="section-3.5.3-4">Note: Implementations <span class="bcp14">MAY</span> use standard serialization formats (e.g., bincode, CBOR) for complex structures, but <span class="bcp14">MUST</span> ensure deterministic encoding for hash inputs.<a href="#section-3.5.3-4" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.5.3-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3.5.3-3">Note: Implementations <span class="bcp14">MAY</span> use standard serialization formats (e.g., bincode, CBOR) for complex structures, but <span class="bcp14">MUST</span> ensure deterministic encoding for hash inputs.<a href="#section-3.5.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="binary-decomposition">
@@ -2294,13 +2329,15 @@ Encode(value):
 <a href="#section-3.5.4" class="section-number selfRef">3.5.4. </a><a href="#name-binary-decomposition" class="section-name selfRef">Binary Decomposition</a>
           </h4>
 <p id="section-3.5.4-1">To decompose a scalar into its binary representation:<a href="#section-3.5.4-1" class="pilcrow">¶</a></p>
-<p id="section-3.5.4-2">```
+<div class="alignLeft art-text artwork" id="section-3.5.4-2">
+<pre>
 BitDecompose(s):
   Input:
     - s: Scalar value
   Output:
-    - bits: Array of L scalars (each 0 or 1)<a href="#section-3.5.4-2" class="pilcrow">¶</a></p>
-<p id="section-3.5.4-3">Steps:
+    - bits: Array of L scalars (each 0 or 1)
+
+  Steps:
     1. bytes = s.to_bytes_le()  // 32 bytes, little-endian
     2. For i = 0 to L-1:
     3.     byte_index = i / 8
@@ -2308,8 +2345,9 @@ BitDecompose(s):
     5.     bit = (bytes[byte_index] &gt;&gt; bit_position) &amp; 1
     6.     bits[i] = Scalar(bit)
     7. return bits
-```<a href="#section-3.5.4-3" class="pilcrow">¶</a></p>
-<p id="section-3.5.4-4">Note: This algorithm produces bits in LSB-first order (i.e., bits[0] is the least significant bit). The algorithm works for any L &lt; 252, as the scalar is represented in 32 bytes (256 bits), which accommodates the full range of the Ristretto group order.<a href="#section-3.5.4-4" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.5.4-2" class="pilcrow">¶</a>
+</div>
+<p id="section-3.5.4-3">Note: This algorithm produces bits in LSB-first order (i.e., <code>bits[0]</code> is the least significant bit). The algorithm works for any L &lt; 252, as the scalar is represented in 32 bytes (256 bits), which accommodates the full range of the Ristretto group order.<a href="#section-3.5.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="scalar-conversion">
@@ -2318,22 +2356,26 @@ BitDecompose(s):
 <a href="#section-3.5.5" class="section-number selfRef">3.5.5. </a><a href="#name-scalar-conversion" class="section-name selfRef">Scalar Conversion</a>
           </h4>
 <p id="section-3.5.5-1">Converting between credit amounts and scalars:<a href="#section-3.5.5-1" class="pilcrow">¶</a></p>
-<p id="section-3.5.5-2">```
+<div class="alignLeft art-text artwork" id="section-3.5.5-2">
+<pre>
 CreditToScalar(amount):
   Input:
     - amount: Integer credit amount (0 &lt;= amount &lt; 2^L)
   Output:
-    - s: Scalar representation<a href="#section-3.5.5-2" class="pilcrow">¶</a></p>
-<p id="section-3.5.5-3">Steps:
+    - s: Scalar representation
+
+  Steps:
     1. if amount &gt;= 2^L:
     2.     return ERROR
-    3. return Scalar(amount)<a href="#section-3.5.5-3" class="pilcrow">¶</a></p>
-<p id="section-3.5.5-4">ScalarToCredit(s):
+    3. return Scalar(amount)
+
+ScalarToCredit(s):
   Input:
     - s: Scalar value
   Output:
-    - amount: Integer credit amount or ERROR<a href="#section-3.5.5-4" class="pilcrow">¶</a></p>
-<p id="section-3.5.5-5">Steps:
+    - amount: Integer credit amount or ERROR
+
+  Steps:
     1. bytes = s.to_bytes_le()
     2. // Check high bytes are zero
     3. For i = 16 to 31:
@@ -2341,7 +2383,8 @@ CreditToScalar(amount):
     5.         return ERROR
     6. amount = bytes[0..15] as u128
     7. return amount
-```<a href="#section-3.5.5-5" class="pilcrow">¶</a></p>
+</pre><a href="#section-3.5.5-2" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 </section>
@@ -2364,14 +2407,16 @@ CreditToScalar(amount):
           <h4 id="name-issuance-request-message">
 <a href="#section-4.1.1" class="section-number selfRef">4.1.1. </a><a href="#name-issuance-request-message" class="section-name selfRef">Issuance Request Message</a>
           </h4>
-<p id="section-4.1.1-1"><code>
+<div class="alignLeft art-text artwork" id="section-4.1.1-1">
+<pre>
 IssuanceRequestMsg = {
     1: bstr,  ; K (compressed Ristretto point, 32 bytes)
     2: bstr,  ; gamma (scalar, 32 bytes)
     3: bstr,  ; k_bar (scalar, 32 bytes)
     4: bstr   ; r_bar (scalar, 32 bytes)
 }
-</code><a href="#section-4.1.1-1" class="pilcrow">¶</a></p>
+</pre><a href="#section-4.1.1-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="issuance-response-message">
@@ -2379,7 +2424,8 @@ IssuanceRequestMsg = {
           <h4 id="name-issuance-response-message">
 <a href="#section-4.1.2" class="section-number selfRef">4.1.2. </a><a href="#name-issuance-response-message" class="section-name selfRef">Issuance Response Message</a>
           </h4>
-<p id="section-4.1.2-1"><code>
+<div class="alignLeft art-text artwork" id="section-4.1.2-1">
+<pre>
 IssuanceResponseMsg = {
     1: bstr,  ; A (compressed Ristretto point, 32 bytes)
     2: bstr,  ; e (scalar, 32 bytes)
@@ -2387,7 +2433,8 @@ IssuanceResponseMsg = {
     4: bstr,  ; z (scalar, 32 bytes)
     5: bstr   ; c (scalar, 32 bytes)
 }
-</code><a href="#section-4.1.2-1" class="pilcrow">¶</a></p>
+</pre><a href="#section-4.1.2-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="spend-proof-message">
@@ -2395,7 +2442,8 @@ IssuanceResponseMsg = {
           <h4 id="name-spend-proof-message">
 <a href="#section-4.1.3" class="section-number selfRef">4.1.3. </a><a href="#name-spend-proof-message" class="section-name selfRef">Spend Proof Message</a>
           </h4>
-<p id="section-4.1.3-1"><code>
+<div class="alignLeft art-text artwork" id="section-4.1.3-1">
+<pre>
 SpendProofMsg = {
     1: bstr,           ; k (nullifier, 32 bytes)
     2: bstr,           ; s (spend amount, 32 bytes)
@@ -2415,7 +2463,8 @@ SpendProofMsg = {
     16: bstr,          ; k_bar (scalar, 32 bytes)
     17: bstr           ; s_bar (scalar, 32 bytes)
 }
-</code><a href="#section-4.1.3-1" class="pilcrow">¶</a></p>
+</pre><a href="#section-4.1.3-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="refund-message">
@@ -2423,14 +2472,16 @@ SpendProofMsg = {
           <h4 id="name-refund-message">
 <a href="#section-4.1.4" class="section-number selfRef">4.1.4. </a><a href="#name-refund-message" class="section-name selfRef">Refund Message</a>
           </h4>
-<p id="section-4.1.4-1"><code>
+<div class="alignLeft art-text artwork" id="section-4.1.4-1">
+<pre>
 RefundMsg = {
     1: bstr,  ; A* (compressed Ristretto point, 32 bytes)
     2: bstr,  ; e* (scalar, 32 bytes)
     3: bstr,  ; gamma (scalar, 32 bytes)
     4: bstr   ; z (scalar, 32 bytes)
 }
-</code><a href="#section-4.1.4-1" class="pilcrow">¶</a></p>
+</pre><a href="#section-4.1.4-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 </section>
@@ -2441,12 +2492,14 @@ RefundMsg = {
 <a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-error-responses" class="section-name selfRef">Error Responses</a>
         </h3>
 <p id="section-4.2-1">Error responses <span class="bcp14">SHOULD</span> use the following format:<a href="#section-4.2-1" class="pilcrow">¶</a></p>
-<p id="section-4.2-2"><code>
+<div class="alignLeft art-text artwork" id="section-4.2-2">
+<pre>
 ErrorMsg = {
     1: uint,   ; error_code
     2: tstr    ; error_message (for debugging only)
 }
-</code><a href="#section-4.2-2" class="pilcrow">¶</a></p>
+</pre><a href="#section-4.2-2" class="pilcrow">¶</a>
+</div>
 <p id="section-4.2-3">Error codes are defined in Section 5.3.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2456,7 +2509,8 @@ ErrorMsg = {
 <a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-protocol-flow" class="section-name selfRef">Protocol Flow</a>
         </h3>
 <p id="section-4.3-1">The complete protocol flow with message types:<a href="#section-4.3-1" class="pilcrow">¶</a></p>
-<p id="section-4.3-2"><code>
+<div class="alignLeft art-text artwork" id="section-4.3-2">
+<pre>
 Client                                          Issuer
   |                                               |
   |-- IssuanceRequestMsg ------------------------&gt;|
@@ -2469,7 +2523,8 @@ Client                                          Issuer
   |                                               |
   |&lt;-- RefundMsg or ErrorMsg ---------------------|
   |                                               |
-</code><a href="#section-4.3-2" class="pilcrow">¶</a></p>
+</pre><a href="#section-4.3-2" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 </section>
@@ -2516,12 +2571,14 @@ Client                                          Issuer
 </li>
         </ul>
 <p id="section-5.2-3">In particular, the range proof generation <span class="bcp14">MUST</span> use constant-time conditional selection when choosing between bit values 0 and 1. The following pattern should be used:<a href="#section-5.2-3" class="pilcrow">¶</a></p>
-<p id="section-5.2-4"><code>
+<div class="alignLeft art-text artwork" id="section-5.2-4">
+<pre>
 ConstantTimeSelect(condition, value_if_true, value_if_false):
   // Returns value_if_true if condition is true (1),
   // value_if_false if condition is false (0)
   // Must execute in constant time regardless of condition
-</code><a href="#section-5.2-4" class="pilcrow">¶</a></p>
+</pre><a href="#section-5.2-4" class="pilcrow">¶</a>
+</div>
 <p id="section-5.2-5">This is critical in the range proof generation where bit values must not leak through timing channels.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2603,7 +2660,7 @@ ConstantTimeSelect(condition, value_if_true, value_if_false):
 </li>
         </ol>
 <p id="section-5.4-3">Example validation:
-<code>
+~~~
 ValidatePoint(P):
   1. If P fails to deserialize:
   2.     return INVALID
@@ -2611,12 +2668,12 @@ ValidatePoint(P):
   4.     return INVALID
   5. // Ristretto ensures prime-order subgroup membership
   6. return VALID
-</code><a href="#section-5.4-3" class="pilcrow">¶</a></p>
+~~~<a href="#section-5.4-3" class="pilcrow">¶</a></p>
 <p id="section-5.4-4">All implementations <span class="bcp14">MUST</span> validate points at these locations:
 - When receiving <code>K</code> in issuance request
 - When receiving <code>A</code> in issuance response
 - When receiving <code>A'</code> and <code>B_bar</code> in spend proof
-- When receiving <code>Com\[j\]</code> commitments in spend proof
+- When receiving <code>Com[j]</code> commitments in spend proof
 - When receiving <code>A*</code> in refund response<a href="#section-5.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3198,12 +3255,14 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
         <h3 id="name-test-configuration">
 <a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-test-configuration" class="section-name selfRef">Test Configuration</a>
         </h3>
-<p id="appendix-A.1-1"><code>
+<div class="alignLeft art-text artwork" id="appendix-A.1-1">
+<pre>
 RNG Seed: 0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
 Domain Separator: "anonymous-credit-tokens-v1"
 Protocol Version: "curve25519-ristretto anonymous-credentials v1.0"
 L: 128 (configurable parameter for this example)
-</code><a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
+</pre><a href="#appendix-A.1-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="complete-protocol-flow-example">
@@ -3217,12 +3276,14 @@ L: 128 (configurable parameter for this example)
           <h4 id="name-1-issuance-phase-100-credit">
 <a href="#appendix-A.2.1" class="section-number selfRef">A.2.1. </a><a href="#name-1-issuance-phase-100-credit" class="section-name selfRef">1. Issuance Phase (100 credits)</a>
           </h4>
-<p id="appendix-A.2.1-1"><code>
+<div class="alignLeft art-text artwork" id="appendix-A.2.1-1">
+<pre>
 Credits to issue: 100
 Token successfully created
 Token balance: 100
 Token nullifier (k): 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
-</code><a href="#appendix-A.2.1-1" class="pilcrow">¶</a></p>
+</pre><a href="#appendix-A.2.1-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="spending-phase-30-credits">
@@ -3230,14 +3291,17 @@ Token nullifier (k): 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22
           <h4 id="name-2-spending-phase-30-credits">
 <a href="#appendix-A.2.2" class="section-number selfRef">A.2.2. </a><a href="#name-2-spending-phase-30-credits" class="section-name selfRef">2. Spending Phase (30 credits)</a>
           </h4>
-<p id="appendix-A.2.2-1">```
+<div class="alignLeft art-text artwork" id="appendix-A.2.2-1">
+<pre>
 Amount to spend: 30
 Nullifier revealed: 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
-Spend amount (s): 30<a href="#appendix-A.2.2-1" class="pilcrow">¶</a></p>
-<p id="appendix-A.2.2-2">Refund issued successfully
+Spend amount (s): 30
+
+Refund issued successfully
 New token balance: 70
 New token nullifier (k*): 0xe844bad01bd4f034fcdd5c594960b7860abf46f8f5b876f600ffff16e0de1b07
-```<a href="#appendix-A.2.2-2" class="pilcrow">¶</a></p>
+</pre><a href="#appendix-A.2.2-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 </section>
@@ -3252,11 +3316,13 @@ New token nullifier (k*): 0xe844bad01bd4f034fcdd5c594960b7860abf46f8f5b876f600ff
           <h4 id="name-zero-credit-token">
 <a href="#appendix-A.3.1" class="section-number selfRef">A.3.1. </a><a href="#name-zero-credit-token" class="section-name selfRef">Zero Credit Token</a>
           </h4>
-<p id="appendix-A.3.1-1"><code>
+<div class="alignLeft art-text artwork" id="appendix-A.3.1-1">
+<pre>
 Zero credit token created
 Balance: 0
 Nullifier: 0x603fdef3d44fbc72098e638618daf2079f9034f803492794791cdc77d9909b04
-</code><a href="#appendix-A.3.1-1" class="pilcrow">¶</a></p>
+</pre><a href="#appendix-A.3.1-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="maximum-credit-token">
@@ -3264,11 +3330,13 @@ Nullifier: 0x603fdef3d44fbc72098e638618daf2079f9034f803492794791cdc77d9909b04
           <h4 id="name-maximum-credit-token">
 <a href="#appendix-A.3.2" class="section-number selfRef">A.3.2. </a><a href="#name-maximum-credit-token" class="section-name selfRef">Maximum Credit Token</a>
           </h4>
-<p id="appendix-A.3.2-1"><code>
+<div class="alignLeft art-text artwork" id="appendix-A.3.2-1">
+<pre>
 Maximum credit token created
 Balance: 340282366920938463463374607431768211455 (2^128 - 1)
 Nullifier: 0x4997bd7475c72eed6065c545e791475d4192059d6f41279f794504233df19a06
-</code><a href="#appendix-A.3.2-1" class="pilcrow">¶</a></p>
+</pre><a href="#appendix-A.3.2-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="invalid-operation-overspend">
@@ -3276,11 +3344,13 @@ Nullifier: 0x4997bd7475c72eed6065c545e791475d4192059d6f41279f794504233df19a06
           <h4 id="name-invalid-operation-overspend">
 <a href="#appendix-A.3.3" class="section-number selfRef">A.3.3. </a><a href="#name-invalid-operation-overspend" class="section-name selfRef">Invalid Operation: Overspend</a>
           </h4>
-<p id="appendix-A.3.3-1"><code>
+<div class="alignLeft art-text artwork" id="appendix-A.3.3-1">
+<pre>
 Token balance: 20
 Attempting to spend: 30
 Result: INVALID (correctly rejected)
-</code><a href="#appendix-A.3.3-1" class="pilcrow">¶</a></p>
+</pre><a href="#appendix-A.3.3-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="double-spend-prevention">
@@ -3288,15 +3358,18 @@ Result: INVALID (correctly rejected)
           <h4 id="name-double-spend-prevention">
 <a href="#appendix-A.3.4" class="section-number selfRef">A.3.4. </a><a href="#name-double-spend-prevention" class="section-name selfRef">Double-Spend Prevention</a>
           </h4>
-<p id="appendix-A.3.4-1">```
+<div class="alignLeft art-text artwork" id="appendix-A.3.4-1">
+<pre>
 Original token balance: 50
 First spend: 20
-Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804<a href="#appendix-A.3.4-1" class="pilcrow">¶</a></p>
-<p id="appendix-A.3.4-2">Attempting second spend from original token: 15
+Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804
+
+Attempting second spend from original token: 15
 Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804
 Same nullifier: true
 Result: Would be rejected by nullifier database
-```<a href="#appendix-A.3.4-2" class="pilcrow">¶</a></p>
+</pre><a href="#appendix-A.3.4-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 </section>
@@ -3312,13 +3385,15 @@ Result: Would be rejected by nullifier database
           <h4 id="name-binary-decomposition-of-c-s">
 <a href="#appendix-A.4.1" class="section-number selfRef">A.4.1. </a><a href="#name-binary-decomposition-of-c-s" class="section-name selfRef">Binary Decomposition of c - s = 70</a>
           </h4>
-<p id="appendix-A.4.1-1"><code>
+<div class="alignLeft art-text artwork" id="appendix-A.4.1-1">
+<pre>
 m = 70 = 0x46
 Binary: 01000110 (LSB first)
-i\[0\] = 0, i\[1\] = 1, i\[2\] = 1, i\[3\] = 0,
-i\[4\] = 0, i\[5\] = 0, i\[6\] = 1, i\[7\] = 0
-i\[8..L-1\] = 0 (where L = 128 for this example)
-</code><a href="#appendix-A.4.1-1" class="pilcrow">¶</a></p>
+i[0] = 0, i[1] = 1, i[2] = 1, i[3] = 0,
+i[4] = 0, i[5] = 0, i[6] = 1, i[7] = 0
+i[8..L-1] = 0 (where L = 128 for this example)
+</pre><a href="#appendix-A.4.1-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 <div id="protocol-message-sizes">
@@ -3326,12 +3401,14 @@ i\[8..L-1\] = 0 (where L = 128 for this example)
           <h4 id="name-protocol-message-sizes">
 <a href="#appendix-A.4.2" class="section-number selfRef">A.4.2. </a><a href="#name-protocol-message-sizes" class="section-name selfRef">Protocol Message Sizes</a>
           </h4>
-<p id="appendix-A.4.2-1"><code>
+<div class="alignLeft art-text artwork" id="appendix-A.4.2-1">
+<pre>
 IssuanceRequestMsg: 4 × 32 = 128 bytes
 IssuanceResponseMsg: 5 × 32 = 160 bytes
 SpendProofMsg: O(L) × 32 bytes (e.g., ~4,096 bytes with L=128)
 RefundMsg: 4 × 32 = 128 bytes
-</code><a href="#appendix-A.4.2-1" class="pilcrow">¶</a></p>
+</pre><a href="#appendix-A.4.2-1" class="pilcrow">¶</a>
+</div>
 </section>
 </div>
 </section>
