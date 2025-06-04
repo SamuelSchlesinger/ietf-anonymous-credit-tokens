@@ -1,0 +1,3430 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Greek,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>Anonymous Credit Tokens</title>
+<meta content="Samuel Schlesinger" name="author">
+<meta content="Jonathan Katz" name="author">
+<meta content="
+       This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving payment protocol based on keyed-verification anonymous credentials. The protocol enables issuers to grant numerical credit values to clients, who can later redeem these credits anonymously while preventing double-spending through the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge proofs to ensure both security and privacy. 
+       Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving user privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token. 
+       This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF. 
+    " name="description">
+<meta content="xml2rfc 3.28.1" name="generator">
+<meta content="anonymous credentials" name="keyword">
+<meta content="privacy" name="keyword">
+<meta content="cryptography" name="keyword">
+<meta content="zero-knowledge proofs" name="keyword">
+<meta content="BBS signatures" name="keyword">
+<meta content="keyed verification" name="keyword">
+<meta content="draft-schlesinger-cfrg-act-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.28.1
+    Python 3.9.6
+    ConfigArgParse 1.7.1
+    google-i18n-address 3.1.1
+    intervaltree 3.1.0
+    Jinja2 3.1.6
+    lxml 5.4.0
+    platformdirs 4.3.8
+    pycountry 24.6.1
+    PyYAML 6.0.2
+    requests 2.32.3
+    setuptools 80.9.0
+    wcwidth 0.2.13
+-->
+<link href="draft-schlesinger-cfrg-act.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1#title {
+  font-size: 32px;
+  line-height: 40px;
+  clear: both;
+}
+h1#title, h1#rfcnum {
+  margin: 1.5em 0 0.2em;
+}
+h1#rfcnum + h1#title {
+  margin: 0.2em 0;
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+}
+#abstract+p code, #abstract+p samp, #abstract+p tt {
+  font-size: 16px;
+  line-height: 0;
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+/* font-family isn't space-separated, but =~ will have to do */
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: var(--highlight-color);
+  border: 1px solid var(--line-color);
+  border-radius: 3px;
+  padding: 0.5em 1em 0;
+  margin-bottom: 0.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+  width: auto;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  border: none;
+  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+     support flexbox yet.
+  */
+  display: table;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+    }
+  }
+  &.olPercent > dt {
+    float: none;
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+}
+dl:not(.dlNewline) > dt {
+  float: left;
+  margin-right: 2ch;
+  min-width: 8ch;
+}
+dl > dd {
+  margin-bottom: .8em;
+  margin-left: var(--indent) !important; /* stupid element overrides */
+  min-height: 2ex;
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a, a[href].selfRef:hover {
+  text-decoration: none;
+}
+a[href] {
+  color: var(--link-color);
+}
+a[href].selfRef, .iref + a[href].internal {
+  color: var(--text-color);
+}
+a[href]:hover {
+  text-decoration: underline;
+}
+a[href].selfRef:hover {
+  background-color: var(--highlight-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) p {
+    margin: -2px 0;
+    max-height: 0;
+    transition: max-height 2s ease, margin 0.5s ease 0.5s;
+    overflow: hidden;
+  }
+  :is(#status-of-memo, #copyright):hover p,
+  :is(#status-of-memo, #copyright) h2:target ~ p {
+    margin: 0.5em 0;
+    max-height: 500px;
+    overflow: auto;
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+}
+table.right {
+  margin-left: auto;
+}
+table.center {
+  margin-left: auto;
+  margin-right: auto;
+}
+table.left {
+  margin-right: auto;
+}
+table .text-left {
+  text-align: left;
+}
+table .text-center {
+  text-align: center;
+}
+table .text-right {
+  text-align: right;
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+table caption {
+  margin: 0;
+  padding: 3px 0 3px 1em;
+}
+table p {
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+}
+@media not print {
+  :hover > a.pilcrow {
+    opacity: 1;
+  }
+  a.pilcrow[href]:hover {
+    color: var(--pilcrow-strong);
+    background-color: transparent;
+  }
+}
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses > section {
+    column-count: 2;
+    column-gap: 20px;
+  }
+  #authors-addresses > section > h2 {
+    column-span: all;
+  }
+  /* hack for break-inside: avoid-column */
+  #authors-addresses address {
+    display: inline-block;
+    break-inside: avoid-column;
+  }
+}
+
+/* Comments */
+.rfcEditorRemove p:first-of-type {
+  font-style: italic;
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc nav {
+    font-family: var(--font-title);
+    font-weight: 360;
+    & > ul { margin-bottom: 2em; }
+    & ul {
+      margin: 0 0 0 4px;
+      & :is(p, li) {
+        margin: 2px 0;
+      }
+    }
+  }
+  #toc a.toplink {
+    float: right;
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 2px 0 2px 6px;
+    padding-right: 1em;
+    font-size: 18px;
+    line-height: 24px;
+    min-width: 190px;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+    &::before { /* css hamburger */
+      float: right;
+      position: relative;
+      width: 1em;
+      height: 1px;
+      left: -164px;
+      margin: 8px 0 0 0;
+      background: white none repeat scroll 0 0;
+      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+      content: "";
+    }
+  }
+  #toc nav {
+    display: none;
+    background-color: var(--background-color);
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+  #toc.active {
+    opacity: 1;
+    & nav { display: block; }
+  }
+  /* Make the collapsed ToC header render white on gray also when it's a link */
+  #toc h2 a,
+  #toc h2 a:is(:link, :focus, :hover),
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+  #toc a.toplink {
+    margin: 2px 0.5em 0;
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+  }
+  #toc h2 {
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 2em;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+  #toc a.toplink {
+    margin: 8px 0.5em 0;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg :is([stroke="black"], [stroke^="#000"]) {
+  stroke: var(--text-color);
+}
+svg :is([stroke="white"], [stroke^="#fff"]) {
+  stroke: var(--background-color);
+}
+svg :is([fill="black"], [fill^="#000"], :not([fill])) {
+  fill: var(--text-color);
+}
+svg :is([fill="white"], [fill^="#fff"]) {
+  fill: var(--background-color);
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">ACT</td>
+<td class="right">June 2025</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Schlesinger &amp; Katz</td>
+<td class="center">Expires 6 December 2025</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">CFRG</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-schlesinger-cfrg-act-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2025-06-04" class="published">4 June 2025</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Informational</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2025-12-06">6 December 2025</time></dd>
+<dt class="label-authors">Authors:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">S. Schlesinger</div>
+<div class="org">Google</div>
+</div>
+<div class="author">
+      <div class="author-name">J. Katz</div>
+<div class="org">Google</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">Anonymous Credit Tokens</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving payment protocol based on keyed-verification anonymous credentials. The protocol enables issuers to grant numerical credit values to clients, who can later redeem these credits anonymously while preventing double-spending through the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge proofs to ensure both security and privacy.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving user privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-3">This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://samuelschlesinger.github.io/ietf-anonymous-credit-tokens/draft-schlesinger-cfrg-act.html">https://samuelschlesinger.github.io/ietf-anonymous-credit-tokens/draft-schlesinger-cfrg-act.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-schlesinger-cfrg-act/">https://datatracker.ietf.org/doc/draft-schlesinger-cfrg-act/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        CFRG Research Group mailing list (<span><a href="mailto:cfrg@ietf.org">mailto:cfrg@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/cfrg/">https://mailarchive.ietf.org/arch/browse/cfrg/</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/cfrg/">https://www.ietf.org/mailman/listinfo/cfrg/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/SamuelSchlesinger/ietf-anonymous-credit-tokens">https://github.com/SamuelSchlesinger/ietf-anonymous-credit-tokens</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 6 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2025 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-use-cases" class="internal xref">Use Cases</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-protocol-overview" class="internal xref">Protocol Overview</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.3">
+                <p id="section-toc.1-1.1.2.3.1" class="keepWithNext"><a href="#section-1.3" class="auto internal xref">1.3</a>.  <a href="#name-design-goals" class="internal xref">Design Goals</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.4">
+                <p id="section-toc.1-1.1.2.4.1"><a href="#section-1.4" class="auto internal xref">1.4</a>.  <a href="#name-relation-to-existing-work" class="internal xref">Relation to Existing Work</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
+                <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-notation" class="internal xref">Notation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.2">
+                <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-data-types" class="internal xref">Data Types</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.3">
+                <p id="section-toc.1-1.2.2.3.1"><a href="#section-2.3" class="auto internal xref">2.3</a>.  <a href="#name-cryptographic-parameters" class="internal xref">Cryptographic Parameters</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-protocol-specification" class="internal xref">Protocol Specification</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-system-parameters" class="internal xref">System Parameters</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-key-generation" class="internal xref">Key Generation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-token-issuance" class="internal xref">Token Issuance</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.1">
+                    <p id="section-toc.1-1.3.2.3.2.1.1"><a href="#section-3.3.1" class="auto internal xref">3.3.1</a>.  <a href="#name-client-issuance-request" class="internal xref">Client: Issuance Request</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.2">
+                    <p id="section-toc.1-1.3.2.3.2.2.1"><a href="#section-3.3.2" class="auto internal xref">3.3.2</a>.  <a href="#name-issuer-issuance-response" class="internal xref">Issuer: Issuance Response</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3.2.3">
+                    <p id="section-toc.1-1.3.2.3.2.3.1"><a href="#section-3.3.3" class="auto internal xref">3.3.3</a>.  <a href="#name-client-token-verification" class="internal xref">Client: Token Verification</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
+                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-token-spending" class="internal xref">Token Spending</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.1">
+                    <p id="section-toc.1-1.3.2.4.2.1.1"><a href="#section-3.4.1" class="auto internal xref">3.4.1</a>.  <a href="#name-client-spend-proof-generati" class="internal xref">Client: Spend Proof Generation</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.2">
+                    <p id="section-toc.1-1.3.2.4.2.2.1"><a href="#section-3.4.2" class="auto internal xref">3.4.2</a>.  <a href="#name-issuer-spend-verification-a" class="internal xref">Issuer: Spend Verification and Refund</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.3">
+                    <p id="section-toc.1-1.3.2.4.2.3.1"><a href="#section-3.4.3" class="auto internal xref">3.4.3</a>.  <a href="#name-refund-issuance" class="internal xref">Refund Issuance</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.4">
+                    <p id="section-toc.1-1.3.2.4.2.4.1"><a href="#section-3.4.4" class="auto internal xref">3.4.4</a>.  <a href="#name-client-refund-token-constru" class="internal xref">Client: Refund Token Construction</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.5">
+                    <p id="section-toc.1-1.3.2.4.2.5.1"><a href="#section-3.4.5" class="auto internal xref">3.4.5</a>.  <a href="#name-spend-proof-verification" class="internal xref">Spend Proof Verification</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.6">
+                    <p id="section-toc.1-1.3.2.4.2.6.1"><a href="#section-3.4.6" class="auto internal xref">3.4.6</a>.  <a href="#name-range-proof-generation" class="internal xref">Range Proof Generation</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5">
+                <p id="section-toc.1-1.3.2.5.1"><a href="#section-3.5" class="auto internal xref">3.5</a>.  <a href="#name-cryptographic-primitives" class="internal xref">Cryptographic Primitives</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5.2.1">
+                    <p id="section-toc.1-1.3.2.5.2.1.1"><a href="#section-3.5.1" class="auto internal xref">3.5.1</a>.  <a href="#name-protocol-version" class="internal xref">Protocol Version</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5.2.2">
+                    <p id="section-toc.1-1.3.2.5.2.2.1"><a href="#section-3.5.2" class="auto internal xref">3.5.2</a>.  <a href="#name-hash-function-and-fiat-sham" class="internal xref">Hash Function and Fiat-Shamir Transform</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5.2.3">
+                    <p id="section-toc.1-1.3.2.5.2.3.1"><a href="#section-3.5.3" class="auto internal xref">3.5.3</a>.  <a href="#name-encoding-functions" class="internal xref">Encoding Functions</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5.2.4">
+                    <p id="section-toc.1-1.3.2.5.2.4.1"><a href="#section-3.5.4" class="auto internal xref">3.5.4</a>.  <a href="#name-binary-decomposition" class="internal xref">Binary Decomposition</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5.2.5">
+                    <p id="section-toc.1-1.3.2.5.2.5.1"><a href="#section-3.5.5" class="auto internal xref">3.5.5</a>.  <a href="#name-scalar-conversion" class="internal xref">Scalar Conversion</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-protocol-messages-and-wire-" class="internal xref">Protocol Messages and Wire Format</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-message-encoding" class="internal xref">Message Encoding</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.1">
+                    <p id="section-toc.1-1.4.2.1.2.1.1"><a href="#section-4.1.1" class="auto internal xref">4.1.1</a>.  <a href="#name-issuance-request-message" class="internal xref">Issuance Request Message</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.2">
+                    <p id="section-toc.1-1.4.2.1.2.2.1"><a href="#section-4.1.2" class="auto internal xref">4.1.2</a>.  <a href="#name-issuance-response-message" class="internal xref">Issuance Response Message</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.3">
+                    <p id="section-toc.1-1.4.2.1.2.3.1"><a href="#section-4.1.3" class="auto internal xref">4.1.3</a>.  <a href="#name-spend-proof-message" class="internal xref">Spend Proof Message</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.4">
+                    <p id="section-toc.1-1.4.2.1.2.4.1"><a href="#section-4.1.4" class="auto internal xref">4.1.4</a>.  <a href="#name-refund-message" class="internal xref">Refund Message</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-error-responses" class="internal xref">Error Responses</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-protocol-flow" class="internal xref">Protocol Flow</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-implementation-consideratio" class="internal xref">Implementation Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-nullifier-management" class="internal xref">Nullifier Management</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-constant-time-operations" class="internal xref">Constant-Time Operations</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-randomness-generation" class="internal xref">Randomness Generation</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3.2.1">
+                    <p id="section-toc.1-1.5.2.3.2.1.1"><a href="#section-5.3.1" class="auto internal xref">5.3.1</a>.  <a href="#name-rng-requirements" class="internal xref">RNG Requirements</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3.2.2">
+                    <p id="section-toc.1-1.5.2.3.2.2.1"><a href="#section-5.3.2" class="auto internal xref">5.3.2</a>.  <a href="#name-nonce-generation" class="internal xref">Nonce Generation</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-point-validation" class="internal xref">Point Validation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.5">
+                <p id="section-toc.1-1.5.2.5.1"><a href="#section-5.5" class="auto internal xref">5.5</a>.  <a href="#name-error-handling" class="internal xref">Error Handling</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.5.2.1">
+                    <p id="section-toc.1-1.5.2.5.2.1.1"><a href="#section-5.5.1" class="auto internal xref">5.5.1</a>.  <a href="#name-error-codes" class="internal xref">Error Codes</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.6">
+                <p id="section-toc.1-1.5.2.6.1"><a href="#section-5.6" class="auto internal xref">5.6</a>.  <a href="#name-parameter-selection" class="internal xref">Parameter Selection</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.6.2.1">
+                    <p id="section-toc.1-1.5.2.6.2.1.1"><a href="#section-5.6.1" class="auto internal xref">5.6.1</a>.  <a href="#name-performance-characteristics" class="internal xref">Performance Characteristics</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.6.2.2">
+                    <p id="section-toc.1-1.5.2.6.2.2.1"><a href="#section-5.6.2" class="auto internal xref">5.6.2</a>.  <a href="#name-parameter-trade-offs" class="internal xref">Parameter Trade-offs</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-security-model-and-definiti" class="internal xref">Security Model and Definitions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.1">
+                    <p id="section-toc.1-1.6.2.1.2.1.1"><a href="#section-6.1.1" class="auto internal xref">6.1.1</a>.  <a href="#name-threat-model" class="internal xref">Threat Model</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1.2.2">
+                    <p id="section-toc.1-1.6.2.1.2.2.1"><a href="#section-6.1.2" class="auto internal xref">6.1.2</a>.  <a href="#name-security-properties" class="internal xref">Security Properties</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-cryptographic-assumptions" class="internal xref">Cryptographic Assumptions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-privacy-properties" class="internal xref">Privacy Properties</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-security-properties-2" class="internal xref">Security Properties</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5">
+                <p id="section-toc.1-1.6.2.5.1"><a href="#section-6.5" class="auto internal xref">6.5</a>.  <a href="#name-implementation-vulnerabilit" class="internal xref">Implementation Vulnerabilities</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.6">
+                <p id="section-toc.1-1.6.2.6.1"><a href="#section-6.6" class="auto internal xref">6.6</a>.  <a href="#name-protocol-composition-and-st" class="internal xref">Protocol Composition and State Management</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.6.2.1">
+                    <p id="section-toc.1-1.6.2.6.2.1.1"><a href="#section-6.6.1" class="auto internal xref">6.6.1</a>.  <a href="#name-atomicity-requirements" class="internal xref">Atomicity Requirements</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.6.2.2">
+                    <p id="section-toc.1-1.6.2.6.2.2.1"><a href="#section-6.6.2" class="auto internal xref">6.6.2</a>.  <a href="#name-session-management" class="internal xref">Session Management</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.6.2.3">
+                    <p id="section-toc.1-1.6.2.6.2.3.1"><a href="#section-6.6.3" class="auto internal xref">6.6.3</a>.  <a href="#name-version-negotiation" class="internal xref">Version Negotiation</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.7">
+                <p id="section-toc.1-1.6.2.7.1"><a href="#section-6.7" class="auto internal xref">6.7</a>.  <a href="#name-quantum-resistance" class="internal xref">Quantum Resistance</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-test-vectors" class="internal xref">Test Vectors</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-test-configuration" class="internal xref">Test Configuration</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-complete-protocol-flow-exam" class="internal xref">Complete Protocol Flow Example</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2.2.1">
+                    <p id="section-toc.1-1.9.2.2.2.1.1"><a href="#appendix-A.2.1" class="auto internal xref">A.2.1</a>.  <a href="#name-1-issuance-phase-100-credit" class="internal xref">1. Issuance Phase (100 credits)</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2.2.2">
+                    <p id="section-toc.1-1.9.2.2.2.2.1"><a href="#appendix-A.2.2" class="auto internal xref">A.2.2</a>.  <a href="#name-2-spending-phase-30-credits" class="internal xref">2. Spending Phase (30 credits)</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
+                <p id="section-toc.1-1.9.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-edge-cases" class="internal xref">Edge Cases</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3.2.1">
+                    <p id="section-toc.1-1.9.2.3.2.1.1"><a href="#appendix-A.3.1" class="auto internal xref">A.3.1</a>.  <a href="#name-zero-credit-token" class="internal xref">Zero Credit Token</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3.2.2">
+                    <p id="section-toc.1-1.9.2.3.2.2.1"><a href="#appendix-A.3.2" class="auto internal xref">A.3.2</a>.  <a href="#name-maximum-credit-token" class="internal xref">Maximum Credit Token</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3.2.3">
+                    <p id="section-toc.1-1.9.2.3.2.3.1"><a href="#appendix-A.3.3" class="auto internal xref">A.3.3</a>.  <a href="#name-invalid-operation-overspend" class="internal xref">Invalid Operation: Overspend</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3.2.4">
+                    <p id="section-toc.1-1.9.2.3.2.4.1"><a href="#appendix-A.3.4" class="auto internal xref">A.3.4</a>.  <a href="#name-double-spend-prevention" class="internal xref">Double-Spend Prevention</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4">
+                <p id="section-toc.1-1.9.2.4.1"><a href="#appendix-A.4" class="auto internal xref">A.4</a>.  <a href="#name-intermediate-test-values" class="internal xref">Intermediate Test Values</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4.2.1">
+                    <p id="section-toc.1-1.9.2.4.2.1.1"><a href="#appendix-A.4.1" class="auto internal xref">A.4.1</a>.  <a href="#name-binary-decomposition-of-c-s" class="internal xref">Binary Decomposition of c - s = 70</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4.2.2">
+                    <p id="section-toc.1-1.9.2.4.2.2.1"><a href="#appendix-A.4.2" class="auto internal xref">A.4.2</a>.  <a href="#name-protocol-message-sizes" class="internal xref">Protocol Message Sizes</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.5">
+                <p id="section-toc.1-1.9.2.5.1"><a href="#appendix-A.5" class="auto internal xref">A.5</a>.  <a href="#name-test-vector-summary" class="internal xref">Test Vector Summary</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.5.2.1">
+                    <p id="section-toc.1-1.9.2.5.2.1.1"><a href="#appendix-A.5.1" class="auto internal xref">A.5.1</a>.  <a href="#name-implementation-validation" class="internal xref">Implementation Validation</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-implementation-status" class="internal xref">Implementation Status</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#appendix-B.1" class="auto internal xref">B.1</a>.  <a href="#name-anonymous-credit-tokens" class="internal xref">anonymous-credit-tokens</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-authors-addresses" class="internal xref">Authors' Addresses</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">Many online services need mechanisms to allocate resources, implement rate limiting, or process micropayments. Traditional approaches to these problems typically require tracking user identity, which raises privacy concerns. Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables services to issue and track credits without linking transactions to user identities.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">The Anonymous Credit Token protocol is a specialization of keyed-verification anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> that focuses on numerical credit values. It allows:<a href="#section-1-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-1-3">
+<li id="section-1-3.1">
+          <p id="section-1-3.1.1"><strong>Anonymous Issuance</strong>: An issuer can grant credits to a client without learning any client-specific information beyond the credit amount.<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-1-3.2">
+          <p id="section-1-3.2.1"><strong>Anonymous Spending</strong>: Clients can spend their credits without revealing their identity or linking multiple transactions.<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-1-3.3">
+          <p id="section-1-3.3.1"><strong>Partial Spending</strong>: Clients can spend a portion of their credits and receive the remainder as a new anonymous token.<a href="#section-1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-1-3.4">
+          <p id="section-1-3.4.1"><strong>Double-Spend Prevention</strong>: Each credit token has an associated nullifier that prevents the same credits from being spent multiple times.<a href="#section-1-3.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<div id="use-cases">
+<section id="section-1.1">
+        <h3 id="name-use-cases">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-use-cases" class="section-name selfRef">Use Cases</a>
+        </h3>
+<p id="section-1.1-1">Anonymous Credit Tokens can be applied to various scenarios:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.1-2.1">
+            <p id="section-1.1-2.1.1"><strong>Rate Limiting</strong>: Services can issue daily credit allowances that users spend anonymously for API calls or resource access.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.1-2.2">
+            <p id="section-1.1-2.2.1"><strong>Privacy-Preserving Micropayments</strong>: Users can purchase credit bundles and spend them over time without creating a transaction history.<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.1-2.3">
+            <p id="section-1.1-2.3.1"><strong>Anonymous Ticketing</strong>: Event organizers can issue transferable tickets that can be verified without tracking ownership changes.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.1-2.4">
+            <p id="section-1.1-2.4.1"><strong>Resource Allocation</strong>: Cloud services can allocate computational resources using credits while preserving user privacy.<a href="#section-1.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="protocol-overview">
+<section id="section-1.2">
+        <h3 id="name-protocol-overview">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-protocol-overview" class="section-name selfRef">Protocol Overview</a>
+        </h3>
+<p id="section-1.2-1">The protocol involves two parties: an issuer (typically a service provider) and clients (users of the service). The interaction follows three main phases:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-1.2-2">
+<li id="section-1.2-2.1">
+            <p id="section-1.2-2.1.1"><strong>Setup</strong>: The issuer generates a key pair and publishes the public key.<a href="#section-1.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-1.2-2.2">
+            <p id="section-1.2-2.2.1"><strong>Issuance</strong>: A client requests credits from the issuer. The issuer creates a blind signature on the credit value and a client-chosen nullifier, producing a credit token.<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-1.2-2.3">
+            <p id="section-1.2-2.3.1"><strong>Spending</strong>: To spend credits, the client reveals the nullifier and proves possession of a valid token with sufficient balance. The issuer verifies the proof, checks the nullifier hasn't been used before, and issues a new token for any remaining balance.<a href="#section-1.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="design-goals">
+<section id="section-1.3">
+        <h3 id="name-design-goals">
+<a href="#section-1.3" class="section-number selfRef">1.3. </a><a href="#name-design-goals" class="section-name selfRef">Design Goals</a>
+        </h3>
+<p id="section-1.3-1">The protocol is designed with the following goals:<a href="#section-1.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.3-2.1">
+            <p id="section-1.3-2.1.1"><strong>Privacy</strong>: The issuer cannot link credit tokens to specific clients or link multiple transactions by the same client.<a href="#section-1.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.3-2.2">
+            <p id="section-1.3-2.2.1"><strong>Security</strong>: Clients cannot spend more credits than they possess or use the same credits multiple times.<a href="#section-1.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.3-2.3">
+            <p id="section-1.3-2.3.1"><strong>Efficiency</strong>: All operations should be computationally efficient, suitable for high-volume web services.<a href="#section-1.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.3-2.4">
+            <p id="section-1.3-2.4.1"><strong>Simplicity</strong>: The protocol should be straightforward to implement and integrate into existing systems.<a href="#section-1.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="relation-to-existing-work">
+<section id="section-1.4">
+        <h3 id="name-relation-to-existing-work">
+<a href="#section-1.4" class="section-number selfRef">1.4. </a><a href="#name-relation-to-existing-work" class="section-name selfRef">Relation to Existing Work</a>
+        </h3>
+<p id="section-1.4-1">This protocol builds upon several cryptographic primitives:<a href="#section-1.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.4-2.1">
+            <p id="section-1.4-2.1.1"><strong>BBS Signatures</strong> <span>[<a href="#BBS" class="cite xref">BBS</a>]</span>: The core signature scheme that enables efficient proofs of possession.<a href="#section-1.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.4-2.2">
+            <p id="section-1.4-2.2.1"><strong>Sigma Protocols</strong> <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>: The zero-knowledge proof framework used for spending proofs.<a href="#section-1.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.4-2.3">
+            <p id="section-1.4-2.3.1"><strong>Fiat-Shamir Transform</strong> <span>[<a href="#ORRU-FS" class="cite xref">ORRU-FS</a>]</span>: The technique to make the interactive proofs non-interactive.<a href="#section-1.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-1.4-3">The protocol can be viewed as a specialized instantiation of keyed-verification anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> optimized for numerical values and partial spending.<a href="#section-1.4-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<div id="notation">
+<section id="section-2.1">
+        <h3 id="name-notation">
+<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-notation" class="section-name selfRef">Notation</a>
+        </h3>
+<p id="section-2.1-1">This document uses the following notation:<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-2.1-2.1">
+            <p id="section-2.1-2.1.1"><code>||</code>: Concatenation of byte strings<a href="#section-2.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-2.1-2.2">
+            <p id="section-2.1-2.2.1"><code>x &lt;- S</code>: Sampling x uniformly at random from the set S<a href="#section-2.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-2.1-2.3">
+            <p id="section-2.1-2.3.1"><code>x := y</code>: Assignment of the value y to the variable x<a href="#section-2.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-2.1-2.4">
+            <p id="section-2.1-2.4.1"><code>[n]</code>: The set of integers {0, 1, ..., n-1}<a href="#section-2.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-2.1-2.5">
+            <p id="section-2.1-2.5.1"><code>|x|</code>: The length of byte string x<a href="#section-2.1-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-2.1-2.6">
+            <p id="section-2.1-2.6.1"><code>0x</code> prefix: Hexadecimal values<a href="#section-2.1-2.6.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="data-types">
+<section id="section-2.2">
+        <h3 id="name-data-types">
+<a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-data-types" class="section-name selfRef">Data Types</a>
+        </h3>
+<p id="section-2.2-1">The protocol uses the following data types:<a href="#section-2.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-2.2-2.1">
+            <p id="section-2.2-2.1.1"><strong>Scalar</strong>: An integer modulo the group order q<a href="#section-2.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-2.2-2.2">
+            <p id="section-2.2-2.2.1"><strong>Element</strong>: A point on the Ristretto curve<a href="#section-2.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-2.2-2.3">
+            <p id="section-2.2-2.3.1"><strong>ByteString</strong>: A sequence of bytes<a href="#section-2.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="cryptographic-parameters">
+<section id="section-2.3">
+        <h3 id="name-cryptographic-parameters">
+<a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-cryptographic-parameters" class="section-name selfRef">Cryptographic Parameters</a>
+        </h3>
+<p id="section-2.3-1">The protocol uses the Ristretto group <span>[<a href="#RISTRETTO" class="cite xref">RISTRETTO</a>]</span>, which provides a prime-order group abstraction over Curve25519. The key parameters are:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-2.3-2.1">
+            <p id="section-2.3-2.1.1"><strong>q</strong>: The prime order of the group (2^252 + 27742317777372353535851937790883648493)<a href="#section-2.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-2.3-2.2">
+            <p id="section-2.3-2.2.1"><strong>G</strong>: The standard generator of the Ristretto group<a href="#section-2.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-2.3-2.3">
+            <p id="section-2.3-2.3.1"><strong>L</strong>: The bit length for credit values (configurable, typically 128 bits)<a href="#section-2.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="protocol-specification">
+<section id="section-3">
+      <h2 id="name-protocol-specification">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-protocol-specification" class="section-name selfRef">Protocol Specification</a>
+      </h2>
+<div id="system-parameters">
+<section id="section-3.1">
+        <h3 id="name-system-parameters">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-system-parameters" class="section-name selfRef">System Parameters</a>
+        </h3>
+<p id="section-3.1-1">The protocol requires the following system parameters:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-2"><code>
+Parameters:
+  - G: Generator of the Ristretto group
+  - H1, H2, H3: Additional generators for commitments
+  - L: Bit length for credit values (configurable, must satisfy L &lt; 252)
+</code><a href="#section-3.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.1-3">The generators H1, H2, and H3 <span class="bcp14">MUST</span> be generated deterministically from a nothing-up-my-sleeve value to ensure they are independent of each other and of G. This prevents attacks where malicious parameters could compromise security. Note that these generators are independent of the choice of L:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-4">```
+GenerateParameters(domain_separator):
+  Input:
+    - domain_separator: ByteString identifying the deployment
+  Output:
+    - params: System parameters (H1, H2, H3)<a href="#section-3.1-4" class="pilcrow">¶</a></p>
+<p id="section-3.1-5">Steps:
+    1. seed = BLAKE3(domain_separator)
+    2. rng = ChaCha20RNG(seed)
+    3. H1 = HashToRistretto(rng.next())
+    4. H2 = HashToRistretto(rng.next())
+    5. H3 = HashToRistretto(rng.next())
+    6. return (H1, H2, H3)
+```<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="key-generation">
+<section id="section-3.2">
+        <h3 id="name-key-generation">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-key-generation" class="section-name selfRef">Key Generation</a>
+        </h3>
+<p id="section-3.2-1">The issuer generates a key pair as follows:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">```
+KeyGen():
+  Input: None
+  Output:
+    - sk: Private key (Scalar)
+    - pk: Public key (Element)<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-3">Steps:
+    1. x &lt;- Zq
+    2. W = G * x
+    3. sk = x
+    4. pk = W
+    5. return (sk, pk)
+```<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="token-issuance">
+<section id="section-3.3">
+        <h3 id="name-token-issuance">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-token-issuance" class="section-name selfRef">Token Issuance</a>
+        </h3>
+<p id="section-3.3-1">The issuance protocol is an interactive protocol between a client and the issuer:<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<div id="client-issuance-request">
+<section id="section-3.3.1">
+          <h4 id="name-client-issuance-request">
+<a href="#section-3.3.1" class="section-number selfRef">3.3.1. </a><a href="#name-client-issuance-request" class="section-name selfRef">Client: Issuance Request</a>
+          </h4>
+<p id="section-3.3.1-1">```
+IssueRequest(pk, c):
+  Input:
+    - pk: Issuer's public key
+    - c: Credit amount (0 &lt;= c &lt; 2^L)
+  Output:
+    - request: Issuance request
+    - state: Client state for later verification<a href="#section-3.3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-2">Steps:
+    1. k &lt;- Zq  // Token identifier
+    2. r &lt;- Zq  // Blinding factor
+    3. K = H2 * k + H3 * r
+    4. // Generate proof of knowledge of k, r
+    5. k' &lt;- Zq
+    6. r' &lt;- Zq
+    7. K1 = H2 * k' + H3 * r'
+    8. transcript = CreateTranscript("request")
+    9. AddToTranscript(transcript, K)
+    10. AddToTranscript(transcript, K1)
+    11. gamma = GetChallenge(transcript)
+    12. k_bar = k' + gamma * k
+    13. r_bar = r' + gamma * r
+    14. request = (K, gamma, k_bar, r_bar)
+    15. state = (k, r, c)
+    16. return (request, state)
+```<a href="#section-3.3.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="issuer-issuance-response">
+<section id="section-3.3.2">
+          <h4 id="name-issuer-issuance-response">
+<a href="#section-3.3.2" class="section-number selfRef">3.3.2. </a><a href="#name-issuer-issuance-response" class="section-name selfRef">Issuer: Issuance Response</a>
+          </h4>
+<p id="section-3.3.2-1">```
+Issue(sk, request, c):
+  Input:
+    - sk: Issuer's private key
+    - request: Client's issuance request
+    - c: Credit amount to issue
+  Output:
+    - response: Issuance response or INVALID<a href="#section-3.3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.3.2-2">Steps:
+    1. Parse request as (K, gamma, k_bar, r_bar)
+    2. // Verify proof of knowledge
+    3. K1 = H2 * k_bar + H3 * r_bar - K * gamma
+    4. transcript = CreateTranscript("request")
+    5. AddToTranscript(transcript, K)
+    6. AddToTranscript(transcript, K1)
+    7. if GetChallenge(transcript) != gamma:
+    8.     return INVALID
+    9. // Create BBS signature
+    10. e &lt;- Zq
+    11. A = (G + H1 * c + K)^(1/(e + sk))
+    12. // Generate proof of correct computation
+    13. alpha &lt;- Zq
+    14. Y_A = A * alpha
+    15. Y_G = G * alpha
+    16. X_A = G + H1 * c + K
+    17. X_G = G * e + pk
+    18. transcript_resp = CreateTranscript("respond")
+    19. AddToTranscript(transcript_resp, c)
+    20. AddToTranscript(transcript_resp, e)
+    21. AddToTranscript(transcript_resp, A)
+    22. AddToTranscript(transcript_resp, X_A)
+    23. AddToTranscript(transcript_resp, X_G)
+    24. AddToTranscript(transcript_resp, Y_A)
+    25. AddToTranscript(transcript_resp, Y_G)
+    26. gamma_resp = GetChallenge(transcript_resp)
+    27. z = gamma_resp * (sk + e) + alpha
+    28. response = (A, e, gamma_resp, z, c)
+    29. return response
+```<a href="#section-3.3.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="client-token-verification">
+<section id="section-3.3.3">
+          <h4 id="name-client-token-verification">
+<a href="#section-3.3.3" class="section-number selfRef">3.3.3. </a><a href="#name-client-token-verification" class="section-name selfRef">Client: Token Verification</a>
+          </h4>
+<p id="section-3.3.3-1">```
+VerifyIssuance(pk, request, response, state):
+  Input:
+    - pk: Issuer's public key
+    - request: The issuance request sent
+    - response: Issuer's response
+    - state: Client state from request generation
+  Output:
+    - token: Credit token or INVALID<a href="#section-3.3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3.3-2">Steps:
+    1. Parse response as (A, e, gamma_resp, z, c_resp)
+    2. Parse state as (k, r, c)
+    3. if c_resp != c:
+    4.     return INVALID
+    5. // Verify proof
+    6. K = H2 * k + H3 * r
+    7. X_A = G + H1 * c + K
+    8. X_G = G * e + pk
+    9. Y_A = A * z - X_A * gamma_resp
+    10. Y_G = G * z - X_G * gamma_resp
+    11. transcript_resp = CreateTranscript("respond")
+    12. AddToTranscript(transcript_resp, c)
+    13. AddToTranscript(transcript_resp, e)
+    14. AddToTranscript(transcript_resp, A)
+    15. AddToTranscript(transcript_resp, X_A)
+    16. AddToTranscript(transcript_resp, X_G)
+    17. AddToTranscript(transcript_resp, Y_A)
+    18. AddToTranscript(transcript_resp, Y_G)
+    19. if GetChallenge(transcript_resp) != gamma_resp:
+    20.     return INVALID
+    21. token = (A, e, k, r, c)
+    22. return token
+```<a href="#section-3.3.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="token-spending">
+<section id="section-3.4">
+        <h3 id="name-token-spending">
+<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-token-spending" class="section-name selfRef">Token Spending</a>
+        </h3>
+<p id="section-3.4-1">The spending protocol allows a client to spend s credits from a token containing c credits (where s &lt;= c):<a href="#section-3.4-1" class="pilcrow">¶</a></p>
+<div id="client-spend-proof-generation">
+<section id="section-3.4.1">
+          <h4 id="name-client-spend-proof-generati">
+<a href="#section-3.4.1" class="section-number selfRef">3.4.1. </a><a href="#name-client-spend-proof-generati" class="section-name selfRef">Client: Spend Proof Generation</a>
+          </h4>
+<p id="section-3.4.1-1">```
+ProveSpend(token, s):
+  Input:
+    - token: Credit token (A, e, k, r, c)
+    - s: Amount to spend (0 &lt;= s &lt;= c)
+  Output:
+    - proof: Spend proof
+    - state: Client state for receiving change<a href="#section-3.4.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.4.1-2">Steps:
+    1. // Randomize the signature
+    2. r1, r2 &lt;- Zq
+    3. B = G + H1 * c + H2 * k + H3 * r
+    4. A' = A * r1 * r2
+    5. B_bar = B * r1
+    6. r3 = 1/r1<a href="#section-3.4.1-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.4.1-3">
+<pre>
+7. // Decompose c - s into bits
+8. m = c - s
+9. (i\[0\], ..., i\[L-1\]) = BitDecompose(m)  // See Section 3.7
+
+10. // Create commitments for each bit
+11. k* &lt;- Zq
+12. For j = 0 to L-1:
+13.     s\[j\] &lt;- Zq
+14.     if j == 0:
+15.         Com\[j\] = H1 * i\[j\] + H2 * k* + H3 * s\[j\]
+16.     else:
+17.         Com\[j\] = H1 * i\[j\] + H3 * s\[j\]
+
+18. // Generate range proof (see Section 3.5.1)
+19. range_proof = GenerateRangeProof(i, k*, s, Com)
+
+20. // Complete sigma protocol
+21. K' = Product(Com\[j\] * 2^j for j in \[L\])
+22. // Generate remaining proof components
+23. c' &lt;- Zq
+24. r' &lt;- Zq
+25. e' &lt;- Zq
+26. r2' &lt;- Zq
+27. r3' &lt;- Zq
+28.
+29. // Compute first round messages
+30. A1 = A' * e' + B_bar * r2'
+31. A2 = B_bar * r3' + H1 * c' + H3 * r'
+32.
+33. // Prepare range proof challenges
+34. k' &lt;- Zq
+35. s' &lt;- Zq
+36. C = H1 * (-c') + H2 * k' + H3 * s'
+37.
+38. // Generate challenge using transcript
+39. transcript = CreateTranscript("spend")
+40. AddToTranscript(transcript, k)
+41. AddToTranscript(transcript, A')
+42. AddToTranscript(transcript, B_bar)
+43. AddToTranscript(transcript, A1)
+44. AddToTranscript(transcript, A2)
+45. For j = 0 to L-1:
+46.     AddToTranscript(transcript, Com\[j\])
+47. For j = 0 to L-1:
+48.     AddToTranscript(transcript, range_proof.C'\[j\]\[0\])
+49.     AddToTranscript(transcript, range_proof.C'\[j\]\[1\])
+50. AddToTranscript(transcript, C)
+51. gamma = GetChallenge(transcript)
+52.
+53. // Compute responses
+54. e_bar = -gamma * e + e'
+55. r2_bar = gamma * r2 + r2'
+56. r3_bar = gamma * r3 + r3'
+57. c_bar = -gamma * c + c'
+58. r_bar = -gamma * r + r'
+59. k_bar = gamma * k* + k'
+60. r* = Sum(2^j * s\[j\] for j in \[L\])
+61. s_bar = gamma * r* + s'
+62.
+63. // Construct proof
+64. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar,
+65.                    r2_bar, r3_bar, c_bar, r_bar,
+66.                    range_proof.w00, range_proof.w01,
+67.                    range_proof.gamma0, range_proof.z,
+68.                    k_bar, s_bar)
+69. state = (k*, r*, m)
+70. return (proof, state) ```
+</pre><a href="#section-3.4.1-3" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="issuer-spend-verification-and-refund">
+<section id="section-3.4.2">
+          <h4 id="name-issuer-spend-verification-a">
+<a href="#section-3.4.2" class="section-number selfRef">3.4.2. </a><a href="#name-issuer-spend-verification-a" class="section-name selfRef">Issuer: Spend Verification and Refund</a>
+          </h4>
+<p id="section-3.4.2-1">```
+VerifyAndRefund(sk, proof):
+  Input:
+    - sk: Issuer's private key
+    - proof: Client's spend proof
+  Output:
+    - refund: Refund for remaining credits or INVALID<a href="#section-3.4.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.4.2-2">Steps:
+    1. Parse proof and extract nullifier k
+    2. // Check nullifier hasn't been used
+    3. if k in used_nullifiers:
+    4.     return INVALID
+    5. // Verify the proof (see Section 3.5.2)
+    6. if not VerifySpendProof(pk, proof):
+    7.     return INVALID
+    8. // Record nullifier
+    9. used_nullifiers.add(k)
+    10. // Issue refund for remaining balance
+    11. K' = Product(Com[j] * 2^j for j in [L])
+    12. refund = IssueRefund(sk, K')
+    13. return refund
+```<a href="#section-3.4.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="refund-issuance">
+<section id="section-3.4.3">
+          <h4 id="name-refund-issuance">
+<a href="#section-3.4.3" class="section-number selfRef">3.4.3. </a><a href="#name-refund-issuance" class="section-name selfRef">Refund Issuance</a>
+          </h4>
+<p id="section-3.4.3-1">After verifying a spend proof, the issuer creates a refund token for the remaining balance:<a href="#section-3.4.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.4.3-2">```
+IssueRefund(sk, K'):
+  Input:
+    - sk: Issuer's private key
+    - K': Commitment to remaining balance and new nullifier
+  Output:
+    - refund: Refund response<a href="#section-3.4.3-2" class="pilcrow">¶</a></p>
+<p id="section-3.4.3-3">Steps:
+    1. // Create new BBS signature on remaining balance
+    2. e* &lt;- Zq
+    3. X_A* = G + K'
+    4. A* = X_A* ^ (1/(e* + sk))<a href="#section-3.4.3-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.4.3-4">
+<pre>
+5. // Generate proof of correct computation
+6. alpha &lt;- Zq
+7. Y_A = A* * alpha
+8. Y_G = G * alpha
+9. X_G = G * e* + pk
+
+10. // Create challenge using transcript
+11. transcript = CreateTranscript("refund")
+12. AddToTranscript(transcript, e*)
+13. AddToTranscript(transcript, A*)
+14. AddToTranscript(transcript, X_A*)
+15. AddToTranscript(transcript, X_G)
+16. AddToTranscript(transcript, Y_A)
+17. AddToTranscript(transcript, Y_G)
+18. gamma = GetChallenge(transcript)
+
+19. // Compute response
+20. z = gamma * (sk + e*) + alpha
+
+21. refund = (A*, e*, gamma, z)
+22. return refund ```
+</pre><a href="#section-3.4.3-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="client-refund-token-construction">
+<section id="section-3.4.4">
+          <h4 id="name-client-refund-token-constru">
+<a href="#section-3.4.4" class="section-number selfRef">3.4.4. </a><a href="#name-client-refund-token-constru" class="section-name selfRef">Client: Refund Token Construction</a>
+          </h4>
+<p id="section-3.4.4-1">The client verifies the refund and constructs a new credit token:<a href="#section-3.4.4-1" class="pilcrow">¶</a></p>
+<p id="section-3.4.4-2">```
+ConstructRefundToken(pk, spend_proof, refund, state):
+  Input:
+    - pk: Issuer's public key
+    - spend_proof: The spend proof sent to issuer
+    - refund: Issuer's refund response
+    - state: Client state (k<em>, r</em>, m)
+  Output:
+    - token: New credit token or INVALID<a href="#section-3.4.4-2" class="pilcrow">¶</a></p>
+<p id="section-3.4.4-3">Steps:
+    1. Parse refund as (A<em>, e</em>, gamma, z)
+    2. Parse state as (k<em>, r</em>, m)<a href="#section-3.4.4-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.4.4-4">
+<pre>
+3. // Reconstruct commitment
+4. K' = Product(spend_proof.Com\[j\] * 2^j for j in \[L\])
+5. X_A* = G + K'
+6. X_G = G * e* + pk
+
+7. // Verify proof
+8. Y_A = A* * z - X_A* * gamma
+9. Y_G = G * z - X_G * gamma
+
+10. // Check challenge using transcript
+11. transcript = CreateTranscript("refund")
+12. AddToTranscript(transcript, e*)
+13. AddToTranscript(transcript, A*)
+14. AddToTranscript(transcript, X_A*)
+15. AddToTranscript(transcript, X_G)
+16. AddToTranscript(transcript, Y_A)
+17. AddToTranscript(transcript, Y_G)
+18. if GetChallenge(transcript) != gamma:
+19.     return INVALID
+
+20. // Construct new token
+21. token = (A*, e*, k*, r*, m)
+22. return token ```
+</pre><a href="#section-3.4.4-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="spend-verification">
+<section id="section-3.4.5">
+          <h4 id="name-spend-proof-verification">
+<a href="#section-3.4.5" class="section-number selfRef">3.4.5. </a><a href="#name-spend-proof-verification" class="section-name selfRef">Spend Proof Verification</a>
+          </h4>
+<p id="section-3.4.5-1">The issuer verifies a spend proof as follows:<a href="#section-3.4.5-1" class="pilcrow">¶</a></p>
+<p id="section-3.4.5-2">```
+VerifySpendProof(pk, proof):
+  Input:
+    - pk: Issuer's public key
+    - proof: Spend proof from client
+  Output:
+    - valid: Boolean indicating if proof is valid<a href="#section-3.4.5-2" class="pilcrow">¶</a></p>
+<p id="section-3.4.5-3">Steps:
+    1. Parse proof as (k, s, A', B_bar, Com, gamma, e_bar,
+                      r2_bar, r3_bar, c_bar, r_bar, w00, w01,
+                      gamma0, z, k_bar, s_bar)<a href="#section-3.4.5-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.4.5-4">
+<pre>
+2. // Check A' is not identity
+3. if A' == Identity:
+4.     return false
+
+5. // Compute issuer's view of signature
+6. A_bar = A' * sk  // This requires the issuer's private key
+7. H1_prime = G + H2 * k  // Spending amount s is added to this later
+
+8. // Verify sigma protocol
+9. A1 = A' * e_bar + B_bar * r2_bar - A_bar * gamma
+10. A2 = B_bar * r3_bar + H1 * c_bar + H3 * r_bar - H1_prime * gamma
+
+11. // Verify range proof
+12. For j = 0 to L-1:
+13.     gamma1\[j\] = gamma - gamma0\[j\]
+14.     C\[j\]\[0\] = Com\[j\]
+15.     C\[j\]\[1\] = Com\[j\] / H1
+
+16. // Verify bit 0 (with k* component)
+17. C'\[0\]\[0\] = H2 * w00 + H3 * z\[0\]\[0\] - C\[0\]\[0\] * gamma0\[0\]
+18. C'\[0\]\[1\] = H2 * w01 + H3 * z\[0\]\[1\] - C\[0\]\[1\] * gamma1\[0\]
+
+19. // Verify remaining bits
+20. For j = 1 to L-1:
+21.     C'\[j\]\[0\] = H3 * z\[j\]\[0\] - C\[j\]\[0\] * gamma0\[j\]
+22.     C'\[j\]\[1\] = H3 * z\[j\]\[1\] - C\[j\]\[1\] * gamma1\[j\]
+
+23. // Verify final commitment
+24. K' = Product(Com\[j\] * 2^j for j in \[L\])
+25. Com_total = H1 * s + K'
+26. C_final = H1 * (-c_bar) + H2 * k_bar + H3 * s_bar - Com_total * gamma
+
+27. // Recompute challenge using transcript
+28. transcript = CreateTranscript("spend")
+29. AddToTranscript(transcript, k)
+30. AddToTranscript(transcript, A')
+31. AddToTranscript(transcript, B_bar)
+32. AddToTranscript(transcript, A1)
+33. AddToTranscript(transcript, A2)
+34. For j = 0 to L-1:
+35.     AddToTranscript(transcript, Com\[j\])
+36. For j = 0 to L-1:
+37.     AddToTranscript(transcript, C'\[j\]\[0\])
+38.     AddToTranscript(transcript, C'\[j\]\[1\])
+39. AddToTranscript(transcript, C_final)
+40. gamma_check = GetChallenge(transcript)
+
+41. // Verify challenge matches
+42. if gamma != gamma_check:
+43.     return false
+
+44. return true ```
+</pre><a href="#section-3.4.5-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="range-proof">
+<section id="section-3.4.6">
+          <h4 id="name-range-proof-generation">
+<a href="#section-3.4.6" class="section-number selfRef">3.4.6. </a><a href="#name-range-proof-generation" class="section-name selfRef">Range Proof Generation</a>
+          </h4>
+<p id="section-3.4.6-1">The range proof demonstrates that c - s &gt;= 0 without revealing the actual values. It uses a binary decomposition and proves each bit is either 0 or 1:<a href="#section-3.4.6-1" class="pilcrow">¶</a></p>
+<p id="section-3.4.6-2">```
+GenerateRangeProof(bits, k<em>, s, Com):
+  Input:
+    - bits: Binary decomposition of c - s
+    - k</em>, s: Randomness values
+    - Com: Commitments to each bit
+  Output:
+    - range_proof: Zero-knowledge range proof<a href="#section-3.4.6-2" class="pilcrow">¶</a></p>
+<p id="section-3.4.6-3">Steps:
+    1. // Initialize arrays for proof components
+    2. C = array[L][2]
+    3. C' = array[L][2]
+    4. gamma0 = array[L]
+    5. w = array[L]
+    6. z = array[L][2]<a href="#section-3.4.6-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.4.6-4">
+<pre>
+7. // Process bit 0 (includes k*)
+8. C\[0\]\[0\] = Com\[0\]
+9. C\[0\]\[1\] = Com\[0\] / H1
+10. k0' &lt;- Zq
+11. s0' &lt;- Zq
+12. gamma0\[0\] &lt;- Zq
+13. w\[0\] &lt;- Zq
+14. z\[0\]\[0\] &lt;- Zq
+15. z\[0\]\[1\] &lt;- Zq
+16.
+17. if bits\[0\] == 0:
+18.     C'\[0\]\[0\] = H2 * k0' + H3 * s0'
+19.     C'\[0\]\[1\] = H2 * w\[0\] + H3 * z\[0\]\[1\] - C\[0\]\[1\] * gamma0\[0\]
+20. else:
+21.     C'\[0\]\[0\] = H2 * w\[0\] + H3 * z\[0\]\[0\] - C\[0\]\[0\] * gamma0\[0\]
+22.     C'\[0\]\[1\] = H2 * k0' + H3 * s0'
+
+23. // Process remaining bits (no k* component)
+24. For j = 1 to L-1:
+25.     C\[j\]\[0\] = Com\[j\]
+26.     C\[j\]\[1\] = Com\[j\] / H1
+27.     sj' &lt;- Zq
+28.     gamma0\[j\] &lt;- Zq
+29.     z\[j\]\[0\] &lt;- Zq
+30.     z\[j\]\[1\] &lt;- Zq
+31.
+32.     if bits\[j\] == 0:
+33.         C'\[j\]\[0\] = H3 * sj'
+34.         C'\[j\]\[1\] = H3 * z\[j\]\[1\] - C\[j\]\[1\] * gamma0\[j\]
+35.     else:
+36.         C'\[j\]\[0\] = H3 * z\[j\]\[0\] - C\[j\]\[0\] * gamma0\[j\]
+37.         C'\[j\]\[1\] = H3 * sj'
+
+38. // After challenge gamma is computed (externally):
+39. // Complete the proof with proper response values
+40.
+41. // For bit 0:
+42. if bits\[0\] == 0:
+43.     gamma0\[0\] = gamma - gamma0\[0\]
+44.     w00 = gamma0\[0\] * k* + k0'
+45.     w01 = w\[0\]
+46.     z\[0\]\[0\] = gamma0\[0\] * s\[0\] + s0'
+47. else:
+48.     w00 = w\[0\]
+49.     w01 = (gamma - gamma0\[0\]) * k* + k0'
+50.     z\[0\]\[1\] = (gamma - gamma0\[0\]) * s\[0\] + s0'
+
+51. // For remaining bits:
+52. For j = 1 to L-1:
+53.     if bits\[j\] == 0:
+54.         gamma0\[j\] = gamma - gamma0\[j\]
+55.         z\[j\]\[0\] = gamma0\[j\] * s\[j\] + sj'
+56.     else:
+57.         z\[j\]\[1\] = (gamma - gamma0\[j\]) * s\[j\] + sj'
+
+58. range_proof = (C', w00, w01, gamma0, z)
+59. return range_proof ```
+</pre><a href="#section-3.4.6-4" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="cryptographic-primitives">
+<section id="section-3.5">
+        <h3 id="name-cryptographic-primitives">
+<a href="#section-3.5" class="section-number selfRef">3.5. </a><a href="#name-cryptographic-primitives" class="section-name selfRef">Cryptographic Primitives</a>
+        </h3>
+<div id="protocol-version">
+<section id="section-3.5.1">
+          <h4 id="name-protocol-version">
+<a href="#section-3.5.1" class="section-number selfRef">3.5.1. </a><a href="#name-protocol-version" class="section-name selfRef">Protocol Version</a>
+          </h4>
+<p id="section-3.5.1-1">The protocol version string for domain separation is:
+<code>
+PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
+</code><a href="#section-3.5.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.5.1-2">This version string <span class="bcp14">MUST</span> be used consistently across all implementations for interoperability. The curve specification is included to prevent cross-curve attacks and ensure implementations using different curves cannot accidentally interact.<a href="#section-3.5.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.5.1-3">Note: The reference implementation currently uses version "v0.2.0" while this specification defines version "v1.0". Implementations <span class="bcp14">MUST</span> use the exact version string for the protocol version they implement. Different version strings create incompatible protocols, which is intentional to prevent version downgrade attacks and ensure implementations are explicitly compatible.<a href="#section-3.5.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="hash-function-and-fiat-shamir-transform">
+<section id="section-3.5.2">
+          <h4 id="name-hash-function-and-fiat-sham">
+<a href="#section-3.5.2" class="section-number selfRef">3.5.2. </a><a href="#name-hash-function-and-fiat-sham" class="section-name selfRef">Hash Function and Fiat-Shamir Transform</a>
+          </h4>
+<p id="section-3.5.2-1">The protocol uses BLAKE3 <span>[<a href="#BLAKE3" class="cite xref">BLAKE3</a>]</span> as the underlying hash function for the Fiat-Shamir transform <span>[<a href="#ORRU-FS" class="cite xref">ORRU-FS</a>]</span>. Following the sigma protocol framework <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>, challenges are generated using a transcript that accumulates all protocol messages:<a href="#section-3.5.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.5.2-2">```
+CreateTranscript(label):
+  Input:
+    - label: ASCII string identifying the proof type
+  Output:
+    - transcript: A new transcript object<a href="#section-3.5.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.5.2-3">Steps:
+    1. hasher = BLAKE3.new()
+    2. hasher.update(PROTOCOL_VERSION)
+    3. hasher.update(Encode(H1))
+    4. hasher.update(Encode(H2))
+    5. hasher.update(Encode(H3))
+    6. hasher.update(len(label).to_be_bytes() || label)
+    7. return transcript with hasher<a href="#section-3.5.2-3" class="pilcrow">¶</a></p>
+<p id="section-3.5.2-4">AddToTranscript(transcript, value):
+  Input:
+    - transcript: Existing transcript
+    - value: Element or Scalar to add<a href="#section-3.5.2-4" class="pilcrow">¶</a></p>
+<p id="section-3.5.2-5">Steps:
+    1. encoded = Encode(value)
+    2. transcript.hasher.update(len(encoded).to_be_bytes() || encoded)<a href="#section-3.5.2-5" class="pilcrow">¶</a></p>
+<p id="section-3.5.2-6">GetChallenge(transcript):
+  Input:
+    - transcript: Completed transcript
+  Output:
+    - challenge: Scalar challenge value<a href="#section-3.5.2-6" class="pilcrow">¶</a></p>
+<p id="section-3.5.2-7">Steps:
+    1. seed = transcript.hasher.finalize()
+    2. rng = ChaCha20RNG(seed)
+    3. return Scalar.random(rng)
+```<a href="#section-3.5.2-7" class="pilcrow">¶</a></p>
+<p id="section-3.5.2-8">This approach ensures:
+- Domain separation through the label and protocol version
+- Inclusion of all public parameters to prevent parameter substitution attacks
+- Proper ordering with length prefixes to prevent ambiguity
+- Deterministic challenge generation from the complete transcript<a href="#section-3.5.2-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="encoding-functions">
+<section id="section-3.5.3">
+          <h4 id="name-encoding-functions">
+<a href="#section-3.5.3" class="section-number selfRef">3.5.3. </a><a href="#name-encoding-functions" class="section-name selfRef">Encoding Functions</a>
+          </h4>
+<p id="section-3.5.3-1">Elements and scalars are encoded as follows:<a href="#section-3.5.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.5.3-2">```
+Encode(value):
+  Input:
+    - value: Element or Scalar
+  Output:
+    - encoding: ByteString<a href="#section-3.5.3-2" class="pilcrow">¶</a></p>
+<p id="section-3.5.3-3">Steps:
+    1. If value is an Element:
+    2.     return value.compress()  // 32 bytes, compressed Ristretto point
+    3. If value is a Scalar:
+    4.     return value.to_bytes_le()  // 32 bytes, little-endian
+```<a href="#section-3.5.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.5.3-4">Note: Implementations <span class="bcp14">MAY</span> use standard serialization formats (e.g., bincode, CBOR) for complex structures, but <span class="bcp14">MUST</span> ensure deterministic encoding for hash inputs.<a href="#section-3.5.3-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="binary-decomposition">
+<section id="section-3.5.4">
+          <h4 id="name-binary-decomposition">
+<a href="#section-3.5.4" class="section-number selfRef">3.5.4. </a><a href="#name-binary-decomposition" class="section-name selfRef">Binary Decomposition</a>
+          </h4>
+<p id="section-3.5.4-1">To decompose a scalar into its binary representation:<a href="#section-3.5.4-1" class="pilcrow">¶</a></p>
+<p id="section-3.5.4-2">```
+BitDecompose(s):
+  Input:
+    - s: Scalar value
+  Output:
+    - bits: Array of L scalars (each 0 or 1)<a href="#section-3.5.4-2" class="pilcrow">¶</a></p>
+<p id="section-3.5.4-3">Steps:
+    1. bytes = s.to_bytes_le()  // 32 bytes, little-endian
+    2. For i = 0 to L-1:
+    3.     byte_index = i / 8
+    4.     bit_position = i % 8
+    5.     bit = (bytes[byte_index] &gt;&gt; bit_position) &amp; 1
+    6.     bits[i] = Scalar(bit)
+    7. return bits
+```<a href="#section-3.5.4-3" class="pilcrow">¶</a></p>
+<p id="section-3.5.4-4">Note: This algorithm produces bits in LSB-first order (i.e., bits[0] is the least significant bit). The algorithm works for any L &lt; 252, as the scalar is represented in 32 bytes (256 bits), which accommodates the full range of the Ristretto group order.<a href="#section-3.5.4-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="scalar-conversion">
+<section id="section-3.5.5">
+          <h4 id="name-scalar-conversion">
+<a href="#section-3.5.5" class="section-number selfRef">3.5.5. </a><a href="#name-scalar-conversion" class="section-name selfRef">Scalar Conversion</a>
+          </h4>
+<p id="section-3.5.5-1">Converting between credit amounts and scalars:<a href="#section-3.5.5-1" class="pilcrow">¶</a></p>
+<p id="section-3.5.5-2">```
+CreditToScalar(amount):
+  Input:
+    - amount: Integer credit amount (0 &lt;= amount &lt; 2^L)
+  Output:
+    - s: Scalar representation<a href="#section-3.5.5-2" class="pilcrow">¶</a></p>
+<p id="section-3.5.5-3">Steps:
+    1. if amount &gt;= 2^L:
+    2.     return ERROR
+    3. return Scalar(amount)<a href="#section-3.5.5-3" class="pilcrow">¶</a></p>
+<p id="section-3.5.5-4">ScalarToCredit(s):
+  Input:
+    - s: Scalar value
+  Output:
+    - amount: Integer credit amount or ERROR<a href="#section-3.5.5-4" class="pilcrow">¶</a></p>
+<p id="section-3.5.5-5">Steps:
+    1. bytes = s.to_bytes_le()
+    2. // Check high bytes are zero
+    3. For i = 16 to 31:
+    4.     if bytes[i] != 0:
+    5.         return ERROR
+    6. amount = bytes[0..15] as u128
+    7. return amount
+```<a href="#section-3.5.5-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="protocol-messages-and-wire-format">
+<section id="section-4">
+      <h2 id="name-protocol-messages-and-wire-">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-protocol-messages-and-wire-" class="section-name selfRef">Protocol Messages and Wire Format</a>
+      </h2>
+<div id="message-encoding">
+<section id="section-4.1">
+        <h3 id="name-message-encoding">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-message-encoding" class="section-name selfRef">Message Encoding</a>
+        </h3>
+<p id="section-4.1-1">All protocol messages <span class="bcp14">SHOULD</span> be encoded using deterministic CBOR (RFC 8949) for interoperability. The following sections define the structure of each message type.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<div id="issuance-request-message">
+<section id="section-4.1.1">
+          <h4 id="name-issuance-request-message">
+<a href="#section-4.1.1" class="section-number selfRef">4.1.1. </a><a href="#name-issuance-request-message" class="section-name selfRef">Issuance Request Message</a>
+          </h4>
+<p id="section-4.1.1-1"><code>
+IssuanceRequestMsg = {
+    1: bstr,  ; K (compressed Ristretto point, 32 bytes)
+    2: bstr,  ; gamma (scalar, 32 bytes)
+    3: bstr,  ; k_bar (scalar, 32 bytes)
+    4: bstr   ; r_bar (scalar, 32 bytes)
+}
+</code><a href="#section-4.1.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="issuance-response-message">
+<section id="section-4.1.2">
+          <h4 id="name-issuance-response-message">
+<a href="#section-4.1.2" class="section-number selfRef">4.1.2. </a><a href="#name-issuance-response-message" class="section-name selfRef">Issuance Response Message</a>
+          </h4>
+<p id="section-4.1.2-1"><code>
+IssuanceResponseMsg = {
+    1: bstr,  ; A (compressed Ristretto point, 32 bytes)
+    2: bstr,  ; e (scalar, 32 bytes)
+    3: bstr,  ; gamma_resp (scalar, 32 bytes)
+    4: bstr,  ; z (scalar, 32 bytes)
+    5: bstr   ; c (scalar, 32 bytes)
+}
+</code><a href="#section-4.1.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="spend-proof-message">
+<section id="section-4.1.3">
+          <h4 id="name-spend-proof-message">
+<a href="#section-4.1.3" class="section-number selfRef">4.1.3. </a><a href="#name-spend-proof-message" class="section-name selfRef">Spend Proof Message</a>
+          </h4>
+<p id="section-4.1.3-1"><code>
+SpendProofMsg = {
+    1: bstr,           ; k (nullifier, 32 bytes)
+    2: bstr,           ; s (spend amount, 32 bytes)
+    3: bstr,           ; A' (compressed point, 32 bytes)
+    4: bstr,           ; B_bar (compressed point, 32 bytes)
+    5: [* bstr],       ; Com array (L compressed points)
+    6: bstr,           ; gamma (scalar, 32 bytes)
+    7: bstr,           ; e_bar (scalar, 32 bytes)
+    8: bstr,           ; r2_bar (scalar, 32 bytes)
+    9: bstr,           ; r3_bar (scalar, 32 bytes)
+    10: bstr,          ; c_bar (scalar, 32 bytes)
+    11: bstr,          ; r_bar (scalar, 32 bytes)
+    12: bstr,          ; w00 (scalar, 32 bytes)
+    13: bstr,          ; w01 (scalar, 32 bytes)
+    14: [* bstr],      ; gamma0 array (L scalars)
+    15: [* [bstr, bstr]], ; z array (L pairs of scalars)
+    16: bstr,          ; k_bar (scalar, 32 bytes)
+    17: bstr           ; s_bar (scalar, 32 bytes)
+}
+</code><a href="#section-4.1.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="refund-message">
+<section id="section-4.1.4">
+          <h4 id="name-refund-message">
+<a href="#section-4.1.4" class="section-number selfRef">4.1.4. </a><a href="#name-refund-message" class="section-name selfRef">Refund Message</a>
+          </h4>
+<p id="section-4.1.4-1"><code>
+RefundMsg = {
+    1: bstr,  ; A* (compressed Ristretto point, 32 bytes)
+    2: bstr,  ; e* (scalar, 32 bytes)
+    3: bstr,  ; gamma (scalar, 32 bytes)
+    4: bstr   ; z (scalar, 32 bytes)
+}
+</code><a href="#section-4.1.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="error-responses">
+<section id="section-4.2">
+        <h3 id="name-error-responses">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-error-responses" class="section-name selfRef">Error Responses</a>
+        </h3>
+<p id="section-4.2-1">Error responses <span class="bcp14">SHOULD</span> use the following format:<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2-2"><code>
+ErrorMsg = {
+    1: uint,   ; error_code
+    2: tstr    ; error_message (for debugging only)
+}
+</code><a href="#section-4.2-2" class="pilcrow">¶</a></p>
+<p id="section-4.2-3">Error codes are defined in Section 5.3.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="protocol-flow">
+<section id="section-4.3">
+        <h3 id="name-protocol-flow">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-protocol-flow" class="section-name selfRef">Protocol Flow</a>
+        </h3>
+<p id="section-4.3-1">The complete protocol flow with message types:<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<p id="section-4.3-2"><code>
+Client                                          Issuer
+  |                                               |
+  |-- IssuanceRequestMsg ------------------------&gt;|
+  |                                               |
+  |&lt;-- IssuanceResponseMsg -----------------------|
+  |                                               |
+  | (client creates token)                        |
+  |                                               |
+  |-- SpendProofMsg -----------------------------&gt;|
+  |                                               |
+  |&lt;-- RefundMsg or ErrorMsg ---------------------|
+  |                                               |
+</code><a href="#section-4.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="implementation-considerations">
+<section id="section-5">
+      <h2 id="name-implementation-consideratio">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-implementation-consideratio" class="section-name selfRef">Implementation Considerations</a>
+      </h2>
+<div id="nullifier-management">
+<section id="section-5.1">
+        <h3 id="name-nullifier-management">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-nullifier-management" class="section-name selfRef">Nullifier Management</a>
+        </h3>
+<p id="section-5.1-1">Implementations <span class="bcp14">MUST</span> maintain a persistent database of used nullifiers to prevent double-spending. The nullifier storage requirements grow linearly with the number of spent tokens. Implementations <span class="bcp14">MAY</span> use the following strategies to manage storage:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.1-2">
+<li id="section-5.1-2.1">
+            <p id="section-5.1-2.1.1"><strong>Expiration</strong>: If tokens have expiration dates, old nullifiers can be pruned.<a href="#section-5.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.1-2.2">
+            <p id="section-5.1-2.2.1"><strong>Sharding</strong>: Nullifiers can be partitioned across multiple databases.<a href="#section-5.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.1-2.3">
+            <p id="section-5.1-2.3.1"><strong>Bloom Filters</strong>: Probabilistic data structures can reduce memory usage with a small false-positive rate.<a href="#section-5.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="constant-time-operations">
+<section id="section-5.2">
+        <h3 id="name-constant-time-operations">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-constant-time-operations" class="section-name selfRef">Constant-Time Operations</a>
+        </h3>
+<p id="section-5.2-1">To prevent timing attacks, implementations <span class="bcp14">MUST</span> use constant-time operations for:<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2-2.1">
+            <p id="section-5.2-2.1.1">Scalar arithmetic<a href="#section-5.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-2.2">
+            <p id="section-5.2-2.2.1">Point operations<a href="#section-5.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.2-2.3">
+            <p id="section-5.2-2.3.1">Conditional selections in range proofs<a href="#section-5.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-5.2-3">In particular, the range proof generation <span class="bcp14">MUST</span> use constant-time conditional selection when choosing between bit values 0 and 1. The following pattern should be used:<a href="#section-5.2-3" class="pilcrow">¶</a></p>
+<p id="section-5.2-4"><code>
+ConstantTimeSelect(condition, value_if_true, value_if_false):
+  // Returns value_if_true if condition is true (1),
+  // value_if_false if condition is false (0)
+  // Must execute in constant time regardless of condition
+</code><a href="#section-5.2-4" class="pilcrow">¶</a></p>
+<p id="section-5.2-5">This is critical in the range proof generation where bit values must not leak through timing channels.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="randomness-generation">
+<section id="section-5.3">
+        <h3 id="name-randomness-generation">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-randomness-generation" class="section-name selfRef">Randomness Generation</a>
+        </h3>
+<p id="section-5.3-1">The security of the protocol critically depends on the quality of random number generation. Implementations <span class="bcp14">MUST</span> use cryptographically secure random number generators (CSPRNGs) for:<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.3-2.1">
+            <p id="section-5.3-2.1.1">Private key generation<a href="#section-5.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.3-2.2">
+            <p id="section-5.3-2.2.1">Blinding factors (r, k)<a href="#section-5.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.3-2.3">
+            <p id="section-5.3-2.3.1">Proof randomness (nonces)<a href="#section-5.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<div id="rng-requirements">
+<section id="section-5.3.1">
+          <h4 id="name-rng-requirements">
+<a href="#section-5.3.1" class="section-number selfRef">5.3.1. </a><a href="#name-rng-requirements" class="section-name selfRef">RNG Requirements</a>
+          </h4>
+<ol start="1" type="1" class="normal type-1" id="section-5.3.1-1">
+<li id="section-5.3.1-1.1">
+              <p id="section-5.3.1-1.1.1"><strong>Entropy Source</strong>: Use OS-provided entropy (e.g., /dev/urandom on Unix systems)<a href="#section-5.3.1-1.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5.3.1-1.2">
+              <p id="section-5.3.1-1.2.1"><strong>Fork Safety</strong>: Reseed after fork() to prevent nonce reuse<a href="#section-5.3.1-1.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5.3.1-1.3">
+              <p id="section-5.3.1-1.3.1"><strong>Backtracking Resistance</strong>: Use forward-secure PRNGs when possible<a href="#section-5.3.1-1.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+</section>
+</div>
+<div id="nonce-generation">
+<section id="section-5.3.2">
+          <h4 id="name-nonce-generation">
+<a href="#section-5.3.2" class="section-number selfRef">5.3.2. </a><a href="#name-nonce-generation" class="section-name selfRef">Nonce Generation</a>
+          </h4>
+<p id="section-5.3.2-1">Following <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>, nonces (the randomness used in proofs) <span class="bcp14">MUST</span> be generated with extreme care:<a href="#section-5.3.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.3.2-2">
+<li id="section-5.3.2-2.1">
+              <p id="section-5.3.2-2.1.1"><strong>Fresh Randomness</strong>: Generate new nonces for every proof<a href="#section-5.3.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5.3.2-2.2">
+              <p id="section-5.3.2-2.2.1"><strong>No Reuse</strong>: Never reuse nonces across different proofs<a href="#section-5.3.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5.3.2-2.3">
+              <p id="section-5.3.2-2.3.1"><strong>Full Entropy</strong>: Use the full security parameter (256 bits) of randomness<a href="#section-5.3.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-5.3.2-2.4">
+              <p id="section-5.3.2-2.4.1"><strong>Zeroization</strong>: Clear nonces from memory after use<a href="#section-5.3.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+<p id="section-5.3.2-3">WARNING: Leakage of even a few bits of a nonce can allow complete recovery of the witness (secret values). Implementations <span class="bcp14">MUST</span> use constant-time operations and secure memory handling for all nonce-related computations.<a href="#section-5.3.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="point-validation">
+<section id="section-5.4">
+        <h3 id="name-point-validation">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-point-validation" class="section-name selfRef">Point Validation</a>
+        </h3>
+<p id="section-5.4-1">All Ristretto points received from external sources <span class="bcp14">MUST</span> be validated:<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.4-2">
+<li id="section-5.4-2.1">
+            <p id="section-5.4-2.1.1"><strong>Deserialization</strong>: Verify the point deserializes to a valid Ristretto point<a href="#section-5.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.4-2.2">
+            <p id="section-5.4-2.2.1"><strong>Non-Identity</strong>: Verify the point is not the identity element<a href="#section-5.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.4-2.3">
+            <p id="section-5.4-2.3.1"><strong>Subgroup Check</strong>: Ristretto guarantees prime-order subgroup membership<a href="#section-5.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-5.4-3">Example validation:
+<code>
+ValidatePoint(P):
+  1. If P fails to deserialize:
+  2.     return INVALID
+  3. If P == Identity:
+  4.     return INVALID
+  5. // Ristretto ensures prime-order subgroup membership
+  6. return VALID
+</code><a href="#section-5.4-3" class="pilcrow">¶</a></p>
+<p id="section-5.4-4">All implementations <span class="bcp14">MUST</span> validate points at these locations:
+- When receiving <code>K</code> in issuance request
+- When receiving <code>A</code> in issuance response
+- When receiving <code>A'</code> and <code>B_bar</code> in spend proof
+- When receiving <code>Com\[j\]</code> commitments in spend proof
+- When receiving <code>A*</code> in refund response<a href="#section-5.4-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="error-handling">
+<section id="section-5.5">
+        <h3 id="name-error-handling">
+<a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-error-handling" class="section-name selfRef">Error Handling</a>
+        </h3>
+<p id="section-5.5-1">Implementations <span class="bcp14">SHOULD NOT</span> provide detailed error messages that could leak information about the verification process. A single INVALID response should be returned for all verification failures.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
+<div id="error-codes">
+<section id="section-5.5.1">
+          <h4 id="name-error-codes">
+<a href="#section-5.5.1" class="section-number selfRef">5.5.1. </a><a href="#name-error-codes" class="section-name selfRef">Error Codes</a>
+          </h4>
+<p id="section-5.5.1-1">While detailed error messages should not be exposed to untrusted parties, implementations <span class="bcp14">MAY</span> use the following internal error codes:<a href="#section-5.5.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.5.1-2.1">
+              <p id="section-5.5.1-2.1.1"><code>INVALID_PROOF</code>: Proof verification failed<a href="#section-5.5.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.5.1-2.2">
+              <p id="section-5.5.1-2.2.1"><code>INSUFFICIENT_BALANCE</code>: Attempting to spend more than available credits<a href="#section-5.5.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.5.1-2.3">
+              <p id="section-5.5.1-2.3.1"><code>NULLIFIER_REUSE</code>: Double-spend attempt detected<a href="#section-5.5.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.5.1-2.4">
+              <p id="section-5.5.1-2.4.1"><code>MALFORMED_REQUEST</code>: Request format is invalid<a href="#section-5.5.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.5.1-2.5">
+              <p id="section-5.5.1-2.5.1"><code>INVALID_SIGNATURE</code>: BBS signature verification failed<a href="#section-5.5.1-2.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.5.1-2.6">
+              <p id="section-5.5.1-2.6.1"><code>RANGE_PROOF_FAILED</code>: Range proof verification failed<a href="#section-5.5.1-2.6.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.5.1-2.7">
+              <p id="section-5.5.1-2.7.1"><code>INVALID_AMOUNT</code>: Credit amount exceeds maximum (2^L - 1)<a href="#section-5.5.1-2.7.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="parameter-selection">
+<section id="section-5.6">
+        <h3 id="name-parameter-selection">
+<a href="#section-5.6" class="section-number selfRef">5.6. </a><a href="#name-parameter-selection" class="section-name selfRef">Parameter Selection</a>
+        </h3>
+<p id="section-5.6-1">The bit length L is configurable and determines the range of credit values (0 to 2^L - 1). The choice of L involves several trade-offs:<a href="#section-5.6-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.6-2">
+<li id="section-5.6-2.1">
+            <p id="section-5.6-2.1.1"><strong>Range</strong>: Larger L supports higher credit values<a href="#section-5.6-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.6-2.2">
+            <p id="section-5.6-2.2.1"><strong>Performance</strong>: Proof size and verification time scale linearly with L<a href="#section-5.6-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-5.6-2.3">
+            <p id="section-5.6-2.3.1"><strong>Security</strong>: L must be less than the bit length of the group order (252 bits for Ristretto)<a href="#section-5.6-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-5.6-3">Common configurations:
+- L = 32: Suitable for small credit systems (up to ~4 billion credits)
+- L = 64: Suitable for medium-scale systems (up to ~18 quintillion credits)
+- L = 128: Suitable for large-scale systems with effectively unlimited credit range
+- L = 256: Maximum practical value, but with doubled proof sizes compared to L = 128<a href="#section-5.6-3" class="pilcrow">¶</a></p>
+<p id="section-5.6-4">The implementation <span class="bcp14">MUST</span> enforce L &lt; 252 to ensure proper scalar arithmetic within the group order.<a href="#section-5.6-4" class="pilcrow">¶</a></p>
+<div id="performance-characteristics">
+<section id="section-5.6.1">
+          <h4 id="name-performance-characteristics">
+<a href="#section-5.6.1" class="section-number selfRef">5.6.1. </a><a href="#name-performance-characteristics" class="section-name selfRef">Performance Characteristics</a>
+          </h4>
+<p id="section-5.6.1-1">The protocol has the following computational complexity:<a href="#section-5.6.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.6.1-2">
+<li id="section-5.6.1-2.1">
+              <p id="section-5.6.1-2.1.1"><strong>Issuance</strong>:<a href="#section-5.6.1-2.1.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.6.1-2.1.2.1">
+                  <p id="section-5.6.1-2.1.2.1.1">Client: 3 scalar multiplications + 1 hash<a href="#section-5.6.1-2.1.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.6.1-2.1.2.2">
+                  <p id="section-5.6.1-2.1.2.2.1">Issuer: 1 exponentiation + 3 scalar multiplications + 1 hash<a href="#section-5.6.1-2.1.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+            <li id="section-5.6.1-2.2">
+              <p id="section-5.6.1-2.2.1"><strong>Spending</strong>:<a href="#section-5.6.1-2.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.6.1-2.2.2.1">
+                  <p id="section-5.6.1-2.2.2.1.1">Client: O(L) scalar multiplications for range proof + O(1) for sigma protocol<a href="#section-5.6.1-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.6.1-2.2.2.2">
+                  <p id="section-5.6.1-2.2.2.2.1">Issuer: O(L) scalar multiplications for verification<a href="#section-5.6.1-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+            <li id="section-5.6.1-2.3">
+              <p id="section-5.6.1-2.3.1"><strong>Storage</strong>:<a href="#section-5.6.1-2.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.6.1-2.3.2.1">
+                  <p id="section-5.6.1-2.3.2.1.1">Token size: 5 × 32 bytes = 160 bytes (independent of L)<a href="#section-5.6.1-2.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.6.1-2.3.2.2">
+                  <p id="section-5.6.1-2.3.2.2.1">Spend proof size: O(L) × 32 bytes (approximately 32L bytes)<a href="#section-5.6.1-2.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.6.1-2.3.2.3">
+                  <p id="section-5.6.1-2.3.2.3.1">Nullifier database: 32 bytes per spent token<a href="#section-5.6.1-2.3.2.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+          </ol>
+<p id="section-5.6.1-3">The proof size scales linearly with L:
+- L = 32: ~1KB spend proof
+- L = 64: ~2KB spend proof
+- L = 128: ~4KB spend proof
+- L = 256: ~8KB spend proof<a href="#section-5.6.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="parameter-trade-offs">
+<section id="section-5.6.2">
+          <h4 id="name-parameter-trade-offs">
+<a href="#section-5.6.2" class="section-number selfRef">5.6.2. </a><a href="#name-parameter-trade-offs" class="section-name selfRef">Parameter Trade-offs</a>
+          </h4>
+<table class="center" id="table-1">
+            <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Parameter</th>
+                <th class="text-left" rowspan="1" colspan="1">Value</th>
+                <th class="text-left" rowspan="1" colspan="1">Maximum Credit Value</th>
+                <th class="text-left" rowspan="1" colspan="1">Spend Proof Size</th>
+                <th class="text-left" rowspan="1" colspan="1">Use Case</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">L</td>
+                <td class="text-left" rowspan="1" colspan="1">32</td>
+                <td class="text-left" rowspan="1" colspan="1">4,294,967,295</td>
+                <td class="text-left" rowspan="1" colspan="1">~1 KB</td>
+                <td class="text-left" rowspan="1" colspan="1">Small-scale systems, API rate limiting</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">L</td>
+                <td class="text-left" rowspan="1" colspan="1">64</td>
+                <td class="text-left" rowspan="1" colspan="1">1.8 × 10^19</td>
+                <td class="text-left" rowspan="1" colspan="1">~2 KB</td>
+                <td class="text-left" rowspan="1" colspan="1">Medium-scale systems, micropayments</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">L</td>
+                <td class="text-left" rowspan="1" colspan="1">128</td>
+                <td class="text-left" rowspan="1" colspan="1">3.4 × 10^38</td>
+                <td class="text-left" rowspan="1" colspan="1">~4 KB</td>
+                <td class="text-left" rowspan="1" colspan="1">Large-scale systems, general purpose</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">L</td>
+                <td class="text-left" rowspan="1" colspan="1">192</td>
+                <td class="text-left" rowspan="1" colspan="1">6.3 × 10^57</td>
+                <td class="text-left" rowspan="1" colspan="1">~6 KB</td>
+                <td class="text-left" rowspan="1" colspan="1">Very large values, future-proofing</td>
+              </tr>
+            </tbody>
+          </table>
+<p id="section-5.6.2-2">Implementations <span class="bcp14">SHOULD</span> choose L based on their maximum credit requirements and performance constraints. Note that L <span class="bcp14">MUST</span> be less than 252 to fit within the Ristretto group order.<a href="#section-5.6.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-6">
+      <h2 id="name-security-considerations">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<div id="security-model-and-definitions">
+<section id="section-6.1">
+        <h3 id="name-security-model-and-definiti">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-security-model-and-definiti" class="section-name selfRef">Security Model and Definitions</a>
+        </h3>
+<div id="threat-model">
+<section id="section-6.1.1">
+          <h4 id="name-threat-model">
+<a href="#section-6.1.1" class="section-number selfRef">6.1.1. </a><a href="#name-threat-model" class="section-name selfRef">Threat Model</a>
+          </h4>
+<p id="section-6.1.1-1">We consider a setting with:
+- A single trusted issuer (multiple issuers can operate independently)
+- Potentially malicious clients who may attempt to forge tokens or double-spend
+- An adversary who can observe all network communications
+- Clients who desire privacy from the issuer regarding their spending patterns<a href="#section-6.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-2">Note: The issuer must be trusted not to:
+- Issue tokens without proper authorization
+- Create tokens for themselves without limit
+- Refuse valid spend proofs
+- Manipulate the nullifier database<a href="#section-6.1.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-3">The protocol does not protect against a malicious issuer, only ensures privacy from an honest-but-curious issuer.<a href="#section-6.1.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-properties">
+<section id="section-6.1.2">
+          <h4 id="name-security-properties">
+<a href="#section-6.1.2" class="section-number selfRef">6.1.2. </a><a href="#name-security-properties" class="section-name selfRef">Security Properties</a>
+          </h4>
+<p id="section-6.1.2-1">The protocol provides the following security guarantees:<a href="#section-6.1.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.1.2-2">
+<li id="section-6.1.2-2.1">
+              <p id="section-6.1.2-2.1.1"><strong>Unforgeability</strong>: No probabilistic polynomial-time (PPT) adversary can create a valid credit token without the issuer's cooperation. Formally, for any PPT adversary A:<a href="#section-6.1.2-2.1.1" class="pilcrow">¶</a></p>
+<p id="section-6.1.2-2.1.2"><code>
+Pr[A(pk, params) -&gt; valid_token] ≤ negl(λ)
+</code><a href="#section-6.1.2-2.1.2" class="pilcrow">¶</a></p>
+<p id="section-6.1.2-2.1.3">
+where λ is the security parameter.<a href="#section-6.1.2-2.1.3" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-6.1.2-2.2">
+              <p id="section-6.1.2-2.2.1"><strong>Unlinkability</strong>: The issuer cannot link:<a href="#section-6.1.2-2.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.2-2.2.2.1">
+                  <p id="section-6.1.2-2.2.2.1.1">A spending transaction to the original issuance<a href="#section-6.1.2-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.1.2-2.2.2.2">
+                  <p id="section-6.1.2-2.2.2.2.1">Multiple spending transactions by the same client<a href="#section-6.1.2-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+<p id="section-6.1.2-2.2.3">
+This holds under the DDH assumption in the Ristretto group.<a href="#section-6.1.2-2.2.3" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-6.1.2-2.3">
+              <p id="section-6.1.2-2.3.1"><strong>Balance Security</strong>: No PPT adversary can spend more credits than issued. Specifically:<a href="#section-6.1.2-2.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.2-2.3.2.1">
+                  <p id="section-6.1.2-2.3.2.1.1">Credits cannot be created from nothing<a href="#section-6.1.2-2.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.1.2-2.3.2.2">
+                  <p id="section-6.1.2-2.3.2.2.1">The sum of spent credits cannot exceed issued credits<a href="#section-6.1.2-2.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.1.2-2.3.2.3">
+                  <p id="section-6.1.2-2.3.2.3.1">Each token can only be fully spent once (via nullifier checking)<a href="#section-6.1.2-2.3.2.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+            <li id="section-6.1.2-2.4">
+              <p id="section-6.1.2-2.4.1"><strong>Zero-Knowledge</strong>: The spending proof reveals only:<a href="#section-6.1.2-2.4.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.2-2.4.2.1">
+                  <p id="section-6.1.2-2.4.2.1.1">The nullifier k<a href="#section-6.1.2-2.4.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.1.2-2.4.2.2">
+                  <p id="section-6.1.2-2.4.2.2.1">The amount being spent s<a href="#section-6.1.2-2.4.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.1.2-2.4.2.3">
+                  <p id="section-6.1.2-2.4.2.3.1">That the client possesses sufficient balance (c ≥ s)<a href="#section-6.1.2-2.4.2.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+<p id="section-6.1.2-2.4.3">
+No other information about c, r, or the token is revealed.<a href="#section-6.1.2-2.4.3" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-6.1.2-2.5">
+              <p id="section-6.1.2-2.5.1"><strong>Nullifier Binding</strong>: The nullifier k is cryptographically bound to the token through the BBS signature. An adversary cannot:<a href="#section-6.1.2-2.5.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.2-2.5.2.1">
+                  <p id="section-6.1.2-2.5.2.1.1">Use a nullifier from one token with a different token<a href="#section-6.1.2-2.5.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.1.2-2.5.2.2">
+                  <p id="section-6.1.2-2.5.2.2.1">Modify the nullifier without invalidating the signature<a href="#section-6.1.2-2.5.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+</li>
+          </ol>
+</section>
+</div>
+</section>
+</div>
+<div id="cryptographic-assumptions">
+<section id="section-6.2">
+        <h3 id="name-cryptographic-assumptions">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-cryptographic-assumptions" class="section-name selfRef">Cryptographic Assumptions</a>
+        </h3>
+<p id="section-6.2-1">The security of Anonymous Credit Tokens relies on:<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.2-2">
+<li id="section-6.2-2.1">
+            <p id="section-6.2-2.1.1"><strong>Discrete Logarithm Problem (DLP)</strong>: Given g, h ∈ G, it is computationally infeasible to find x such that h = g^x.<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.2-2.2">
+            <p id="section-6.2-2.2.1"><strong>Decisional Diffie-Hellman (DDH) Assumption</strong>: Given (g, g^a, g^b, g^c) for random a, b, c, it is computationally infeasible to determine whether c = ab or c is random.<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.2-2.3">
+            <p id="section-6.2-2.3.1"><strong>Random Oracle Model</strong>: The BLAKE3 hash function H is modeled as a random oracle, providing:<a href="#section-6.2-2.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.2-2.3.2.1">
+                <p id="section-6.2-2.3.2.1.1">Collision resistance<a href="#section-6.2-2.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.2-2.3.2.2">
+                <p id="section-6.2-2.3.2.2.1">Pre-image resistance<a href="#section-6.2-2.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.2-2.3.2.3">
+                <p id="section-6.2-2.3.2.3.1">Unpredictability<a href="#section-6.2-2.3.2.3.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+          <li id="section-6.2-2.4">
+            <p id="section-6.2-2.4.1"><strong>Sigma Protocol Security</strong>: The underlying sigma protocols satisfy <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>:<a href="#section-6.2-2.4.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.2-2.4.2.1">
+                <p id="section-6.2-2.4.2.1.1">Completeness: Honest proofs always verify<a href="#section-6.2-2.4.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.2-2.4.2.2">
+                <p id="section-6.2-2.4.2.2.1">Special soundness: From two accepting transcripts with the same commitment but different challenges, one can extract the witness<a href="#section-6.2-2.4.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.2-2.4.2.3">
+                <p id="section-6.2-2.4.2.3.1">Honest-verifier zero-knowledge: The proof reveals nothing beyond the validity of the statement<a href="#section-6.2-2.4.2.3.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+          <li id="section-6.2-2.5">
+            <p id="section-6.2-2.5.1"><strong>Fiat-Shamir Security</strong>: The non-interactive proofs are secure in the random oracle model <span>[<a href="#ORRU-FS" class="cite xref">ORRU-FS</a>]</span>:<a href="#section-6.2-2.5.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.2-2.5.2.1">
+                <p id="section-6.2-2.5.2.1.1">The transcript includes all public values to prevent malleability<a href="#section-6.2-2.5.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.2-2.5.2.2">
+                <p id="section-6.2-2.5.2.2.1">Domain separation prevents cross-protocol attacks<a href="#section-6.2-2.5.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.2-2.5.2.3">
+                <p id="section-6.2-2.5.2.3.1">Length-prefixing prevents ambiguity in parsing<a href="#section-6.2-2.5.2.3.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+        </ol>
+</section>
+</div>
+<div id="privacy-properties">
+<section id="section-6.3">
+        <h3 id="name-privacy-properties">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-privacy-properties" class="section-name selfRef">Privacy Properties</a>
+        </h3>
+<p id="section-6.3-1">The protocol provides the following privacy guarantees:<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.3-2">
+<li id="section-6.3-2.1">
+            <p id="section-6.3-2.1.1"><strong>Unlinkability</strong>: The issuer cannot link a token to its issuance request or link multiple spends by the same client.<a href="#section-6.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-2.2">
+            <p id="section-6.3-2.2.1"><strong>Balance Privacy</strong>: The amount of credits in a token is not revealed during spending (only that it's sufficient for the transaction).<a href="#section-6.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-6.3-3">However, the protocol does NOT provide:<a href="#section-6.3-3" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.3-4">
+<li id="section-6.3-4.1">
+            <p id="section-6.3-4.1.1"><strong>Network-Level Privacy</strong>: IP addresses and network metadata can still link transactions.<a href="#section-6.3-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-4.2">
+            <p id="section-6.3-4.2.1"><strong>Amount Privacy</strong>: The spent amount s is revealed to the issuer.<a href="#section-6.3-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.3-4.3">
+            <p id="section-6.3-4.3.1"><strong>Timing Privacy</strong>: Transaction timing patterns could potentially be used for correlation.<a href="#section-6.3-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="security-properties-1">
+<section id="section-6.4">
+        <h3 id="name-security-properties-2">
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-security-properties-2" class="section-name selfRef">Security Properties</a>
+        </h3>
+<p id="section-6.4-1">The protocol ensures:<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.4-2">
+<li id="section-6.4-2.1">
+            <p id="section-6.4-2.1.1"><strong>Unforgeability</strong>: Clients cannot create valid tokens without the issuer's cooperation.<a href="#section-6.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.4-2.2">
+            <p id="section-6.4-2.2.1"><strong>Non-Transferability</strong>: While tokens can be shared, this requires sharing the entire token state.<a href="#section-6.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.4-2.3">
+            <p id="section-6.4-2.3.1"><strong>Double-Spend Prevention</strong>: Each token can only be fully spent once due to nullifier checking.<a href="#section-6.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="implementation-vulnerabilities">
+<section id="section-6.5">
+        <h3 id="name-implementation-vulnerabilit">
+<a href="#section-6.5" class="section-number selfRef">6.5. </a><a href="#name-implementation-vulnerabilit" class="section-name selfRef">Implementation Vulnerabilities</a>
+        </h3>
+<p id="section-6.5-1">Implementers should be aware of:<a href="#section-6.5-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.5-2">
+<li id="section-6.5-2.1">
+            <p id="section-6.5-2.1.1"><strong>RNG Failures</strong>: Weak randomness can completely break the protocol's security. Implementations <span class="bcp14">MUST</span>:<a href="#section-6.5-2.1.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5-2.1.2.1">
+                <p id="section-6.5-2.1.2.1.1">Use cryptographically secure RNGs<a href="#section-6.5-2.1.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.5-2.1.2.2">
+                <p id="section-6.5-2.1.2.2.1">Reseed after fork() operations<a href="#section-6.5-2.1.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.5-2.1.2.3">
+                <p id="section-6.5-2.1.2.3.1">Implement forward-secure RNG state management<a href="#section-6.5-2.1.2.3.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+          <li id="section-6.5-2.2">
+            <p id="section-6.5-2.2.1"><strong>Timing Attacks</strong>: Variable-time operations can leak information about secret values. Critical operations requiring constant-time implementation:<a href="#section-6.5-2.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5-2.2.2.1">
+                <p id="section-6.5-2.2.2.1.1">Scalar arithmetic in proofs<a href="#section-6.5-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.5-2.2.2.2">
+                <p id="section-6.5-2.2.2.2.1">Binary decomposition in range proofs<a href="#section-6.5-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.5-2.2.2.3">
+                <p id="section-6.5-2.2.2.3.1">Conditional selections based on secret bits<a href="#section-6.5-2.2.2.3.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+          <li id="section-6.5-2.3">
+            <p id="section-6.5-2.3.1"><strong>Nullifier Database Integrity</strong>: Corruption of the nullifier database could enable double-spending. Implementations <span class="bcp14">SHOULD</span>:<a href="#section-6.5-2.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5-2.3.2.1">
+                <p id="section-6.5-2.3.2.1.1">Use atomic database operations<a href="#section-6.5-2.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.5-2.3.2.2">
+                <p id="section-6.5-2.3.2.2.1">Implement database backups<a href="#section-6.5-2.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-6.5-2.3.2.3">
+                <p id="section-6.5-2.3.2.3.1">Include integrity checks (e.g., Merkle trees)<a href="#section-6.5-2.3.2.3.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+</li>
+          <li id="section-6.5-2.4">
+            <p id="section-6.5-2.4.1"><strong>Nullifier Collisions</strong>: While nullifiers are 256-bit values with negligible collision probability (approximately 2^-128 for 2^64 tokens), implementations should still handle potential collisions gracefully.<a href="#section-6.5-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.5-2.5">
+            <p id="section-6.5-2.5.1"><strong>Serialization Attacks</strong>: Implementations <span class="bcp14">MUST</span> use canonical serialization for all values included in hash computations to prevent malleability attacks.<a href="#section-6.5-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.5-2.6">
+            <p id="section-6.5-2.6.1"><strong>Concurrent Access</strong>: The protocol does not specify thread-safety requirements. Implementations <span class="bcp14">SHOULD</span> document their concurrency model and use appropriate locking mechanisms.<a href="#section-6.5-2.6.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="protocol-composition-and-state-management">
+<section id="section-6.6">
+        <h3 id="name-protocol-composition-and-st">
+<a href="#section-6.6" class="section-number selfRef">6.6. </a><a href="#name-protocol-composition-and-st" class="section-name selfRef">Protocol Composition and State Management</a>
+        </h3>
+<div id="atomicity-requirements">
+<section id="section-6.6.1">
+          <h4 id="name-atomicity-requirements">
+<a href="#section-6.6.1" class="section-number selfRef">6.6.1. </a><a href="#name-atomicity-requirements" class="section-name selfRef">Atomicity Requirements</a>
+          </h4>
+<p id="section-6.6.1-1">The spend and refund operations <span class="bcp14">MUST</span> be treated as an atomic transaction. If the refund fails after a spend proof is accepted, credits could be permanently lost. Implementations <span class="bcp14">SHOULD</span>:<a href="#section-6.6.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.6.1-2">
+<li id="section-6.6.1-2.1">
+              <p id="section-6.6.1-2.1.1">Use two-phase commit or similar mechanisms<a href="#section-6.6.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-6.6.1-2.2">
+              <p id="section-6.6.1-2.2.1">Implement rollback capabilities for failed refunds<a href="#section-6.6.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-6.6.1-2.3">
+              <p id="section-6.6.1-2.3.1">Log all state transitions for recovery<a href="#section-6.6.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+</section>
+</div>
+<div id="session-management">
+<section id="section-6.6.2">
+          <h4 id="name-session-management">
+<a href="#section-6.6.2" class="section-number selfRef">6.6.2. </a><a href="#name-session-management" class="section-name selfRef">Session Management</a>
+          </h4>
+<p id="section-6.6.2-1">Each protocol session (issuance or spend/refund) <span class="bcp14">MUST</span>:
+- Use fresh randomness
+- Complete without interruption
+- Not reuse any random values across sessions<a href="#section-6.6.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="version-negotiation">
+<section id="section-6.6.3">
+          <h4 id="name-version-negotiation">
+<a href="#section-6.6.3" class="section-number selfRef">6.6.3. </a><a href="#name-version-negotiation" class="section-name selfRef">Version Negotiation</a>
+          </h4>
+<p id="section-6.6.3-1">To support protocol evolution, implementations <span class="bcp14">MAY</span> include version negotiation in the initial handshake. All parties <span class="bcp14">MUST</span> agree on the protocol version before proceeding.<a href="#section-6.6.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="quantum-resistance">
+<section id="section-6.7">
+        <h3 id="name-quantum-resistance">
+<a href="#section-6.7" class="section-number selfRef">6.7. </a><a href="#name-quantum-resistance" class="section-name selfRef">Quantum Resistance</a>
+        </h3>
+<p id="section-6.7-1">This protocol is NOT quantum-resistant. The discrete logarithm problem can be solved efficiently by quantum computers using Shor's algorithm. Organizations requiring long-term security should consider post-quantum alternatives.<a href="#section-6.7-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-7">
+      <h2 id="name-iana-considerations">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-7-1">This document has no IANA actions.<a href="#section-7-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-8">
+      <h2 id="name-references">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-8.1">
+        <h3 id="name-normative-references">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="BLAKE3">[BLAKE3]</dt>
+        <dd>
+<span class="refTitle">"BLAKE3: One Function, Fast Everywhere"</span>, <time datetime="2020-01-09" class="refDate">9 January 2020</time>, <span>&lt;<a href="https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf">https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8949">[RFC8949]</dt>
+        <dd>
+<span class="refAuthor">Bormann, C.</span> and <span class="refAuthor">P. Hoffman</span>, <span class="refTitle">"Concise Binary Object Representation (CBOR)"</span>, <span class="seriesInfo">STD 94</span>, <span class="seriesInfo">RFC 8949</span>, <span class="seriesInfo">DOI 10.17487/RFC8949</span>, <time datetime="2020-12" class="refDate">December 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc8949">https://www.rfc-editor.org/rfc/rfc8949</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9380">[RFC9380]</dt>
+        <dd>
+<span class="refAuthor">Faz-Hernandez, A.</span>, <span class="refAuthor">Scott, S.</span>, <span class="refAuthor">Sullivan, N.</span>, <span class="refAuthor">Wahby, R. S.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"Hashing to Elliptic Curves"</span>, <span class="seriesInfo">RFC 9380</span>, <span class="seriesInfo">DOI 10.17487/RFC9380</span>, <time datetime="2023-08" class="refDate">August 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9380">https://www.rfc-editor.org/rfc/rfc9380</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RISTRETTO">[RISTRETTO]</dt>
+      <dd>
+<span class="refTitle">"The Ristretto Group"</span>, <span>&lt;<a href="https://ristretto.group/">https://ristretto.group/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-8.2">
+        <h3 id="name-informative-references">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="BBS">[BBS]</dt>
+        <dd>
+<span class="refTitle">"Short Group Signatures"</span>, <time datetime="2004" class="refDate">2004</time>, <span>&lt;<a href="https://crypto.stanford.edu/~dabo/pubs/papers/groupsigs.pdf">https://crypto.stanford.edu/~dabo/pubs/papers/groupsigs.pdf</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="KVAC">[KVAC]</dt>
+        <dd>
+<span class="refTitle">"Keyed-Verification Anonymous Credentials"</span>, <time datetime="2014" class="refDate">2014</time>, <span>&lt;<a href="https://eprint.iacr.org/2013/516.pdf">https://eprint.iacr.org/2013/516.pdf</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ORRU-FS">[ORRU-FS]</dt>
+        <dd>
+<span class="refTitle">"The Fiat-Shamir Transform"</span>, <time datetime="2025-01-19" class="refDate">19 January 2025</time>, <span>&lt;<a href="https://mmaker.github.io/draft-zkproof-sigma-protocols/draft-orru-zkproof-fiat-shamir.html">https://mmaker.github.io/draft-zkproof-sigma-protocols/draft-orru-zkproof-fiat-shamir.html</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="ORRU-SIGMA">[ORRU-SIGMA]</dt>
+        <dd>
+<span class="refTitle">"Sigma Protocols"</span>, <time datetime="2025-01-19" class="refDate">19 January 2025</time>, <span>&lt;<a href="https://www.ietf.org/archive/id/draft-orru-zkproof-sigma-protocols-00.txt">https://www.ietf.org/archive/id/draft-orru-zkproof-sigma-protocols-00.txt</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9474">[RFC9474]</dt>
+      <dd>
+<span class="refAuthor">Denis, F.</span>, <span class="refAuthor">Jacobs, F.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"RSA Blind Signatures"</span>, <span class="seriesInfo">RFC 9474</span>, <span class="seriesInfo">DOI 10.17487/RFC9474</span>, <time datetime="2023-10" class="refDate">October 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9474">https://www.rfc-editor.org/rfc/rfc9474</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="test-vectors">
+<section id="appendix-A">
+      <h2 id="name-test-vectors">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-test-vectors" class="section-name selfRef">Test Vectors</a>
+      </h2>
+<p id="appendix-A-1">This appendix provides test vectors for implementers to verify their implementations. All values are encoded in hexadecimal. Scalars are 32 bytes each.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<div id="test-configuration">
+<section id="appendix-A.1">
+        <h3 id="name-test-configuration">
+<a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-test-configuration" class="section-name selfRef">Test Configuration</a>
+        </h3>
+<p id="appendix-A.1-1"><code>
+RNG Seed: 0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
+Domain Separator: "anonymous-credit-tokens-v1"
+Protocol Version: "curve25519-ristretto anonymous-credentials v1.0"
+L: 128 (configurable parameter for this example)
+</code><a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="complete-protocol-flow-example">
+<section id="appendix-A.2">
+        <h3 id="name-complete-protocol-flow-exam">
+<a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-complete-protocol-flow-exam" class="section-name selfRef">Complete Protocol Flow Example</a>
+        </h3>
+<p id="appendix-A.2-1">This example demonstrates issuing 100 credits and spending 30.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+<div id="issuance-phase-100-credits">
+<section id="appendix-A.2.1">
+          <h4 id="name-1-issuance-phase-100-credit">
+<a href="#appendix-A.2.1" class="section-number selfRef">A.2.1. </a><a href="#name-1-issuance-phase-100-credit" class="section-name selfRef">1. Issuance Phase (100 credits)</a>
+          </h4>
+<p id="appendix-A.2.1-1"><code>
+Credits to issue: 100
+Token successfully created
+Token balance: 100
+Token nullifier (k): 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
+</code><a href="#appendix-A.2.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="spending-phase-30-credits">
+<section id="appendix-A.2.2">
+          <h4 id="name-2-spending-phase-30-credits">
+<a href="#appendix-A.2.2" class="section-number selfRef">A.2.2. </a><a href="#name-2-spending-phase-30-credits" class="section-name selfRef">2. Spending Phase (30 credits)</a>
+          </h4>
+<p id="appendix-A.2.2-1">```
+Amount to spend: 30
+Nullifier revealed: 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
+Spend amount (s): 30<a href="#appendix-A.2.2-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.2.2-2">Refund issued successfully
+New token balance: 70
+New token nullifier (k*): 0xe844bad01bd4f034fcdd5c594960b7860abf46f8f5b876f600ffff16e0de1b07
+```<a href="#appendix-A.2.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="edge-cases">
+<section id="appendix-A.3">
+        <h3 id="name-edge-cases">
+<a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-edge-cases" class="section-name selfRef">Edge Cases</a>
+        </h3>
+<div id="zero-credit-token">
+<section id="appendix-A.3.1">
+          <h4 id="name-zero-credit-token">
+<a href="#appendix-A.3.1" class="section-number selfRef">A.3.1. </a><a href="#name-zero-credit-token" class="section-name selfRef">Zero Credit Token</a>
+          </h4>
+<p id="appendix-A.3.1-1"><code>
+Zero credit token created
+Balance: 0
+Nullifier: 0x603fdef3d44fbc72098e638618daf2079f9034f803492794791cdc77d9909b04
+</code><a href="#appendix-A.3.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="maximum-credit-token">
+<section id="appendix-A.3.2">
+          <h4 id="name-maximum-credit-token">
+<a href="#appendix-A.3.2" class="section-number selfRef">A.3.2. </a><a href="#name-maximum-credit-token" class="section-name selfRef">Maximum Credit Token</a>
+          </h4>
+<p id="appendix-A.3.2-1"><code>
+Maximum credit token created
+Balance: 340282366920938463463374607431768211455 (2^128 - 1)
+Nullifier: 0x4997bd7475c72eed6065c545e791475d4192059d6f41279f794504233df19a06
+</code><a href="#appendix-A.3.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="invalid-operation-overspend">
+<section id="appendix-A.3.3">
+          <h4 id="name-invalid-operation-overspend">
+<a href="#appendix-A.3.3" class="section-number selfRef">A.3.3. </a><a href="#name-invalid-operation-overspend" class="section-name selfRef">Invalid Operation: Overspend</a>
+          </h4>
+<p id="appendix-A.3.3-1"><code>
+Token balance: 20
+Attempting to spend: 30
+Result: INVALID (correctly rejected)
+</code><a href="#appendix-A.3.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="double-spend-prevention">
+<section id="appendix-A.3.4">
+          <h4 id="name-double-spend-prevention">
+<a href="#appendix-A.3.4" class="section-number selfRef">A.3.4. </a><a href="#name-double-spend-prevention" class="section-name selfRef">Double-Spend Prevention</a>
+          </h4>
+<p id="appendix-A.3.4-1">```
+Original token balance: 50
+First spend: 20
+Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804<a href="#appendix-A.3.4-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.3.4-2">Attempting second spend from original token: 15
+Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804
+Same nullifier: true
+Result: Would be rejected by nullifier database
+```<a href="#appendix-A.3.4-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="intermediate-test-values">
+<section id="appendix-A.4">
+        <h3 id="name-intermediate-test-values">
+<a href="#appendix-A.4" class="section-number selfRef">A.4. </a><a href="#name-intermediate-test-values" class="section-name selfRef">Intermediate Test Values</a>
+        </h3>
+<p id="appendix-A.4-1">For debugging implementations, here are the expected intermediate values for the main test case (100 credits, spend 30):<a href="#appendix-A.4-1" class="pilcrow">¶</a></p>
+<div id="binary-decomposition-of-c-s-70">
+<section id="appendix-A.4.1">
+          <h4 id="name-binary-decomposition-of-c-s">
+<a href="#appendix-A.4.1" class="section-number selfRef">A.4.1. </a><a href="#name-binary-decomposition-of-c-s" class="section-name selfRef">Binary Decomposition of c - s = 70</a>
+          </h4>
+<p id="appendix-A.4.1-1"><code>
+m = 70 = 0x46
+Binary: 01000110 (LSB first)
+i\[0\] = 0, i\[1\] = 1, i\[2\] = 1, i\[3\] = 0,
+i\[4\] = 0, i\[5\] = 0, i\[6\] = 1, i\[7\] = 0
+i\[8..L-1\] = 0 (where L = 128 for this example)
+</code><a href="#appendix-A.4.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="protocol-message-sizes">
+<section id="appendix-A.4.2">
+          <h4 id="name-protocol-message-sizes">
+<a href="#appendix-A.4.2" class="section-number selfRef">A.4.2. </a><a href="#name-protocol-message-sizes" class="section-name selfRef">Protocol Message Sizes</a>
+          </h4>
+<p id="appendix-A.4.2-1"><code>
+IssuanceRequestMsg: 4 × 32 = 128 bytes
+IssuanceResponseMsg: 5 × 32 = 160 bytes
+SpendProofMsg: O(L) × 32 bytes (e.g., ~4,096 bytes with L=128)
+RefundMsg: 4 × 32 = 128 bytes
+</code><a href="#appendix-A.4.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="test-vector-summary">
+<section id="appendix-A.5">
+        <h3 id="name-test-vector-summary">
+<a href="#appendix-A.5" class="section-number selfRef">A.5. </a><a href="#name-test-vector-summary" class="section-name selfRef">Test Vector Summary</a>
+        </h3>
+<p id="appendix-A.5-1">These test vectors demonstrate:
+1. Successful issuance and spending with correct balances
+2. Edge cases (zero and maximum credit amounts) work correctly
+3. Invalid operations (overspending) are properly rejected
+4. Double-spend prevention through nullifier reuse detection
+5. Correct binary decomposition for range proofs<a href="#appendix-A.5-1" class="pilcrow">¶</a></p>
+<div id="implementation-validation">
+<section id="appendix-A.5.1">
+          <h4 id="name-implementation-validation">
+<a href="#appendix-A.5.1" class="section-number selfRef">A.5.1. </a><a href="#name-implementation-validation" class="section-name selfRef">Implementation Validation</a>
+          </h4>
+<p id="appendix-A.5.1-1">Implementations can validate correctness by:
+1. Reproducing the nullifier values with the same RNG seed
+2. Verifying balance calculations after spending
+3. Ensuring invalid operations are rejected
+4. Checking that double-spends produce identical nullifiers<a href="#appendix-A.5.1-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.5.1-2">Note: Full cryptographic values (points, signatures) depend on the specific implementation's representation and cannot be compared directly across implementations.<a href="#appendix-A.5.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="implementation-status">
+<section id="appendix-B">
+      <h2 id="name-implementation-status">
+<a href="#appendix-B" class="section-number selfRef">Appendix B. </a><a href="#name-implementation-status" class="section-name selfRef">Implementation Status</a>
+      </h2>
+<p id="appendix-B-1">This section records the status of known implementations of the protocol defined by this specification at the time of posting of this Internet-Draft, and is based on a proposal described in RFC 7942.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+<div id="anonymous-credit-tokens">
+<section id="appendix-B.1">
+        <h3 id="name-anonymous-credit-tokens">
+<a href="#appendix-B.1" class="section-number selfRef">B.1. </a><a href="#name-anonymous-credit-tokens" class="section-name selfRef">anonymous-credit-tokens</a>
+        </h3>
+<p id="appendix-B.1-1">Organization: Google<a href="#appendix-B.1-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-2">Description: Reference implementation in Rust<a href="#appendix-B.1-2" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-3">Maturity: Beta<a href="#appendix-B.1-3" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-4">Coverage: Complete protocol implementation<a href="#appendix-B.1-4" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-5">License: Apache 2.0<a href="#appendix-B.1-5" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-6">Contact: sgschlesinger@gmail.com<a href="#appendix-B.1-6" class="pilcrow">¶</a></p>
+<p id="appendix-B.1-7">URL: https://github.com/SamuelSchlesinger/anonymous-credit-tokens<a href="#appendix-B.1-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="appendix-C">
+      <h2 id="name-acknowledgments">
+<a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-C-1">The authors would like to thank the Crypto Forum Research Group for their valuable feedback and suggestions. Special thanks to the contributors who provided implementation guidance and security analysis.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
+<p id="appendix-C-2">This work builds upon the foundational research in anonymous credentials and zero-knowledge proofs by numerous researchers in the cryptographic community, particularly the work on BBS signatures by Boneh, Boyen, and Shacham, and keyed-verification anonymous credentials by Chase, Meiklejohn, and Zaverucha.<a href="#appendix-C-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-D">
+      <h2 id="name-authors-addresses">
+<a href="#name-authors-addresses" class="section-name selfRef">Authors' Addresses</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Samuel Schlesinger</span></div>
+<div dir="auto" class="left"><span class="org">Google</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:sgschlesinger@gmail.com" class="email">sgschlesinger@gmail.com</a>
+</div>
+</address>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Jonathan Katz</span></div>
+<div dir="auto" class="left"><span class="org">Google</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:jkatz@google.com" class="email">jkatz@google.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>

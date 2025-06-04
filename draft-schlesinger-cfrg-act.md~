@@ -1,0 +1,1378 @@
+---
+###
+# Internet-Draft Markdown Template
+#
+# Rename this file from draft-todo-yourname-protocol.md to get started.
+# Draft name format is "draft-<yourname>-<workgroup>-<name>.md".
+#
+# For initial setup, you only need to edit the first block of fields.
+# Only "title" needs to be changed; delete "abbrev" if your title is short.
+# Any other content can be edited, but be careful not to introduce errors.
+# Some fields will be set automatically during setup if they are unchanged.
+#
+# Don't include "-00" or "-latest" in the filename.
+# Labels in the form draft-<yourname>-<workgroup>-<name>-latest are used by
+# the tools to refer to the current version; see "docname" for example.
+#
+# This template uses kramdown-rfc: https://github.com/cabo/kramdown-rfc
+# You can replace the entire file if you prefer a different format.
+# Change the file extension to match the format (.xml for XML, etc...)
+#
+###
+title: "Anonymous Credit Tokens"
+abbrev: "ACT"
+category: info
+
+docname: draft-schlesinger-cfrg-act-latest
+submissiontype: IRTF  # also: "independent", "editorial", "IAB", or "IRTF"
+number:
+date:
+consensus: true
+v: 3
+area: SEC
+workgroup: CFRG
+keyword:
+ - anonymous credentials
+ - privacy
+ - cryptography
+ - zero-knowledge proofs
+ - BBS signatures
+ - keyed verification
+venue:
+  group: CFRG
+  type: Research Group
+  mail: cfrg@ietf.org
+  arch: https://mailarchive.ietf.org/arch/browse/cfrg/
+  github: SamuelSchlesinger/ietf-anonymous-credit-tokens
+  latest: https://samuelschlesinger.github.io/ietf-anonymous-credit-tokens/draft-schlesinger-cfrg-act.html
+
+author:
+ -
+    fullname: Samuel Schlesinger
+    organization: Google
+    email: sgschlesinger@gmail.com
+ -
+    fullname: Jonathan Katz
+    organization: Google
+    email: jkatz@google.com
+
+normative:
+  RFC2119:
+  RFC8174:
+  RFC8949:
+  RFC9380:
+  RISTRETTO:
+    title: "The Ristretto Group"
+    target: https://ristretto.group/
+    date: false
+  BLAKE3:
+    title: "BLAKE3: One Function, Fast Everywhere"
+    target: https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf
+    date: 2020-01-09
+
+informative:
+  RFC9474:
+  ORRU-SIGMA:
+    title: "Sigma Protocols"
+    target: https://www.ietf.org/archive/id/draft-orru-zkproof-sigma-protocols-00.txt
+    date: 2025-01-19
+  ORRU-FS:
+    title: "The Fiat-Shamir Transform"
+    target: https://mmaker.github.io/draft-zkproof-sigma-protocols/draft-orru-zkproof-fiat-shamir.html
+    date: 2025-01-19
+  BBS:
+    title: "Short Group Signatures"
+    target: https://crypto.stanford.edu/~dabo/pubs/papers/groupsigs.pdf
+    date: 2004
+  KVAC:
+    title: "Keyed-Verification Anonymous Credentials"
+    target: https://eprint.iacr.org/2013/516.pdf
+    date: 2014
+
+...
+
+--- abstract
+
+This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving payment protocol based on keyed-verification anonymous credentials. The protocol enables issuers to grant numerical credit values to clients, who can later redeem these credits anonymously while preventing double-spending through the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge proofs to ensure both security and privacy.
+
+Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving user privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token.
+
+This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF.
+
+--- middle
+
+# Introduction
+
+Many online services need mechanisms to allocate resources, implement rate limiting, or process micropayments. Traditional approaches to these problems typically require tracking user identity, which raises privacy concerns. Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables services to issue and track credits without linking transactions to user identities.
+
+The Anonymous Credit Token protocol is a specialization of keyed-verification anonymous credentials {{KVAC}} that focuses on numerical credit values. It allows:
+
+1. **Anonymous Issuance**: An issuer can grant credits to a client without learning any client-specific information beyond the credit amount.
+
+2. **Anonymous Spending**: Clients can spend their credits without revealing their identity or linking multiple transactions.
+
+3. **Partial Spending**: Clients can spend a portion of their credits and receive the remainder as a new anonymous token.
+
+4. **Double-Spend Prevention**: Each credit token has an associated nullifier that prevents the same credits from being spent multiple times.
+
+## Use Cases
+
+Anonymous Credit Tokens can be applied to various scenarios:
+
+- **Rate Limiting**: Services can issue daily credit allowances that users spend anonymously for API calls or resource access.
+- **Privacy-Preserving Micropayments**: Users can purchase credit bundles and spend them over time without creating a transaction history.
+- **Anonymous Ticketing**: Event organizers can issue transferable tickets that can be verified without tracking ownership changes.
+- **Resource Allocation**: Cloud services can allocate computational resources using credits while preserving user privacy.
+
+## Protocol Overview
+
+The protocol involves two parties: an issuer (typically a service provider) and clients (users of the service). The interaction follows three main phases:
+
+1. **Setup**: The issuer generates a key pair and publishes the public key.
+
+2. **Issuance**: A client requests credits from the issuer. The issuer creates a blind signature on the credit value and a client-chosen nullifier, producing a credit token.
+
+3. **Spending**: To spend credits, the client reveals the nullifier and proves possession of a valid token with sufficient balance. The issuer verifies the proof, checks the nullifier hasn't been used before, and issues a new token for any remaining balance.
+
+## Design Goals
+
+The protocol is designed with the following goals:
+
+- **Privacy**: The issuer cannot link credit tokens to specific clients or link multiple transactions by the same client.
+- **Security**: Clients cannot spend more credits than they possess or use the same credits multiple times.
+- **Efficiency**: All operations should be computationally efficient, suitable for high-volume web services.
+- **Simplicity**: The protocol should be straightforward to implement and integrate into existing systems.
+
+## Relation to Existing Work
+
+This protocol builds upon several cryptographic primitives:
+
+- **BBS Signatures** {{BBS}}: The core signature scheme that enables efficient proofs of possession.
+- **Sigma Protocols** {{ORRU-SIGMA}}: The zero-knowledge proof framework used for spending proofs.
+- **Fiat-Shamir Transform** {{ORRU-FS}}: The technique to make the interactive proofs non-interactive.
+
+The protocol can be viewed as a specialized instantiation of keyed-verification anonymous credentials {{KVAC}} optimized for numerical values and partial spending.
+
+# Conventions and Definitions
+
+{::boilerplate bcp14-tagged}
+
+## Notation
+
+This document uses the following notation:
+
+- `||`: Concatenation of byte strings
+- `x <- S`: Sampling x uniformly at random from the set S
+- `x := y`: Assignment of the value y to the variable x
+- `[n]`: The set of integers {0, 1, ..., n-1}
+- `|x|`: The length of byte string x
+- `0x` prefix: Hexadecimal values
+
+## Data Types
+
+The protocol uses the following data types:
+
+- **Scalar**: An integer modulo the group order q
+- **Element**: A point on the Ristretto curve
+- **ByteString**: A sequence of bytes
+
+## Cryptographic Parameters
+
+The protocol uses the Ristretto group {{RISTRETTO}}, which provides a prime-order group abstraction over Curve25519. The key parameters are:
+
+- **q**: The prime order of the group (2^252 + 27742317777372353535851937790883648493)
+- **G**: The standard generator of the Ristretto group
+- **L**: The bit length for credit values (configurable, typically 128 bits)
+
+# Protocol Specification
+
+## System Parameters
+
+The protocol requires the following system parameters:
+
+```
+Parameters:
+  - G: Generator of the Ristretto group
+  - H1, H2, H3: Additional generators for commitments
+  - L: Bit length for credit values (configurable, must satisfy L < 252)
+```
+
+The generators H1, H2, and H3 MUST be generated deterministically from a nothing-up-my-sleeve value to ensure they are independent of each other and of G. This prevents attacks where malicious parameters could compromise security. Note that these generators are independent of the choice of L:
+
+```
+GenerateParameters(domain_separator):
+  Input:
+    - domain_separator: ByteString identifying the deployment
+  Output:
+    - params: System parameters (H1, H2, H3)
+  
+  Steps:
+    1. seed = BLAKE3(domain_separator)
+    2. rng = ChaCha20RNG(seed)
+    3. H1 = HashToRistretto(rng.next())
+    4. H2 = HashToRistretto(rng.next())
+    5. H3 = HashToRistretto(rng.next())
+    6. return (H1, H2, H3)
+```
+
+## Key Generation
+
+The issuer generates a key pair as follows:
+
+```
+KeyGen():
+  Input: None
+  Output:
+    - sk: Private key (Scalar)
+    - pk: Public key (Element)
+  
+  Steps:
+    1. x <- Zq
+    2. W = G * x
+    3. sk = x
+    4. pk = W
+    5. return (sk, pk)
+```
+
+## Token Issuance
+
+The issuance protocol is an interactive protocol between a client and the issuer:
+
+### Client: Issuance Request
+
+```
+IssueRequest(pk, c):
+  Input:
+    - pk: Issuer's public key
+    - c: Credit amount (0 <= c < 2^L)
+  Output:
+    - request: Issuance request
+    - state: Client state for later verification
+  
+  Steps:
+    1. k <- Zq  // Token identifier
+    2. r <- Zq  // Blinding factor
+    3. K = H2 * k + H3 * r
+    4. // Generate proof of knowledge of k, r
+    5. k' <- Zq
+    6. r' <- Zq
+    7. K1 = H2 * k' + H3 * r'
+    8. transcript = CreateTranscript("request")
+    9. AddToTranscript(transcript, K)
+    10. AddToTranscript(transcript, K1)
+    11. gamma = GetChallenge(transcript)
+    12. k_bar = k' + gamma * k
+    13. r_bar = r' + gamma * r
+    14. request = (K, gamma, k_bar, r_bar)
+    15. state = (k, r, c)
+    16. return (request, state)
+```
+
+### Issuer: Issuance Response
+
+```
+Issue(sk, request, c):
+  Input:
+    - sk: Issuer's private key
+    - request: Client's issuance request
+    - c: Credit amount to issue
+  Output:
+    - response: Issuance response or INVALID
+  
+  Steps:
+    1. Parse request as (K, gamma, k_bar, r_bar)
+    2. // Verify proof of knowledge
+    3. K1 = H2 * k_bar + H3 * r_bar - K * gamma
+    4. transcript = CreateTranscript("request")
+    5. AddToTranscript(transcript, K)
+    6. AddToTranscript(transcript, K1)
+    7. if GetChallenge(transcript) != gamma:
+    8.     return INVALID
+    9. // Create BBS signature
+    10. e <- Zq
+    11. A = (G + H1 * c + K)^(1/(e + sk))
+    12. // Generate proof of correct computation
+    13. alpha <- Zq
+    14. Y_A = A * alpha
+    15. Y_G = G * alpha
+    16. X_A = G + H1 * c + K
+    17. X_G = G * e + pk
+    18. transcript_resp = CreateTranscript("respond")
+    19. AddToTranscript(transcript_resp, c)
+    20. AddToTranscript(transcript_resp, e)
+    21. AddToTranscript(transcript_resp, A)
+    22. AddToTranscript(transcript_resp, X_A)
+    23. AddToTranscript(transcript_resp, X_G)
+    24. AddToTranscript(transcript_resp, Y_A)
+    25. AddToTranscript(transcript_resp, Y_G)
+    26. gamma_resp = GetChallenge(transcript_resp)
+    27. z = gamma_resp * (sk + e) + alpha
+    28. response = (A, e, gamma_resp, z, c)
+    29. return response
+```
+
+### Client: Token Verification
+
+```
+VerifyIssuance(pk, request, response, state):
+  Input:
+    - pk: Issuer's public key
+    - request: The issuance request sent
+    - response: Issuer's response
+    - state: Client state from request generation
+  Output:
+    - token: Credit token or INVALID
+  
+  Steps:
+    1. Parse response as (A, e, gamma_resp, z, c_resp)
+    2. Parse state as (k, r, c)
+    3. if c_resp != c:
+    4.     return INVALID
+    5. // Verify proof
+    6. K = H2 * k + H3 * r
+    7. X_A = G + H1 * c + K
+    8. X_G = G * e + pk
+    9. Y_A = A * z - X_A * gamma_resp
+    10. Y_G = G * z - X_G * gamma_resp
+    11. transcript_resp = CreateTranscript("respond")
+    12. AddToTranscript(transcript_resp, c)
+    13. AddToTranscript(transcript_resp, e)
+    14. AddToTranscript(transcript_resp, A)
+    15. AddToTranscript(transcript_resp, X_A)
+    16. AddToTranscript(transcript_resp, X_G)
+    17. AddToTranscript(transcript_resp, Y_A)
+    18. AddToTranscript(transcript_resp, Y_G)
+    19. if GetChallenge(transcript_resp) != gamma_resp:
+    20.     return INVALID
+    21. token = (A, e, k, r, c)
+    22. return token
+```
+
+## Token Spending
+
+The spending protocol allows a client to spend s credits from a token containing c credits (where s <= c):
+
+### Client: Spend Proof Generation
+
+```
+ProveSpend(token, s):
+  Input:
+    - token: Credit token (A, e, k, r, c)
+    - s: Amount to spend (0 <= s <= c)
+  Output:
+    - proof: Spend proof
+    - state: Client state for receiving change
+  
+  Steps:
+    1. // Randomize the signature
+    2. r1, r2 <- Zq
+    3. B = G + H1 * c + H2 * k + H3 * r
+    4. A' = A * r1 * r2
+    5. B_bar = B * r1
+    6. r3 = 1/r1
+    
+    7. // Decompose c - s into bits
+    8. m = c - s
+    9. (i\[0\], ..., i\[L-1\]) = BitDecompose(m)  // See Section 3.7
+    
+    10. // Create commitments for each bit
+    11. k* <- Zq
+    12. For j = 0 to L-1:
+    13.     s\[j\] <- Zq
+    14.     if j == 0:
+    15.         Com\[j\] = H1 * i\[j\] + H2 * k* + H3 * s\[j\]
+    16.     else:
+    17.         Com\[j\] = H1 * i\[j\] + H3 * s\[j\]
+    
+    18. // Generate range proof (see Section 3.5.1)
+    19. range_proof = GenerateRangeProof(i, k*, s, Com)
+    
+    20. // Complete sigma protocol
+    21. K' = Product(Com\[j\] * 2^j for j in \[L\])
+    22. // Generate remaining proof components
+    23. c' <- Zq
+    24. r' <- Zq
+    25. e' <- Zq
+    26. r2' <- Zq
+    27. r3' <- Zq
+    28. 
+    29. // Compute first round messages
+    30. A1 = A' * e' + B_bar * r2'
+    31. A2 = B_bar * r3' + H1 * c' + H3 * r'
+    32. 
+    33. // Prepare range proof challenges
+    34. k' <- Zq
+    35. s' <- Zq
+    36. C = H1 * (-c') + H2 * k' + H3 * s'
+    37. 
+    38. // Generate challenge using transcript
+    39. transcript = CreateTranscript("spend")
+    40. AddToTranscript(transcript, k)
+    41. AddToTranscript(transcript, A')
+    42. AddToTranscript(transcript, B_bar)
+    43. AddToTranscript(transcript, A1)
+    44. AddToTranscript(transcript, A2)
+    45. For j = 0 to L-1:
+    46.     AddToTranscript(transcript, Com\[j\])
+    47. For j = 0 to L-1:
+    48.     AddToTranscript(transcript, range_proof.C'\[j\]\[0\])
+    49.     AddToTranscript(transcript, range_proof.C'\[j\]\[1\])
+    50. AddToTranscript(transcript, C)
+    51. gamma = GetChallenge(transcript)
+    52. 
+    53. // Compute responses
+    54. e_bar = -gamma * e + e'
+    55. r2_bar = gamma * r2 + r2'
+    56. r3_bar = gamma * r3 + r3'
+    57. c_bar = -gamma * c + c'
+    58. r_bar = -gamma * r + r'
+    59. k_bar = gamma * k* + k'
+    60. r* = Sum(2^j * s\[j\] for j in \[L\])
+    61. s_bar = gamma * r* + s'
+    62. 
+    63. // Construct proof
+    64. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar, 
+    65.                    r2_bar, r3_bar, c_bar, r_bar, 
+    66.                    range_proof.w00, range_proof.w01,
+    67.                    range_proof.gamma0, range_proof.z,
+    68.                    k_bar, s_bar)
+    69. state = (k*, r*, m)
+    70. return (proof, state)
+```
+
+### Issuer: Spend Verification and Refund
+
+```
+VerifyAndRefund(sk, proof):
+  Input:
+    - sk: Issuer's private key
+    - proof: Client's spend proof
+  Output:
+    - refund: Refund for remaining credits or INVALID
+  
+  Steps:
+    1. Parse proof and extract nullifier k
+    2. // Check nullifier hasn't been used
+    3. if k in used_nullifiers:
+    4.     return INVALID
+    5. // Verify the proof (see Section 3.5.2)
+    6. if not VerifySpendProof(pk, proof):
+    7.     return INVALID
+    8. // Record nullifier
+    9. used_nullifiers.add(k)
+    10. // Issue refund for remaining balance
+    11. K' = Product(Com\[j\] * 2^j for j in \[L\])
+    12. refund = IssueRefund(sk, K')
+    13. return refund
+```
+
+### Refund Issuance {#refund-issuance}
+
+After verifying a spend proof, the issuer creates a refund token for the remaining balance:
+
+```
+IssueRefund(sk, K'):
+  Input:
+    - sk: Issuer's private key
+    - K': Commitment to remaining balance and new nullifier
+  Output:
+    - refund: Refund response
+  
+  Steps:
+    1. // Create new BBS signature on remaining balance
+    2. e* <- Zq
+    3. X_A* = G + K'
+    4. A* = X_A* ^ (1/(e* + sk))
+    
+    5. // Generate proof of correct computation
+    6. alpha <- Zq
+    7. Y_A = A* * alpha
+    8. Y_G = G * alpha
+    9. X_G = G * e* + pk
+    
+    10. // Create challenge using transcript
+    11. transcript = CreateTranscript("refund")
+    12. AddToTranscript(transcript, e*)
+    13. AddToTranscript(transcript, A*)
+    14. AddToTranscript(transcript, X_A*)
+    15. AddToTranscript(transcript, X_G)
+    16. AddToTranscript(transcript, Y_A)
+    17. AddToTranscript(transcript, Y_G)
+    18. gamma = GetChallenge(transcript)
+    
+    19. // Compute response
+    20. z = gamma * (sk + e*) + alpha
+    
+    21. refund = (A*, e*, gamma, z)
+    22. return refund
+```
+
+### Client: Refund Token Construction
+
+The client verifies the refund and constructs a new credit token:
+
+```
+ConstructRefundToken(pk, spend_proof, refund, state):
+  Input:
+    - pk: Issuer's public key
+    - spend_proof: The spend proof sent to issuer
+    - refund: Issuer's refund response
+    - state: Client state (k*, r*, m)
+  Output:
+    - token: New credit token or INVALID
+  
+  Steps:
+    1. Parse refund as (A*, e*, gamma, z)
+    2. Parse state as (k*, r*, m)
+    
+    3. // Reconstruct commitment
+    4. K' = Product(spend_proof.Com\[j\] * 2^j for j in \[L\])
+    5. X_A* = G + K'
+    6. X_G = G * e* + pk
+    
+    7. // Verify proof
+    8. Y_A = A* * z - X_A* * gamma
+    9. Y_G = G * z - X_G * gamma
+    
+    10. // Check challenge using transcript
+    11. transcript = CreateTranscript("refund")
+    12. AddToTranscript(transcript, e*)
+    13. AddToTranscript(transcript, A*)
+    14. AddToTranscript(transcript, X_A*)
+    15. AddToTranscript(transcript, X_G)
+    16. AddToTranscript(transcript, Y_A)
+    17. AddToTranscript(transcript, Y_G)
+    18. if GetChallenge(transcript) != gamma:
+    19.     return INVALID
+    
+    20. // Construct new token
+    21. token = (A*, e*, k*, r*, m)
+    22. return token
+```
+
+### Spend Proof Verification {#spend-verification}
+
+The issuer verifies a spend proof as follows:
+
+```
+VerifySpendProof(pk, proof):
+  Input:
+    - pk: Issuer's public key
+    - proof: Spend proof from client
+  Output:
+    - valid: Boolean indicating if proof is valid
+  
+  Steps:
+    1. Parse proof as (k, s, A', B_bar, Com, gamma, e_bar,
+                      r2_bar, r3_bar, c_bar, r_bar, w00, w01,
+                      gamma0, z, k_bar, s_bar)
+    
+    2. // Check A' is not identity
+    3. if A' == Identity:
+    4.     return false
+    
+    5. // Compute issuer's view of signature
+    6. A_bar = A' * sk  // This requires the issuer's private key
+    7. H1_prime = G + H2 * k  // Spending amount s is added to this later
+    
+    8. // Verify sigma protocol
+    9. A1 = A' * e_bar + B_bar * r2_bar - A_bar * gamma
+    10. A2 = B_bar * r3_bar + H1 * c_bar + H3 * r_bar - H1_prime * gamma
+    
+    11. // Verify range proof
+    12. For j = 0 to L-1:
+    13.     gamma1\[j\] = gamma - gamma0\[j\]
+    14.     C\[j\]\[0\] = Com\[j\]
+    15.     C\[j\]\[1\] = Com\[j\] / H1
+    
+    16. // Verify bit 0 (with k* component)
+    17. C'\[0\]\[0\] = H2 * w00 + H3 * z\[0\]\[0\] - C\[0\]\[0\] * gamma0\[0\]
+    18. C'\[0\]\[1\] = H2 * w01 + H3 * z\[0\]\[1\] - C\[0\]\[1\] * gamma1\[0\]
+    
+    19. // Verify remaining bits
+    20. For j = 1 to L-1:
+    21.     C'\[j\]\[0\] = H3 * z\[j\]\[0\] - C\[j\]\[0\] * gamma0\[j\]
+    22.     C'\[j\]\[1\] = H3 * z\[j\]\[1\] - C\[j\]\[1\] * gamma1\[j\]
+    
+    23. // Verify final commitment
+    24. K' = Product(Com\[j\] * 2^j for j in \[L\])
+    25. Com_total = H1 * s + K'
+    26. C_final = H1 * (-c_bar) + H2 * k_bar + H3 * s_bar - Com_total * gamma
+    
+    27. // Recompute challenge using transcript
+    28. transcript = CreateTranscript("spend")
+    29. AddToTranscript(transcript, k)
+    30. AddToTranscript(transcript, A')
+    31. AddToTranscript(transcript, B_bar)
+    32. AddToTranscript(transcript, A1)
+    33. AddToTranscript(transcript, A2)
+    34. For j = 0 to L-1:
+    35.     AddToTranscript(transcript, Com\[j\])
+    36. For j = 0 to L-1:
+    37.     AddToTranscript(transcript, C'\[j\]\[0\])
+    38.     AddToTranscript(transcript, C'\[j\]\[1\])
+    39. AddToTranscript(transcript, C_final)
+    40. gamma_check = GetChallenge(transcript)
+    
+    41. // Verify challenge matches
+    42. if gamma != gamma_check:
+    43.     return false
+    
+    44. return true
+```
+
+### Range Proof Generation {#range-proof}
+
+The range proof demonstrates that c - s >= 0 without revealing the actual values. It uses a binary decomposition and proves each bit is either 0 or 1:
+
+```
+GenerateRangeProof(bits, k*, s, Com):
+  Input:
+    - bits: Binary decomposition of c - s
+    - k*, s: Randomness values  
+    - Com: Commitments to each bit
+  Output:
+    - range_proof: Zero-knowledge range proof
+  
+  Steps:
+    1. // Initialize arrays for proof components
+    2. C = array\[L\]\[2\]
+    3. C' = array\[L\]\[2\]
+    4. gamma0 = array\[L\]
+    5. w = array\[L\]
+    6. z = array\[L\]\[2\]
+    
+    7. // Process bit 0 (includes k*)
+    8. C\[0\]\[0\] = Com\[0\]
+    9. C\[0\]\[1\] = Com\[0\] / H1
+    10. k0' <- Zq
+    11. s0' <- Zq
+    12. gamma0\[0\] <- Zq
+    13. w\[0\] <- Zq
+    14. z\[0\]\[0\] <- Zq
+    15. z\[0\]\[1\] <- Zq
+    16. 
+    17. if bits\[0\] == 0:
+    18.     C'\[0\]\[0\] = H2 * k0' + H3 * s0'
+    19.     C'\[0\]\[1\] = H2 * w\[0\] + H3 * z\[0\]\[1\] - C\[0\]\[1\] * gamma0\[0\]
+    20. else:
+    21.     C'\[0\]\[0\] = H2 * w\[0\] + H3 * z\[0\]\[0\] - C\[0\]\[0\] * gamma0\[0\]
+    22.     C'\[0\]\[1\] = H2 * k0' + H3 * s0'
+    
+    23. // Process remaining bits (no k* component)
+    24. For j = 1 to L-1:
+    25.     C\[j\]\[0\] = Com\[j\]
+    26.     C\[j\]\[1\] = Com\[j\] / H1
+    27.     sj' <- Zq
+    28.     gamma0\[j\] <- Zq
+    29.     z\[j\]\[0\] <- Zq
+    30.     z\[j\]\[1\] <- Zq
+    31.     
+    32.     if bits\[j\] == 0:
+    33.         C'\[j\]\[0\] = H3 * sj'
+    34.         C'\[j\]\[1\] = H3 * z\[j\]\[1\] - C\[j\]\[1\] * gamma0\[j\]
+    35.     else:
+    36.         C'\[j\]\[0\] = H3 * z\[j\]\[0\] - C\[j\]\[0\] * gamma0\[j\]
+    37.         C'\[j\]\[1\] = H3 * sj'
+    
+    38. // After challenge gamma is computed (externally):
+    39. // Complete the proof with proper response values
+    40. 
+    41. // For bit 0:
+    42. if bits\[0\] == 0:
+    43.     gamma0\[0\] = gamma - gamma0\[0\]
+    44.     w00 = gamma0\[0\] * k* + k0'
+    45.     w01 = w\[0\]
+    46.     z\[0\]\[0\] = gamma0\[0\] * s\[0\] + s0'
+    47. else:
+    48.     w00 = w\[0\]
+    49.     w01 = (gamma - gamma0\[0\]) * k* + k0'
+    50.     z\[0\]\[1\] = (gamma - gamma0\[0\]) * s\[0\] + s0'
+    
+    51. // For remaining bits:
+    52. For j = 1 to L-1:
+    53.     if bits\[j\] == 0:
+    54.         gamma0\[j\] = gamma - gamma0\[j\]
+    55.         z\[j\]\[0\] = gamma0\[j\] * s\[j\] + sj'
+    56.     else:
+    57.         z\[j\]\[1\] = (gamma - gamma0\[j\]) * s\[j\] + sj'
+    
+    58. range_proof = (C', w00, w01, gamma0, z)
+    59. return range_proof
+```
+
+## Cryptographic Primitives
+
+### Protocol Version
+
+The protocol version string for domain separation is:
+```
+PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
+```
+
+This version string MUST be used consistently across all implementations for interoperability. The curve specification is included to prevent cross-curve attacks and ensure implementations using different curves cannot accidentally interact.
+
+Note: The reference implementation currently uses version "v0.2.0" while this specification defines version "v1.0". Implementations MUST use the exact version string for the protocol version they implement. Different version strings create incompatible protocols, which is intentional to prevent version downgrade attacks and ensure implementations are explicitly compatible.
+
+### Hash Function and Fiat-Shamir Transform
+
+The protocol uses BLAKE3 {{BLAKE3}} as the underlying hash function for the Fiat-Shamir transform {{ORRU-FS}}. Following the sigma protocol framework {{ORRU-SIGMA}}, challenges are generated using a transcript that accumulates all protocol messages:
+
+```
+CreateTranscript(label):
+  Input:
+    - label: ASCII string identifying the proof type
+  Output:
+    - transcript: A new transcript object
+  
+  Steps:
+    1. hasher = BLAKE3.new()
+    2. hasher.update(PROTOCOL_VERSION)
+    3. hasher.update(Encode(H1))
+    4. hasher.update(Encode(H2))
+    5. hasher.update(Encode(H3))
+    6. hasher.update(len(label).to_be_bytes() || label)
+    7. return transcript with hasher
+
+AddToTranscript(transcript, value):
+  Input:
+    - transcript: Existing transcript
+    - value: Element or Scalar to add
+  
+  Steps:
+    1. encoded = Encode(value)
+    2. transcript.hasher.update(len(encoded).to_be_bytes() || encoded)
+
+GetChallenge(transcript):
+  Input:
+    - transcript: Completed transcript
+  Output:
+    - challenge: Scalar challenge value
+  
+  Steps:
+    1. seed = transcript.hasher.finalize()
+    2. rng = ChaCha20RNG(seed)
+    3. return Scalar.random(rng)
+```
+
+This approach ensures:
+- Domain separation through the label and protocol version
+- Inclusion of all public parameters to prevent parameter substitution attacks
+- Proper ordering with length prefixes to prevent ambiguity
+- Deterministic challenge generation from the complete transcript
+
+### Encoding Functions
+
+Elements and scalars are encoded as follows:
+
+```
+Encode(value):
+  Input:
+    - value: Element or Scalar
+  Output:
+    - encoding: ByteString
+  
+  Steps:
+    1. If value is an Element:
+    2.     return value.compress()  // 32 bytes, compressed Ristretto point
+    3. If value is a Scalar:
+    4.     return value.to_bytes_le()  // 32 bytes, little-endian
+```
+
+Note: Implementations MAY use standard serialization formats (e.g., bincode, CBOR) for complex structures, but MUST ensure deterministic encoding for hash inputs.
+
+### Binary Decomposition {#binary-decomposition}
+
+To decompose a scalar into its binary representation:
+
+```
+BitDecompose(s):
+  Input:
+    - s: Scalar value
+  Output:
+    - bits: Array of L scalars (each 0 or 1)
+  
+  Steps:
+    1. bytes = s.to_bytes_le()  // 32 bytes, little-endian
+    2. For i = 0 to L-1:
+    3.     byte_index = i / 8
+    4.     bit_position = i % 8
+    5.     bit = (bytes[byte_index] >> bit_position) & 1
+    6.     bits\[i\] = Scalar(bit)
+    7. return bits
+```
+
+Note: This algorithm produces bits in LSB-first order (i.e., bits\[0\] is the least significant bit). The algorithm works for any L < 252, as the scalar is represented in 32 bytes (256 bits), which accommodates the full range of the Ristretto group order.
+
+### Scalar Conversion
+
+Converting between credit amounts and scalars:
+
+```
+CreditToScalar(amount):
+  Input:
+    - amount: Integer credit amount (0 <= amount < 2^L)
+  Output:
+    - s: Scalar representation
+  
+  Steps:
+    1. if amount >= 2^L:
+    2.     return ERROR
+    3. return Scalar(amount)
+
+ScalarToCredit(s):
+  Input:
+    - s: Scalar value
+  Output:
+    - amount: Integer credit amount or ERROR
+  
+  Steps:
+    1. bytes = s.to_bytes_le()
+    2. // Check high bytes are zero
+    3. For i = 16 to 31:
+    4.     if bytes\[i\] != 0:
+    5.         return ERROR
+    6. amount = bytes\[0..15\] as u128
+    7. return amount
+```
+
+# Protocol Messages and Wire Format
+
+## Message Encoding
+
+All protocol messages SHOULD be encoded using deterministic CBOR (RFC 8949) for interoperability. The following sections define the structure of each message type.
+
+### Issuance Request Message
+
+```
+IssuanceRequestMsg = {
+    1: bstr,  ; K (compressed Ristretto point, 32 bytes)
+    2: bstr,  ; gamma (scalar, 32 bytes)
+    3: bstr,  ; k_bar (scalar, 32 bytes) 
+    4: bstr   ; r_bar (scalar, 32 bytes)
+}
+```
+
+### Issuance Response Message
+
+```
+IssuanceResponseMsg = {
+    1: bstr,  ; A (compressed Ristretto point, 32 bytes)
+    2: bstr,  ; e (scalar, 32 bytes)
+    3: bstr,  ; gamma_resp (scalar, 32 bytes)
+    4: bstr,  ; z (scalar, 32 bytes)
+    5: bstr   ; c (scalar, 32 bytes)
+}
+```
+
+### Spend Proof Message
+
+```
+SpendProofMsg = {
+    1: bstr,           ; k (nullifier, 32 bytes)
+    2: bstr,           ; s (spend amount, 32 bytes)
+    3: bstr,           ; A' (compressed point, 32 bytes)
+    4: bstr,           ; B_bar (compressed point, 32 bytes)
+    5: [* bstr],       ; Com array (L compressed points)
+    6: bstr,           ; gamma (scalar, 32 bytes)
+    7: bstr,           ; e_bar (scalar, 32 bytes)
+    8: bstr,           ; r2_bar (scalar, 32 bytes)
+    9: bstr,           ; r3_bar (scalar, 32 bytes)
+    10: bstr,          ; c_bar (scalar, 32 bytes)
+    11: bstr,          ; r_bar (scalar, 32 bytes)
+    12: bstr,          ; w00 (scalar, 32 bytes)
+    13: bstr,          ; w01 (scalar, 32 bytes)
+    14: [* bstr],      ; gamma0 array (L scalars)
+    15: [* [bstr, bstr]], ; z array (L pairs of scalars)
+    16: bstr,          ; k_bar (scalar, 32 bytes)
+    17: bstr           ; s_bar (scalar, 32 bytes)
+}
+```
+
+### Refund Message
+
+```
+RefundMsg = {
+    1: bstr,  ; A* (compressed Ristretto point, 32 bytes)
+    2: bstr,  ; e* (scalar, 32 bytes)
+    3: bstr,  ; gamma (scalar, 32 bytes)
+    4: bstr   ; z (scalar, 32 bytes)
+}
+```
+
+## Error Responses
+
+Error responses SHOULD use the following format:
+
+```
+ErrorMsg = {
+    1: uint,   ; error_code
+    2: tstr    ; error_message (for debugging only)
+}
+```
+
+Error codes are defined in Section 5.3.
+
+## Protocol Flow
+
+The complete protocol flow with message types:
+
+```
+Client                                          Issuer
+  |                                               |
+  |-- IssuanceRequestMsg ------------------------>|
+  |                                               |
+  |<-- IssuanceResponseMsg -----------------------|
+  |                                               |
+  | (client creates token)                        |
+  |                                               |
+  |-- SpendProofMsg ----------------------------->|
+  |                                               |
+  |<-- RefundMsg or ErrorMsg ---------------------|
+  |                                               |
+```
+
+# Implementation Considerations
+
+## Nullifier Management
+
+Implementations MUST maintain a persistent database of used nullifiers to prevent double-spending. The nullifier storage requirements grow linearly with the number of spent tokens. Implementations MAY use the following strategies to manage storage:
+
+1. **Expiration**: If tokens have expiration dates, old nullifiers can be pruned.
+2. **Sharding**: Nullifiers can be partitioned across multiple databases.
+3. **Bloom Filters**: Probabilistic data structures can reduce memory usage with a small false-positive rate.
+
+## Constant-Time Operations
+
+To prevent timing attacks, implementations MUST use constant-time operations for:
+
+- Scalar arithmetic
+- Point operations  
+- Conditional selections in range proofs
+
+In particular, the range proof generation MUST use constant-time conditional selection when choosing between bit values 0 and 1. The following pattern should be used:
+
+```
+ConstantTimeSelect(condition, value_if_true, value_if_false):
+  // Returns value_if_true if condition is true (1),
+  // value_if_false if condition is false (0)
+  // Must execute in constant time regardless of condition
+```
+
+This is critical in the range proof generation where bit values must not leak through timing channels.
+
+## Randomness Generation
+
+The security of the protocol critically depends on the quality of random number generation. Implementations MUST use cryptographically secure random number generators (CSPRNGs) for:
+
+- Private key generation
+- Blinding factors (r, k)
+- Proof randomness (nonces)
+
+### RNG Requirements
+
+1. **Entropy Source**: Use OS-provided entropy (e.g., /dev/urandom on Unix systems)
+2. **Fork Safety**: Reseed after fork() to prevent nonce reuse
+3. **Backtracking Resistance**: Use forward-secure PRNGs when possible
+
+### Nonce Generation
+
+Following {{ORRU-SIGMA}}, nonces (the randomness used in proofs) MUST be generated with extreme care:
+
+1. **Fresh Randomness**: Generate new nonces for every proof
+2. **No Reuse**: Never reuse nonces across different proofs
+3. **Full Entropy**: Use the full security parameter (256 bits) of randomness
+4. **Zeroization**: Clear nonces from memory after use
+
+WARNING: Leakage of even a few bits of a nonce can allow complete recovery of the witness (secret values). Implementations MUST use constant-time operations and secure memory handling for all nonce-related computations.
+
+## Point Validation
+
+All Ristretto points received from external sources MUST be validated:
+
+1. **Deserialization**: Verify the point deserializes to a valid Ristretto point
+2. **Non-Identity**: Verify the point is not the identity element
+3. **Subgroup Check**: Ristretto guarantees prime-order subgroup membership
+
+Example validation:
+```
+ValidatePoint(P):
+  1. If P fails to deserialize:
+  2.     return INVALID
+  3. If P == Identity:
+  4.     return INVALID
+  5. // Ristretto ensures prime-order subgroup membership
+  6. return VALID
+```
+
+All implementations MUST validate points at these locations:
+- When receiving `K` in issuance request
+- When receiving `A` in issuance response  
+- When receiving `A'` and `B_bar` in spend proof
+- When receiving `Com\[j\]` commitments in spend proof
+- When receiving `A*` in refund response
+
+## Error Handling
+
+Implementations SHOULD NOT provide detailed error messages that could leak information about the verification process. A single INVALID response should be returned for all verification failures.
+
+### Error Codes
+
+While detailed error messages should not be exposed to untrusted parties, implementations MAY use the following internal error codes:
+
+- `INVALID_PROOF`: Proof verification failed
+- `INSUFFICIENT_BALANCE`: Attempting to spend more than available credits  
+- `NULLIFIER_REUSE`: Double-spend attempt detected
+- `MALFORMED_REQUEST`: Request format is invalid
+- `INVALID_SIGNATURE`: BBS signature verification failed
+- `RANGE_PROOF_FAILED`: Range proof verification failed
+- `INVALID_AMOUNT`: Credit amount exceeds maximum (2^L - 1)
+
+## Parameter Selection
+
+The bit length L is configurable and determines the range of credit values (0 to 2^L - 1). The choice of L involves several trade-offs:
+
+1. **Range**: Larger L supports higher credit values
+2. **Performance**: Proof size and verification time scale linearly with L
+3. **Security**: L must be less than the bit length of the group order (252 bits for Ristretto)
+
+Common configurations:
+- L = 32: Suitable for small credit systems (up to ~4 billion credits)
+- L = 64: Suitable for medium-scale systems (up to ~18 quintillion credits)
+- L = 128: Suitable for large-scale systems with effectively unlimited credit range
+- L = 256: Maximum practical value, but with doubled proof sizes compared to L = 128
+
+The implementation MUST enforce L < 252 to ensure proper scalar arithmetic within the group order.
+
+### Performance Characteristics
+
+The protocol has the following computational complexity:
+
+1. **Issuance**:
+   - Client: 3 scalar multiplications + 1 hash
+   - Issuer: 1 exponentiation + 3 scalar multiplications + 1 hash
+
+2. **Spending**:
+   - Client: O(L) scalar multiplications for range proof + O(1) for sigma protocol
+   - Issuer: O(L) scalar multiplications for verification
+
+3. **Storage**:
+   - Token size: 5 × 32 bytes = 160 bytes (independent of L)
+   - Spend proof size: O(L) × 32 bytes (approximately 32L bytes)
+   - Nullifier database: 32 bytes per spent token
+
+The proof size scales linearly with L:
+- L = 32: ~1KB spend proof
+- L = 64: ~2KB spend proof  
+- L = 128: ~4KB spend proof
+- L = 256: ~8KB spend proof
+
+### Parameter Trade-offs
+
+| Parameter | Value | Maximum Credit Value | Spend Proof Size | Use Case |
+|-----------|-------|---------------------|------------------|-----------|
+| L | 32 | 4,294,967,295 | ~1 KB | Small-scale systems, API rate limiting |
+| L | 64 | 1.8 × 10^19 | ~2 KB | Medium-scale systems, micropayments |
+| L | 128 | 3.4 × 10^38 | ~4 KB | Large-scale systems, general purpose |
+| L | 192 | 6.3 × 10^57 | ~6 KB | Very large values, future-proofing |
+
+Implementations SHOULD choose L based on their maximum credit requirements and performance constraints. Note that L MUST be less than 252 to fit within the Ristretto group order.
+
+# Security Considerations
+
+## Security Model and Definitions
+
+### Threat Model
+
+We consider a setting with:
+- A single trusted issuer (multiple issuers can operate independently)
+- Potentially malicious clients who may attempt to forge tokens or double-spend
+- An adversary who can observe all network communications
+- Clients who desire privacy from the issuer regarding their spending patterns
+
+Note: The issuer must be trusted not to:
+- Issue tokens without proper authorization
+- Create tokens for themselves without limit
+- Refuse valid spend proofs
+- Manipulate the nullifier database
+
+The protocol does not protect against a malicious issuer, only ensures privacy from an honest-but-curious issuer.
+
+### Security Properties
+
+The protocol provides the following security guarantees:
+
+1. **Unforgeability**: No probabilistic polynomial-time (PPT) adversary can create a valid credit token without the issuer's cooperation. Formally, for any PPT adversary A:
+
+   ```
+   Pr[A(pk, params) -> valid_token] ≤ negl(λ)
+   ```
+
+   where λ is the security parameter.
+
+2. **Unlinkability**: The issuer cannot link:
+   - A spending transaction to the original issuance
+   - Multiple spending transactions by the same client
+   
+   This holds under the DDH assumption in the Ristretto group.
+
+3. **Balance Security**: No PPT adversary can spend more credits than issued. Specifically:
+   - Credits cannot be created from nothing
+   - The sum of spent credits cannot exceed issued credits
+   - Each token can only be fully spent once (via nullifier checking)
+
+4. **Zero-Knowledge**: The spending proof reveals only:
+   - The nullifier k
+   - The amount being spent s
+   - That the client possesses sufficient balance (c ≥ s)
+   
+   No other information about c, r, or the token is revealed.
+
+5. **Nullifier Binding**: The nullifier k is cryptographically bound to the token through the BBS signature. An adversary cannot:
+   - Use a nullifier from one token with a different token
+   - Modify the nullifier without invalidating the signature
+
+## Cryptographic Assumptions
+
+The security of Anonymous Credit Tokens relies on:
+
+1. **Discrete Logarithm Problem (DLP)**: Given g, h ∈ G, it is computationally infeasible to find x such that h = g^x.
+
+2. **Decisional Diffie-Hellman (DDH) Assumption**: Given (g, g^a, g^b, g^c) for random a, b, c, it is computationally infeasible to determine whether c = ab or c is random.
+
+3. **Random Oracle Model**: The BLAKE3 hash function H is modeled as a random oracle, providing:
+   - Collision resistance
+   - Pre-image resistance  
+   - Unpredictability
+
+4. **Sigma Protocol Security**: The underlying sigma protocols satisfy {{ORRU-SIGMA}}:
+   - Completeness: Honest proofs always verify
+   - Special soundness: From two accepting transcripts with the same commitment but different challenges, one can extract the witness
+   - Honest-verifier zero-knowledge: The proof reveals nothing beyond the validity of the statement
+   
+5. **Fiat-Shamir Security**: The non-interactive proofs are secure in the random oracle model {{ORRU-FS}}:
+   - The transcript includes all public values to prevent malleability
+   - Domain separation prevents cross-protocol attacks
+   - Length-prefixing prevents ambiguity in parsing
+
+## Privacy Properties
+
+The protocol provides the following privacy guarantees:
+
+1. **Unlinkability**: The issuer cannot link a token to its issuance request or link multiple spends by the same client.
+2. **Balance Privacy**: The amount of credits in a token is not revealed during spending (only that it's sufficient for the transaction).
+
+However, the protocol does NOT provide:
+
+1. **Network-Level Privacy**: IP addresses and network metadata can still link transactions.
+2. **Amount Privacy**: The spent amount s is revealed to the issuer.
+3. **Timing Privacy**: Transaction timing patterns could potentially be used for correlation.
+
+## Security Properties
+
+The protocol ensures:
+
+1. **Unforgeability**: Clients cannot create valid tokens without the issuer's cooperation.
+2. **Non-Transferability**: While tokens can be shared, this requires sharing the entire token state.
+3. **Double-Spend Prevention**: Each token can only be fully spent once due to nullifier checking.
+
+## Implementation Vulnerabilities
+
+Implementers should be aware of:
+
+1. **RNG Failures**: Weak randomness can completely break the protocol's security. Implementations MUST:
+   - Use cryptographically secure RNGs
+   - Reseed after fork() operations
+   - Implement forward-secure RNG state management
+
+2. **Timing Attacks**: Variable-time operations can leak information about secret values. Critical operations requiring constant-time implementation:
+   - Scalar arithmetic in proofs
+   - Binary decomposition in range proofs
+   - Conditional selections based on secret bits
+
+3. **Nullifier Database Integrity**: Corruption of the nullifier database could enable double-spending. Implementations SHOULD:
+   - Use atomic database operations
+   - Implement database backups
+   - Include integrity checks (e.g., Merkle trees)
+
+4. **Nullifier Collisions**: While nullifiers are 256-bit values with negligible collision probability (approximately 2^-128 for 2^64 tokens), implementations should still handle potential collisions gracefully.
+
+5. **Serialization Attacks**: Implementations MUST use canonical serialization for all values included in hash computations to prevent malleability attacks.
+
+6. **Concurrent Access**: The protocol does not specify thread-safety requirements. Implementations SHOULD document their concurrency model and use appropriate locking mechanisms.
+
+## Protocol Composition and State Management
+
+### Atomicity Requirements
+
+The spend and refund operations MUST be treated as an atomic transaction. If the refund fails after a spend proof is accepted, credits could be permanently lost. Implementations SHOULD:
+
+1. Use two-phase commit or similar mechanisms
+2. Implement rollback capabilities for failed refunds
+3. Log all state transitions for recovery
+
+### Session Management
+
+Each protocol session (issuance or spend/refund) MUST:
+- Use fresh randomness
+- Complete without interruption
+- Not reuse any random values across sessions
+
+### Version Negotiation
+
+To support protocol evolution, implementations MAY include version negotiation in the initial handshake. All parties MUST agree on the protocol version before proceeding.
+
+## Quantum Resistance
+
+This protocol is NOT quantum-resistant. The discrete logarithm problem can be solved efficiently by quantum computers using Shor's algorithm. Organizations requiring long-term security should consider post-quantum alternatives.
+
+# IANA Considerations
+
+This document has no IANA actions.
+
+--- back
+
+# Test Vectors {#test-vectors}
+
+This appendix provides test vectors for implementers to verify their implementations. All values are encoded in hexadecimal. Scalars are 32 bytes each.
+
+## Test Configuration
+
+```
+RNG Seed: 0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
+Domain Separator: "anonymous-credit-tokens-v1"
+Protocol Version: "curve25519-ristretto anonymous-credentials v1.0"
+L: 128 (configurable parameter for this example)
+```
+
+## Complete Protocol Flow Example
+
+This example demonstrates issuing 100 credits and spending 30.
+
+### 1. Issuance Phase (100 credits)
+
+```
+Credits to issue: 100
+Token successfully created
+Token balance: 100
+Token nullifier (k): 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
+```
+
+### 2. Spending Phase (30 credits)
+
+```
+Amount to spend: 30
+Nullifier revealed: 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
+Spend amount (s): 30
+
+Refund issued successfully
+New token balance: 70
+New token nullifier (k*): 0xe844bad01bd4f034fcdd5c594960b7860abf46f8f5b876f600ffff16e0de1b07
+```
+
+## Edge Cases
+
+### Zero Credit Token
+
+```
+Zero credit token created
+Balance: 0
+Nullifier: 0x603fdef3d44fbc72098e638618daf2079f9034f803492794791cdc77d9909b04
+```
+
+### Maximum Credit Token
+
+```
+Maximum credit token created
+Balance: 340282366920938463463374607431768211455 (2^128 - 1)
+Nullifier: 0x4997bd7475c72eed6065c545e791475d4192059d6f41279f794504233df19a06
+```
+
+### Invalid Operation: Overspend
+
+```
+Token balance: 20
+Attempting to spend: 30
+Result: INVALID (correctly rejected)
+```
+
+### Double-Spend Prevention
+
+```
+Original token balance: 50
+First spend: 20
+Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804
+
+Attempting second spend from original token: 15
+Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804
+Same nullifier: true
+Result: Would be rejected by nullifier database
+```
+
+## Intermediate Test Values
+
+For debugging implementations, here are the expected intermediate values for the main test case (100 credits, spend 30):
+
+### Binary Decomposition of c - s = 70
+
+```
+m = 70 = 0x46
+Binary: 01000110 (LSB first)
+i\[0\] = 0, i\[1\] = 1, i\[2\] = 1, i\[3\] = 0, 
+i\[4\] = 0, i\[5\] = 0, i\[6\] = 1, i\[7\] = 0
+i\[8..L-1\] = 0 (where L = 128 for this example)
+```
+
+### Protocol Message Sizes
+
+```
+IssuanceRequestMsg: 4 × 32 = 128 bytes
+IssuanceResponseMsg: 5 × 32 = 160 bytes  
+SpendProofMsg: O(L) × 32 bytes (e.g., ~4,096 bytes with L=128)
+RefundMsg: 4 × 32 = 128 bytes
+```
+
+## Test Vector Summary
+
+These test vectors demonstrate:
+1. Successful issuance and spending with correct balances
+2. Edge cases (zero and maximum credit amounts) work correctly
+3. Invalid operations (overspending) are properly rejected
+4. Double-spend prevention through nullifier reuse detection
+5. Correct binary decomposition for range proofs
+
+### Implementation Validation
+
+Implementations can validate correctness by:
+1. Reproducing the nullifier values with the same RNG seed
+2. Verifying balance calculations after spending
+3. Ensuring invalid operations are rejected
+4. Checking that double-spends produce identical nullifiers
+
+Note: Full cryptographic values (points, signatures) depend on the specific implementation's representation and cannot be compared directly across implementations.
+
+# Implementation Status
+
+This section records the status of known implementations of the protocol defined by this specification at the time of posting of this Internet-Draft, and is based on a proposal described in RFC 7942.
+
+## anonymous-credit-tokens
+
+Organization: Google
+
+Description: Reference implementation in Rust
+
+Maturity: Beta
+
+Coverage: Complete protocol implementation
+
+License: Apache 2.0
+
+Contact: sgschlesinger@gmail.com
+
+URL: https://github.com/SamuelSchlesinger/anonymous-credit-tokens
+
+# Acknowledgments
+
+The authors would like to thank the Crypto Forum Research Group for their valuable feedback and suggestions. Special thanks to the contributors who provided implementation guidance and security analysis.
+
+This work builds upon the foundational research in anonymous credentials and zero-knowledge proofs by numerous researchers in the cryptographic community, particularly the work on BBS signatures by Boneh, Boyen, and Shacham, and keyed-verification anonymous credentials by Chase, Meiklejohn, and Zaverucha.
