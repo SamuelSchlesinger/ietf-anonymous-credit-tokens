@@ -1694,22 +1694,32 @@ follow this structured format:<a href="#section-3.1-5" class="pilcrow">¶</a></p
 domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deployment_id || ":" || version
 </pre><a href="#section-3.1-6" class="pilcrow">¶</a>
 </div>
-<p id="section-3.1-7">Where:
-- <code>organization</code>: A unique identifier for the organization (e.g., "example-corp", "acme-inc")
-- <code>service</code>: The specific service or application name (e.g., "payment-api", "rate-limiter")
-- <code>deployment_id</code>: The deployment environment (e.g., "production", "staging", "us-west-1")
-- <code>version</code>: An ISO 8601 date (YYYY-MM-DD) indicating when parameters were generated<a href="#section-3.1-7" class="pilcrow">¶</a></p>
-<p id="section-3.1-8">Example: <code>"ACT-v1:example-corp:payment-api:production:2024-01-15"</code><a href="#section-3.1-8" class="pilcrow">¶</a></p>
-<p id="section-3.1-9">This structured format ensures:
+<p id="section-3.1-7">Where:<a href="#section-3.1-7" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1-8.1">
+            <p id="section-3.1-8.1.1"><code>organization</code>: A unique identifier for the organization (e.g., "example-corp", "acme-inc")<a href="#section-3.1-8.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-3.1-8.2">
+            <p id="section-3.1-8.2.1"><code>service</code>: The specific service or application name (e.g., "payment-api", "rate-limiter")<a href="#section-3.1-8.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-3.1-8.3">
+            <p id="section-3.1-8.3.1"><code>deployment_id</code>: The deployment environment (e.g., "production", "staging", "us-west-1")<a href="#section-3.1-8.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-3.1-8.4">
+            <p id="section-3.1-8.4.1"><code>version</code>: An ISO 8601 date (YYYY-MM-DD) indicating when parameters were generated<a href="#section-3.1-8.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-3.1-9">Example: <code>"ACT-v1:example-corp:payment-api:production:2024-01-15"</code><a href="#section-3.1-9" class="pilcrow">¶</a></p>
+<p id="section-3.1-10">This structured format ensures:
 1. Protocol identification through the "ACT-v1:" prefix
 2. Organizational namespace isolation
 3. Service-level separation within organizations
 4. Environment isolation (production vs staging)
-5. Version tracking for parameter updates<a href="#section-3.1-9" class="pilcrow">¶</a></p>
-<p id="section-3.1-10">Using generic or unstructured domain separators creates security risks through
+5. Version tracking for parameter updates<a href="#section-3.1-10" class="pilcrow">¶</a></p>
+<p id="section-3.1-11">Using generic or unstructured domain separators creates security risks through
 parameter collision and <span class="bcp14">MUST NOT</span> be used. When parameters need to be updated
 (e.g., for security reasons or protocol upgrades), a new version date <span class="bcp14">MUST</span> be
-used, creating entirely new parameters.<a href="#section-3.1-10" class="pilcrow">¶</a></p>
+used, creating entirely new parameters.<a href="#section-3.1-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="key-generation">
