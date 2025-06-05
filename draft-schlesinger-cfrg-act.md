@@ -215,7 +215,7 @@ GenerateParameters(domain_separator):
     6. return (H1, H2, H3)
 ~~~
 
-The domain_separator MUST be unique for each deployment to ensure cryptographic isolation between different services. Each deployment SHOULD use a domain separator that identifies the specific service, organization, or use case, such as "myservice-act-v1" or "example-corp-credits-v1". Using generic domain separators like "anonymous-credit-tokens-v1" across multiple deployments creates security risks through parameter collision and MUST be avoided in production systems.
+The domain\_separator MUST be unique for each deployment to ensure cryptographic isolation between different services. Each deployment SHOULD use a domain separator that identifies the specific service, organization, or use case, such as "myservice-act-v1" or "example-corp-credits-v1". Using generic domain separators like "anonymous-credit-tokens-v1" across multiple deployments creates security risks through parameter collision and MUST be avoided in production systems.
 
 ## Key Generation
 
