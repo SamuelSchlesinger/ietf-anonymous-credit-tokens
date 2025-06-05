@@ -5,7 +5,7 @@
 CFRG                                                      S. Schlesinger
 Internet-Draft                                                   J. Katz
 Intended status: Informational                                    Google
-Expires: 6 December 2025                                     4 June 2025
+Expires: 7 December 2025                                     5 June 2025
 
 
                         Anonymous Credit Tokens
@@ -63,7 +63,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 6 December 2025.
+   This Internet-Draft will expire on 7 December 2025.
 
 Copyright Notice
 
@@ -100,7 +100,6 @@ Table of Contents
        3.4.3.  Refund Issuance
        3.4.4.  Client: Refund Token Construction
        3.4.5.  Spend Proof Verification
-       3.4.6.  Range Proof Generation
      3.5.  Cryptographic Primitives
        3.5.1.  Protocol Version
        3.5.2.  Hash Function and Fiat-Shamir Transform
@@ -269,6 +268,11 @@ Table of Contents
 
    *  0x prefix: Hexadecimal values
 
+   *  We use additive notation for group operations, so group elements
+      are added together like a + b and exponentiation of a group
+      element by a scalar element is written as a * n, with group
+      element a and scalar n.
+
 2.2.  Data Types
 
    The protocol uses the following data types:
@@ -282,8 +286,9 @@ Table of Contents
 2.3.  Cryptographic Parameters
 
    The protocol uses the Ristretto group [RISTRETTO], which provides a
-   prime-order group abstraction over Curve25519.  The key parameters
-   are:
+   prime-order group abstraction over Curve25519.  It would be easy to
+   adapt this approach to using any other prime order group.  The key
+   parameters are:
 
    *  *q*: The prime order of the group (2^252 +
       27742317777372353535851937790883648493)
@@ -302,13 +307,15 @@ Table of Contents
 Parameters:
   - G: Generator of the Ristretto group
   - H1, H2, H3: Additional generators for commitments
-  - L: Bit length for credit values (configurable, must satisfy L < 252)
+  - L: Bit length for credit values (configurable, must satisfy L <= 252)
 
    The generators H1, H2, and H3 MUST be generated deterministically
    from a nothing-up-my-sleeve value to ensure they are independent of
    each other and of G.  This prevents attacks where malicious
-   parameters could compromise security.  Note that these generators are
-   independent of the choice of L:
+   parameters could compromise security, for instance by the discrete
+   logarithms of H1, H2, or H3 being known, or them having known
+   relationships between each other like H1^10 = H2.  Note that these
+   generators are independent of the choice of L:
 
    GenerateParameters(domain_separator):
      Input:
@@ -360,7 +367,6 @@ Parameters:
    IssueRequest(pk, c):
      Input:
        - pk: Issuer's public key
-       - c: Credit amount (0 <= c < 2^L)
      Output:
        - request: Issuance request
        - state: Client state for later verification
@@ -436,28 +442,26 @@ Parameters:
        - token: Credit token or INVALID
 
      Steps:
-       1. Parse response as (A, e, gamma_resp, z, c_resp)
-       2. Parse state as (k, r, c)
-       3. if c_resp != c:
-       4.     return INVALID
-       5. // Verify proof
-       6. K = H2 * k + H3 * r
-       7. X_A = G + H1 * c + K
-       8. X_G = G * e + pk
-       9. Y_A = A * z - X_A * gamma_resp
-       10. Y_G = G * z - X_G * gamma_resp
-       11. transcript_resp = CreateTranscript("respond")
-       12. AddToTranscript(transcript_resp, c)
-       13. AddToTranscript(transcript_resp, e)
-       14. AddToTranscript(transcript_resp, A)
-       15. AddToTranscript(transcript_resp, X_A)
-       16. AddToTranscript(transcript_resp, X_G)
-       17. AddToTranscript(transcript_resp, Y_A)
-       18. AddToTranscript(transcript_resp, Y_G)
-       19. if GetChallenge(transcript_resp) != gamma_resp:
-       20.     return INVALID
-       21. token = (A, e, k, r, c)
-       22. return token
+       1. Parse request as (K, gamma, k_bar, r_bar)
+       2. Parse response as (A, e, gamma_resp, z, c)
+       3. Parse state as (k, r)
+       4. // Verify proof
+       6. X_A = G + H1 * c + K
+       7. X_G = G * e + pk
+       8. Y_A = A * z + X_A * (-gamma_resp)
+       9. Y_G = G * z + X_G * (-gamma_resp)
+       10. transcript_resp = CreateTranscript("respond")
+       11. AddToTranscript(transcript_resp, c)
+       12. AddToTranscript(transcript_resp, e)
+       13. AddToTranscript(transcript_resp, A)
+       14. AddToTranscript(transcript_resp, X_A)
+       15. AddToTranscript(transcript_resp, X_G)
+       16. AddToTranscript(transcript_resp, Y_A)
+       17. AddToTranscript(transcript_resp, Y_G)
+       18. if GetChallenge(transcript_resp) != gamma_resp:
+       19.     return INVALID
+       20. token = (A, e, k, r, c)
+       21. return token
 
 3.4.  Token Spending
 
@@ -478,77 +482,140 @@ Parameters:
        1. // Randomize the signature
        2. r1, r2 <- Zq
        3. B = G + H1 * c + H2 * k + H3 * r
-       4. A' = A * r1 * r2
+       4. A' = A * (r1 * r2)
        5. B_bar = B * r1
        6. r3 = 1/r1
 
-       7. // Decompose c - s into bits
-       8. m = c - s
-       9. (i[0], ..., i[L-1]) = BitDecompose(m)  // See Section 3.7
+       7. // Generate initial proof components
+       8. c' <- Zq
+       9. r' <- Zq
+       10. e' <- Zq
+       11. r2' <- Zq
+       12. r3' <- Zq
 
-       10. // Create commitments for each bit
-       11. k* <- Zq
-       12. For j = 0 to L-1:
-       13.     s[j] <- Zq
-       14.     if j == 0:
-       15.         Com[j] = H1 * i[j] + H2 * k* + H3 * s[j]
-       16.     else:
-       17.         Com[j] = H1 * i[j] + H3 * s[j]
+       13. // Compute first round messages
+       14. A1 = A' * e' + B_bar * r2'
+       15. A2 = B_bar * r3' + H1 * c' + H3 * r'
 
-       18. // Generate range proof (see Section 3.5.1)
-       19. range_proof = GenerateRangeProof(i, k*, s, Com)
+       16. // Decompose c - s into bits
+       17. m = c - s
+       18. (i[0], ..., i[L-1]) = BitDecompose(m)  // See Section 3.7
 
-       20. // Complete sigma protocol
-       21. K' = Product(Com[j] * 2^j for j in [L])
-       22. // Generate remaining proof components
-       23. c' <- Zq
-       24. r' <- Zq
-       25. e' <- Zq
-       26. r2' <- Zq
-       27. r3' <- Zq
-       28.
-       29. // Compute first round messages
-       30. A1 = A' * e' + B_bar * r2'
-       31. A2 = B_bar * r3' + H1 * c' + H3 * r'
-       32.
-       33. // Prepare range proof challenges
-       34. k' <- Zq
-       35. s' <- Zq
-       36. C = H1 * (-c') + H2 * k' + H3 * s'
-       37.
-       38. // Generate challenge using transcript
-       39. transcript = CreateTranscript("spend")
-       40. AddToTranscript(transcript, k)
-       41. AddToTranscript(transcript, A')
-       42. AddToTranscript(transcript, B_bar)
-       43. AddToTranscript(transcript, A1)
-       44. AddToTranscript(transcript, A2)
-       45. For j = 0 to L-1:
-       46.     AddToTranscript(transcript, Com[j])
-       47. For j = 0 to L-1:
-       48.     AddToTranscript(transcript, range_proof.C'[j][0])
-       49.     AddToTranscript(transcript, range_proof.C'[j][1])
-       50. AddToTranscript(transcript, C)
-       51. gamma = GetChallenge(transcript)
-       52.
-       53. // Compute responses
-       54. e_bar = -gamma * e + e'
-       55. r2_bar = gamma * r2 + r2'
-       56. r3_bar = gamma * r3 + r3'
-       57. c_bar = -gamma * c + c'
-       58. r_bar = -gamma * r + r'
-       59. k_bar = gamma * k* + k'
-       60. r* = Sum(2^j * s[j] for j in [L])
-       61. s_bar = gamma * r* + s'
-       62.
-       63. // Construct proof
-       64. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar,
-       65.                    r2_bar, r3_bar, c_bar, r_bar,
-       66.                    range_proof.w00, range_proof.w01,
-       67.                    range_proof.gamma0, range_proof.z,
-       68.                    k_bar, s_bar)
-       69. state = (k*, r*, m)
-       70. return (proof, state)
+       19. // Create commitments for each bit
+       20. k* <- Zq
+       21. s[0] <- Zq
+       22. Com[0] = H1 * i[0] + H2 * k* + H3 * s[0]
+       23. For j = 1 to L-1:
+       24.     s[j] <- Zq
+       25.     Com[j] = H1 * i[j] + H3 * s[j]
+
+       26. // Initialize range proof arrays
+       27. C = array[L][2]
+       28. C' = array[L][2]
+       29. gamma0 = array[L]
+       30. z = array[L][2]
+
+       31. // Process bit 0 (with k* component)
+       32. C[0][0] = Com[0]
+       33. C[0][1] = Com[0] - H1
+       34. k0' <- Zq
+       35. s_prime = array[L]
+       36. s_prime[0] <- Zq
+       37. gamma0[0] <- Zq
+       38. w0 <- Zq
+       39. z[0] <- Zq
+
+       40. if i[0] == 0:
+       41.     C'[0][0] = H2 * k0' + H3 * s_prime[0]
+       42.     C'[0][1] = H2 * w0 + H3 * z[0] - C[0][1] * gamma0[0]
+       43. else:
+       44.     C'[0][0] = H2 * w0 + H3 * z[0] - C[0][0] * gamma0[0]
+       45.     C'[0][1] = H2 * k0' + H3 * s_prime[0]
+
+       46. // Process remaining bits
+       47. For j = 1 to L-1:
+       48.     C[j][0] = Com[j]
+       49.     C[j][1] = Com[j] - H1
+       50.     s_prime[j] <- Zq
+       51.     gamma0[j] <- Zq
+       52.     z[j] <- Zq
+       53.
+       54.     if i[j] == 0:
+       55.         C'[j][0] = H3 * s_prime[j]
+       56.         C'[j][1] = H3 * z[j] - C[j][1] * gamma0[j]
+       57.     else:
+       58.         C'[j][0] = H3 * z[j] - C[j][0] * gamma0[j]
+       59.         C'[j][1] = H3 * s_prime[j]
+
+       60. // Compute K' commitment
+       61. K' = Sum(Com[j] * 2^j for j in [L])
+       62. r* = Sum(s[j] * 2^j for j in [L])
+       63. k' <- Zq
+       64. s' <- Zq
+       65. C = H1 * (-c') + H2 * k' + H3 * s'
+
+       66. // Generate challenge using transcript
+       67. transcript = CreateTranscript("spend")
+       68. AddToTranscript(transcript, k)
+       69. AddToTranscript(transcript, A')
+       70. AddToTranscript(transcript, B_bar)
+       71. AddToTranscript(transcript, A1)
+       72. AddToTranscript(transcript, A2)
+       73. For j = 0 to L-1:
+       74.     AddToTranscript(transcript, Com[j])
+       75. For j = 0 to L-1:
+       76.     AddToTranscript(transcript, C'[j][0])
+       77.     AddToTranscript(transcript, C'[j][1])
+       78. AddToTranscript(transcript, C)
+       79. gamma = GetChallenge(transcript)
+
+       80. // Compute responses
+       81. e_bar = -gamma * e + e'
+       82. r2_bar = gamma * r2 + r2'
+       83. r3_bar = gamma * r3 + r3'
+       84. c_bar = -gamma * c + c'
+       85. r_bar = -gamma * r + r'
+
+       86. // Complete range proof responses
+       87. z_final = array[L][2]
+       88. gamma0_final = array[L]
+       89.
+       90. // For bit 0
+       91. if i[0] == 0:
+       92.     gamma0_final[0] = gamma0[0]
+       93.     gamma1 = gamma - gamma0[0]
+       94.     w00 = gamma0_final[0] * k* + k0'
+       95.     w01 = w0
+       96.     z_final[0][0] = gamma0_final[0] * s[0] + s_prime[0]
+       97.     z_final[0][1] = z[0]
+       98. else:
+       99.     gamma0_final[0] = gamma - gamma0[0]
+       100.     w00 = w0
+       101.     w01 = gamma0_final[0] * k* + k0'
+       102.     z_final[0][0] = z[0]
+       103.     z_final[0][1] = gamma0_final[0] * s[0] + s_prime[0]
+
+       104. // For remaining bits
+       105. For j = 1 to L-1:
+       106.     if i[j] == 0:
+       107.         gamma0_final[j] = gamma0[j]
+       108.         z_final[j][0] = gamma0_final[j] * s[j] + s_prime[j]
+       109.         z_final[j][1] = z[j]
+       110.     else:
+       111.         gamma0_final[j] = gamma - gamma0[j]
+       112.         z_final[j][0] = z[j]
+       113.         z_final[j][1] = gamma0_final[j] * s[j] + s_prime[j]
+
+       114. k_bar = gamma * k* + k'
+       115. s_bar = gamma * r* + s'
+
+       116. // Construct proof
+       117. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar,
+       118.                    r2_bar, r3_bar, c_bar, r_bar,
+       119.                    w00, w01, gamma0_final, z_final,
+       120.                    k_bar, s_bar)
+       121. state = (k*, r*, m)
+       122. return (proof, state)
 
 3.4.2.  Issuer: Spend Verification and Refund
 
@@ -565,12 +632,12 @@ Parameters:
        3. if k in used_nullifiers:
        4.     return INVALID
        5. // Verify the proof (see Section 3.5.2)
-       6. if not VerifySpendProof(pk, proof):
+       6. if not VerifySpendProof(sk, proof):
        7.     return INVALID
        8. // Record nullifier
        9. used_nullifiers.add(k)
        10. // Issue refund for remaining balance
-       11. K' = Product(Com[j] * 2^j for j in [L])
+       11. K' = Sum(Com[j] * 2^j for j in [L])
        12. refund = IssueRefund(sk, K')
        13. return refund
 
@@ -632,13 +699,13 @@ Parameters:
        2. Parse state as (k*, r*, m)
 
        3. // Reconstruct commitment
-       4. K' = Product(spend_proof.Com[j] * 2^j for j in [L])
+       4. K' = Sum(spend_proof.Com[j] * 2^j for j in [L])
        5. X_A* = G + K'
        6. X_G = G * e* + pk
 
        7. // Verify proof
-       8. Y_A = A* * z - X_A* * gamma
-       9. Y_G = G * z - X_G * gamma
+       8. Y_A = A* * z + X_A* * (-gamma)
+       9. Y_G = G * z + X_G * (-gamma)
 
        10. // Check challenge using transcript
        11. transcript = CreateTranscript("refund")
@@ -659,9 +726,9 @@ Parameters:
 
    The issuer verifies a spend proof as follows:
 
-VerifySpendProof(pk, proof):
+VerifySpendProof(sk, proof):
   Input:
-    - pk: Issuer's public key
+    - sk: Issuer's private key
     - proof: Spend proof from client
   Output:
     - valid: Boolean indicating if proof is valid
@@ -676,133 +743,58 @@ VerifySpendProof(pk, proof):
     4.     return false
 
     5. // Compute issuer's view of signature
-    6. A_bar = A' * sk  // This requires the issuer's private key
-    7. H1_prime = G + H2 * k  // Spending amount s is added to this later
+    6. A_bar = A' * sk
+    7. H1_prime = G + H2 * k
 
     8. // Verify sigma protocol
     9. A1 = A' * e_bar + B_bar * r2_bar - A_bar * gamma
     10. A2 = B_bar * r3_bar + H1 * c_bar + H3 * r_bar - H1_prime * gamma
 
-    11. // Verify range proof
-    12. For j = 0 to L-1:
-    13.     gamma1[j] = gamma - gamma0[j]
-    14.     C[j][0] = Com[j]
-    15.     C[j][1] = Com[j] / H1
+    11. // Initialize arrays for range proof verification
+    12. gamma1 = array[L]
+    13. C = array[L][2]
+    14. C' = array[L][2]
 
-    16. // Verify bit 0 (with k* component)
-    17. C'[0][0] = H2 * w00 + H3 * z[0][0] - C[0][0] * gamma0[0]
-    18. C'[0][1] = H2 * w01 + H3 * z[0][1] - C[0][1] * gamma1[0]
+    15. // Process bit 0 (with k* component)
+    16. gamma1[0] = gamma - gamma0[0]
+    17. C[0][0] = Com[0]
+    18. C[0][1] = Com[0] - H1
+    19. C'[0][0] = H2 * w00 + H3 * z[0][0] - C[0][0] * gamma0[0]
+    20. C'[0][1] = H2 * w01 + H3 * z[0][1] - C[0][1] * gamma1[0]
 
-    19. // Verify remaining bits
-    20. For j = 1 to L-1:
-    21.     C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
-    22.     C'[j][1] = H3 * z[j][1] - C[j][1] * gamma1[j]
+    21. // Verify remaining bits
+    22. For j = 1 to L-1:
+    23.     gamma1[j] = gamma - gamma0[j]
+    24.     C[j][0] = Com[j]
+    25.     C[j][1] = Com[j] - H1
+    26.     C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
+    27.     C'[j][1] = H3 * z[j][1] - C[j][1] * gamma1[j]
 
-    23. // Verify final commitment
-    24. K' = Product(Com[j] * 2^j for j in [L])
-    25. Com_total = H1 * s + K'
-    26. C_final = H1 * (-c_bar) + H2 * k_bar + H3 * s_bar - Com_total * gamma
+    28. // Verify final commitment
+    29. K' = Sum(Com[j] * 2^j for j in [L])
+    30. Com_total = H1 * s + K'
+    31. C_final = H1 * (-c_bar) + H2 * k_bar + H3 * s_bar - Com_total * gamma
 
-    27. // Recompute challenge using transcript
-    28. transcript = CreateTranscript("spend")
-    29. AddToTranscript(transcript, k)
-    30. AddToTranscript(transcript, A')
-    31. AddToTranscript(transcript, B_bar)
-    32. AddToTranscript(transcript, A1)
-    33. AddToTranscript(transcript, A2)
-    34. For j = 0 to L-1:
-    35.     AddToTranscript(transcript, Com[j])
-    36. For j = 0 to L-1:
-    37.     AddToTranscript(transcript, C'[j][0])
-    38.     AddToTranscript(transcript, C'[j][1])
-    39. AddToTranscript(transcript, C_final)
-    40. gamma_check = GetChallenge(transcript)
+    32. // Recompute challenge using transcript
+    33. transcript = CreateTranscript("spend")
+    34. AddToTranscript(transcript, k)
+    35. AddToTranscript(transcript, A')
+    36. AddToTranscript(transcript, B_bar)
+    37. AddToTranscript(transcript, A1)
+    38. AddToTranscript(transcript, A2)
+    39. For j = 0 to L-1:
+    40.     AddToTranscript(transcript, Com[j])
+    41. For j = 0 to L-1:
+    42.     AddToTranscript(transcript, C'[j][0])
+    43.     AddToTranscript(transcript, C'[j][1])
+    44. AddToTranscript(transcript, C_final)
+    45. gamma_check = GetChallenge(transcript)
 
-    41. // Verify challenge matches
-    42. if gamma != gamma_check:
-    43.     return false
+    46. // Verify challenge matches
+    47. if gamma != gamma_check:
+    48.     return false
 
-    44. return true
-
-3.4.6.  Range Proof Generation
-
-   The range proof demonstrates that c - s >= 0 without revealing the
-   actual values.  It uses a binary decomposition and proves each bit is
-   either 0 or 1:
-
-   GenerateRangeProof(bits, k*, s, Com):
-     Input:
-       - bits: Binary decomposition of c - s
-       - k*, s: Randomness values
-       - Com: Commitments to each bit
-     Output:
-       - range_proof: Zero-knowledge range proof
-
-     Steps:
-       1. // Initialize arrays for proof components
-       2. C = array[L][2]
-       3. C' = array[L][2]
-       4. gamma0 = array[L]
-       5. w = array[L]
-       6. z = array[L][2]
-
-       7. // Process bit 0 (includes k*)
-       8. C[0][0] = Com[0]
-       9. C[0][1] = Com[0] / H1
-       10. k0' <- Zq
-       11. s0' <- Zq
-       12. gamma0[0] <- Zq
-       13. w[0] <- Zq
-       14. z[0][0] <- Zq
-       15. z[0][1] <- Zq
-       16.
-       17. if bits[0] == 0:
-       18.     C'[0][0] = H2 * k0' + H3 * s0'
-       19.     C'[0][1] = H2 * w[0] + H3 * z[0][1] - C[0][1] * gamma0[0]
-       20. else:
-       21.     C'[0][0] = H2 * w[0] + H3 * z[0][0] - C[0][0] * gamma0[0]
-       22.     C'[0][1] = H2 * k0' + H3 * s0'
-
-       23. // Process remaining bits (no k* component)
-       24. For j = 1 to L-1:
-       25.     C[j][0] = Com[j]
-       26.     C[j][1] = Com[j] / H1
-       27.     sj' <- Zq
-       28.     gamma0[j] <- Zq
-       29.     z[j][0] <- Zq
-       30.     z[j][1] <- Zq
-       31.
-       32.     if bits[j] == 0:
-       33.         C'[j][0] = H3 * sj'
-       34.         C'[j][1] = H3 * z[j][1] - C[j][1] * gamma0[j]
-       35.     else:
-       36.         C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
-       37.         C'[j][1] = H3 * sj'
-
-       38. // After challenge gamma is computed (externally):
-       39. // Complete the proof with proper response values
-       40.
-       41. // For bit 0:
-       42. if bits[0] == 0:
-       43.     gamma0[0] = gamma - gamma0[0]
-       44.     w00 = gamma0[0] * k* + k0'
-       45.     w01 = w[0]
-       46.     z[0][0] = gamma0[0] * s[0] + s0'
-       47. else:
-       48.     w00 = w[0]
-       49.     w01 = (gamma - gamma0[0]) * k* + k0'
-       50.     z[0][1] = (gamma - gamma0[0]) * s[0] + s0'
-
-       51. // For remaining bits:
-       52. For j = 1 to L-1:
-       53.     if bits[j] == 0:
-       54.         gamma0[j] = gamma - gamma0[j]
-       55.         z[j][0] = gamma0[j] * s[j] + sj'
-       56.     else:
-       57.         z[j][1] = (gamma - gamma0[j]) * s[j] + sj'
-
-       58. range_proof = (C', w00, w01, gamma0, z)
-       59. return range_proof
+    49. return true
 
 3.5.  Cryptographic Primitives
 
@@ -816,13 +808,6 @@ VerifySpendProof(pk, proof):
    implementations for interoperability.  The curve specification is
    included to prevent cross-curve attacks and ensure implementations
    using different curves cannot accidentally interact.
-
-   Note: The reference implementation currently uses version "v0.2.0"
-   while this specification defines version "v1.0".  Implementations
-   MUST use the exact version string for the protocol version they
-   implement.  Different version strings create incompatible protocols,
-   which is intentional to prevent version downgrade attacks and ensure
-   implementations are explicitly compatible.
 
 3.5.2.  Hash Function and Fiat-Shamir Transform
 

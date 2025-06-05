@@ -1056,7 +1056,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Schlesinger &amp; Katz</td>
-<td class="center">Expires 6 December 2025</td>
+<td class="center">Expires 7 December 2025</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1069,12 +1069,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-schlesinger-cfrg-act-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-06-04" class="published">4 June 2025</time>
+<time datetime="2025-06-05" class="published">5 June 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-12-06">6 December 2025</time></dd>
+<dd class="expires"><time datetime="2025-12-07">7 December 2025</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1130,7 +1130,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 6 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 7 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1227,9 +1227,6 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.5">
                     <p id="section-toc.1-1.3.2.4.2.5.1"><a href="#section-3.4.5" class="auto internal xref">3.4.5</a>.  <a href="#name-spend-proof-verification" class="internal xref">Spend Proof Verification</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4.2.6">
-                    <p id="section-toc.1-1.3.2.4.2.6.1"><a href="#section-3.4.6" class="auto internal xref">3.4.6</a>.  <a href="#name-range-proof-generation" class="internal xref">Range Proof Generation</a></p>
 </li>
                 </ul>
 </li>
@@ -1547,6 +1544,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <li class="normal" id="section-2.1-2.6">
             <p id="section-2.1-2.6.1"><code>0x</code> prefix: Hexadecimal values<a href="#section-2.1-2.6.1" class="pilcrow">¶</a></p>
 </li>
+          <li class="normal" id="section-2.1-2.7">
+            <p id="section-2.1-2.7.1">We use additive notation for group operations, so group elements are added together like <code>a + b</code> and exponentiation of a group element by a scalar element is written as <code>a * n</code>, with group element <code>a</code> and scalar <code>n</code>.<a href="#section-2.1-2.7.1" class="pilcrow">¶</a></p>
+</li>
         </ul>
 </section>
 </div>
@@ -1574,7 +1574,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-cryptographic-parameters">
 <a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-cryptographic-parameters" class="section-name selfRef">Cryptographic Parameters</a>
         </h3>
-<p id="section-2.3-1">The protocol uses the Ristretto group <span>[<a href="#RISTRETTO" class="cite xref">RISTRETTO</a>]</span>, which provides a prime-order group abstraction over Curve25519. The key parameters are:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
+<p id="section-2.3-1">The protocol uses the Ristretto group <span>[<a href="#RISTRETTO" class="cite xref">RISTRETTO</a>]</span>, which provides a prime-order group abstraction over Curve25519. It would be easy to adapt this approach to using any other prime order group. The key parameters are:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-2.3-2.1">
             <p id="section-2.3-2.1.1"><strong>q</strong>: The prime order of the group (2^252 + 27742317777372353535851937790883648493)<a href="#section-2.3-2.1.1" class="pilcrow">¶</a></p>
@@ -1606,10 +1606,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 Parameters:
   - G: Generator of the Ristretto group
   - H1, H2, H3: Additional generators for commitments
-  - L: Bit length for credit values (configurable, must satisfy L &lt; 252)
+  - L: Bit length for credit values (configurable, must satisfy L &lt;= 252)
 </pre><a href="#section-3.1-2" class="pilcrow">¶</a>
 </div>
-<p id="section-3.1-3">The generators H1, H2, and H3 <span class="bcp14">MUST</span> be generated deterministically from a nothing-up-my-sleeve value to ensure they are independent of each other and of G. This prevents attacks where malicious parameters could compromise security. Note that these generators are independent of the choice of L:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-3">The generators H1, H2, and H3 <span class="bcp14">MUST</span> be generated deterministically from a nothing-up-my-sleeve value to ensure they are independent of each other and of G. This prevents attacks where malicious parameters could compromise security, for instance by the discrete logarithms of <code>H1</code>, <code>H2</code>, or <code>H3</code> being known, or them having known relationships between each other like <code>H1^10 = H2</code>. Note that these generators are independent of the choice of L:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.1-4">
 <pre>
 GenerateParameters(domain_separator):
@@ -1670,7 +1670,6 @@ KeyGen():
 IssueRequest(pk, c):
   Input:
     - pk: Issuer's public key
-    - c: Credit amount (0 &lt;= c &lt; 2^L)
   Output:
     - request: Issuance request
     - state: Client state for later verification
@@ -1762,28 +1761,26 @@ VerifyIssuance(pk, request, response, state):
     - token: Credit token or INVALID
 
   Steps:
-    1. Parse response as (A, e, gamma_resp, z, c_resp)
-    2. Parse state as (k, r, c)
-    3. if c_resp != c:
-    4.     return INVALID
-    5. // Verify proof
-    6. K = H2 * k + H3 * r
-    7. X_A = G + H1 * c + K
-    8. X_G = G * e + pk
-    9. Y_A = A * z - X_A * gamma_resp
-    10. Y_G = G * z - X_G * gamma_resp
-    11. transcript_resp = CreateTranscript("respond")
-    12. AddToTranscript(transcript_resp, c)
-    13. AddToTranscript(transcript_resp, e)
-    14. AddToTranscript(transcript_resp, A)
-    15. AddToTranscript(transcript_resp, X_A)
-    16. AddToTranscript(transcript_resp, X_G)
-    17. AddToTranscript(transcript_resp, Y_A)
-    18. AddToTranscript(transcript_resp, Y_G)
-    19. if GetChallenge(transcript_resp) != gamma_resp:
-    20.     return INVALID
-    21. token = (A, e, k, r, c)
-    22. return token
+    1. Parse request as (K, gamma, k_bar, r_bar)
+    2. Parse response as (A, e, gamma_resp, z, c)
+    3. Parse state as (k, r)
+    4. // Verify proof
+    6. X_A = G + H1 * c + K
+    7. X_G = G * e + pk
+    8. Y_A = A * z + X_A * (-gamma_resp)
+    9. Y_G = G * z + X_G * (-gamma_resp)
+    10. transcript_resp = CreateTranscript("respond")
+    11. AddToTranscript(transcript_resp, c)
+    12. AddToTranscript(transcript_resp, e)
+    13. AddToTranscript(transcript_resp, A)
+    14. AddToTranscript(transcript_resp, X_A)
+    15. AddToTranscript(transcript_resp, X_G)
+    16. AddToTranscript(transcript_resp, Y_A)
+    17. AddToTranscript(transcript_resp, Y_G)
+    18. if GetChallenge(transcript_resp) != gamma_resp:
+    19.     return INVALID
+    20. token = (A, e, k, r, c)
+    21. return token
 </pre><a href="#section-3.3.3-1" class="pilcrow">¶</a>
 </div>
 </section>
@@ -1815,77 +1812,140 @@ ProveSpend(token, s):
     1. // Randomize the signature
     2. r1, r2 &lt;- Zq
     3. B = G + H1 * c + H2 * k + H3 * r
-    4. A' = A * r1 * r2
+    4. A' = A * (r1 * r2)
     5. B_bar = B * r1
     6. r3 = 1/r1
 
-    7. // Decompose c - s into bits
-    8. m = c - s
-    9. (i[0], ..., i[L-1]) = BitDecompose(m)  // See Section 3.7
+    7. // Generate initial proof components
+    8. c' &lt;- Zq
+    9. r' &lt;- Zq
+    10. e' &lt;- Zq
+    11. r2' &lt;- Zq
+    12. r3' &lt;- Zq
 
-    10. // Create commitments for each bit
-    11. k* &lt;- Zq
-    12. For j = 0 to L-1:
-    13.     s[j] &lt;- Zq
-    14.     if j == 0:
-    15.         Com[j] = H1 * i[j] + H2 * k* + H3 * s[j]
-    16.     else:
-    17.         Com[j] = H1 * i[j] + H3 * s[j]
+    13. // Compute first round messages
+    14. A1 = A' * e' + B_bar * r2'
+    15. A2 = B_bar * r3' + H1 * c' + H3 * r'
 
-    18. // Generate range proof (see Section 3.5.1)
-    19. range_proof = GenerateRangeProof(i, k*, s, Com)
+    16. // Decompose c - s into bits
+    17. m = c - s
+    18. (i[0], ..., i[L-1]) = BitDecompose(m)  // See Section 3.7
 
-    20. // Complete sigma protocol
-    21. K' = Product(Com[j] * 2^j for j in [L])
-    22. // Generate remaining proof components
-    23. c' &lt;- Zq
-    24. r' &lt;- Zq
-    25. e' &lt;- Zq
-    26. r2' &lt;- Zq
-    27. r3' &lt;- Zq
-    28.
-    29. // Compute first round messages
-    30. A1 = A' * e' + B_bar * r2'
-    31. A2 = B_bar * r3' + H1 * c' + H3 * r'
-    32.
-    33. // Prepare range proof challenges
-    34. k' &lt;- Zq
-    35. s' &lt;- Zq
-    36. C = H1 * (-c') + H2 * k' + H3 * s'
-    37.
-    38. // Generate challenge using transcript
-    39. transcript = CreateTranscript("spend")
-    40. AddToTranscript(transcript, k)
-    41. AddToTranscript(transcript, A')
-    42. AddToTranscript(transcript, B_bar)
-    43. AddToTranscript(transcript, A1)
-    44. AddToTranscript(transcript, A2)
-    45. For j = 0 to L-1:
-    46.     AddToTranscript(transcript, Com[j])
-    47. For j = 0 to L-1:
-    48.     AddToTranscript(transcript, range_proof.C'[j][0])
-    49.     AddToTranscript(transcript, range_proof.C'[j][1])
-    50. AddToTranscript(transcript, C)
-    51. gamma = GetChallenge(transcript)
-    52.
-    53. // Compute responses
-    54. e_bar = -gamma * e + e'
-    55. r2_bar = gamma * r2 + r2'
-    56. r3_bar = gamma * r3 + r3'
-    57. c_bar = -gamma * c + c'
-    58. r_bar = -gamma * r + r'
-    59. k_bar = gamma * k* + k'
-    60. r* = Sum(2^j * s[j] for j in [L])
-    61. s_bar = gamma * r* + s'
-    62.
-    63. // Construct proof
-    64. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar,
-    65.                    r2_bar, r3_bar, c_bar, r_bar,
-    66.                    range_proof.w00, range_proof.w01,
-    67.                    range_proof.gamma0, range_proof.z,
-    68.                    k_bar, s_bar)
-    69. state = (k*, r*, m)
-    70. return (proof, state)
+    19. // Create commitments for each bit
+    20. k* &lt;- Zq
+    21. s[0] &lt;- Zq
+    22. Com[0] = H1 * i[0] + H2 * k* + H3 * s[0]
+    23. For j = 1 to L-1:
+    24.     s[j] &lt;- Zq
+    25.     Com[j] = H1 * i[j] + H3 * s[j]
+
+    26. // Initialize range proof arrays
+    27. C = array[L][2]
+    28. C' = array[L][2]
+    29. gamma0 = array[L]
+    30. z = array[L][2]
+
+    31. // Process bit 0 (with k* component)
+    32. C[0][0] = Com[0]
+    33. C[0][1] = Com[0] - H1
+    34. k0' &lt;- Zq
+    35. s_prime = array[L]
+    36. s_prime[0] &lt;- Zq
+    37. gamma0[0] &lt;- Zq
+    38. w0 &lt;- Zq
+    39. z[0] &lt;- Zq
+
+    40. if i[0] == 0:
+    41.     C'[0][0] = H2 * k0' + H3 * s_prime[0]
+    42.     C'[0][1] = H2 * w0 + H3 * z[0] - C[0][1] * gamma0[0]
+    43. else:
+    44.     C'[0][0] = H2 * w0 + H3 * z[0] - C[0][0] * gamma0[0]
+    45.     C'[0][1] = H2 * k0' + H3 * s_prime[0]
+
+    46. // Process remaining bits
+    47. For j = 1 to L-1:
+    48.     C[j][0] = Com[j]
+    49.     C[j][1] = Com[j] - H1
+    50.     s_prime[j] &lt;- Zq
+    51.     gamma0[j] &lt;- Zq
+    52.     z[j] &lt;- Zq
+    53.
+    54.     if i[j] == 0:
+    55.         C'[j][0] = H3 * s_prime[j]
+    56.         C'[j][1] = H3 * z[j] - C[j][1] * gamma0[j]
+    57.     else:
+    58.         C'[j][0] = H3 * z[j] - C[j][0] * gamma0[j]
+    59.         C'[j][1] = H3 * s_prime[j]
+
+    60. // Compute K' commitment
+    61. K' = Sum(Com[j] * 2^j for j in [L])
+    62. r* = Sum(s[j] * 2^j for j in [L])
+    63. k' &lt;- Zq
+    64. s' &lt;- Zq
+    65. C = H1 * (-c') + H2 * k' + H3 * s'
+
+    66. // Generate challenge using transcript
+    67. transcript = CreateTranscript("spend")
+    68. AddToTranscript(transcript, k)
+    69. AddToTranscript(transcript, A')
+    70. AddToTranscript(transcript, B_bar)
+    71. AddToTranscript(transcript, A1)
+    72. AddToTranscript(transcript, A2)
+    73. For j = 0 to L-1:
+    74.     AddToTranscript(transcript, Com[j])
+    75. For j = 0 to L-1:
+    76.     AddToTranscript(transcript, C'[j][0])
+    77.     AddToTranscript(transcript, C'[j][1])
+    78. AddToTranscript(transcript, C)
+    79. gamma = GetChallenge(transcript)
+
+    80. // Compute responses
+    81. e_bar = -gamma * e + e'
+    82. r2_bar = gamma * r2 + r2'
+    83. r3_bar = gamma * r3 + r3'
+    84. c_bar = -gamma * c + c'
+    85. r_bar = -gamma * r + r'
+
+    86. // Complete range proof responses
+    87. z_final = array[L][2]
+    88. gamma0_final = array[L]
+    89.
+    90. // For bit 0
+    91. if i[0] == 0:
+    92.     gamma0_final[0] = gamma0[0]
+    93.     gamma1 = gamma - gamma0[0]
+    94.     w00 = gamma0_final[0] * k* + k0'
+    95.     w01 = w0
+    96.     z_final[0][0] = gamma0_final[0] * s[0] + s_prime[0]
+    97.     z_final[0][1] = z[0]
+    98. else:
+    99.     gamma0_final[0] = gamma - gamma0[0]
+    100.     w00 = w0
+    101.     w01 = gamma0_final[0] * k* + k0'
+    102.     z_final[0][0] = z[0]
+    103.     z_final[0][1] = gamma0_final[0] * s[0] + s_prime[0]
+
+    104. // For remaining bits
+    105. For j = 1 to L-1:
+    106.     if i[j] == 0:
+    107.         gamma0_final[j] = gamma0[j]
+    108.         z_final[j][0] = gamma0_final[j] * s[j] + s_prime[j]
+    109.         z_final[j][1] = z[j]
+    110.     else:
+    111.         gamma0_final[j] = gamma - gamma0[j]
+    112.         z_final[j][0] = z[j]
+    113.         z_final[j][1] = gamma0_final[j] * s[j] + s_prime[j]
+
+    114. k_bar = gamma * k* + k'
+    115. s_bar = gamma * r* + s'
+
+    116. // Construct proof
+    117. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar,
+    118.                    r2_bar, r3_bar, c_bar, r_bar,
+    119.                    w00, w01, gamma0_final, z_final,
+    120.                    k_bar, s_bar)
+    121. state = (k*, r*, m)
+    122. return (proof, state)
 </pre><a href="#section-3.4.1-1" class="pilcrow">¶</a>
 </div>
 </section>
@@ -1910,12 +1970,12 @@ VerifyAndRefund(sk, proof):
     3. if k in used_nullifiers:
     4.     return INVALID
     5. // Verify the proof (see Section 3.5.2)
-    6. if not VerifySpendProof(pk, proof):
+    6. if not VerifySpendProof(sk, proof):
     7.     return INVALID
     8. // Record nullifier
     9. used_nullifiers.add(k)
     10. // Issue refund for remaining balance
-    11. K' = Product(Com[j] * 2^j for j in [L])
+    11. K' = Sum(Com[j] * 2^j for j in [L])
     12. refund = IssueRefund(sk, K')
     13. return refund
 </pre><a href="#section-3.4.2-1" class="pilcrow">¶</a>
@@ -1990,13 +2050,13 @@ ConstructRefundToken(pk, spend_proof, refund, state):
     2. Parse state as (k*, r*, m)
 
     3. // Reconstruct commitment
-    4. K' = Product(spend_proof.Com[j] * 2^j for j in [L])
+    4. K' = Sum(spend_proof.Com[j] * 2^j for j in [L])
     5. X_A* = G + K'
     6. X_G = G * e* + pk
 
     7. // Verify proof
-    8. Y_A = A* * z - X_A* * gamma
-    9. Y_G = G * z - X_G * gamma
+    8. Y_A = A* * z + X_A* * (-gamma)
+    9. Y_G = G * z + X_G * (-gamma)
 
     10. // Check challenge using transcript
     11. transcript = CreateTranscript("refund")
@@ -2024,9 +2084,9 @@ ConstructRefundToken(pk, spend_proof, refund, state):
 <p id="section-3.4.5-1">The issuer verifies a spend proof as follows:<a href="#section-3.4.5-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.4.5-2">
 <pre>
-VerifySpendProof(pk, proof):
+VerifySpendProof(sk, proof):
   Input:
-    - pk: Issuer's public key
+    - sk: Issuer's private key
     - proof: Spend proof from client
   Output:
     - valid: Boolean indicating if proof is valid
@@ -2041,139 +2101,59 @@ VerifySpendProof(pk, proof):
     4.     return false
 
     5. // Compute issuer's view of signature
-    6. A_bar = A' * sk  // This requires the issuer's private key
-    7. H1_prime = G + H2 * k  // Spending amount s is added to this later
+    6. A_bar = A' * sk
+    7. H1_prime = G + H2 * k
 
     8. // Verify sigma protocol
     9. A1 = A' * e_bar + B_bar * r2_bar - A_bar * gamma
     10. A2 = B_bar * r3_bar + H1 * c_bar + H3 * r_bar - H1_prime * gamma
 
-    11. // Verify range proof
-    12. For j = 0 to L-1:
-    13.     gamma1[j] = gamma - gamma0[j]
-    14.     C[j][0] = Com[j]
-    15.     C[j][1] = Com[j] / H1
+    11. // Initialize arrays for range proof verification
+    12. gamma1 = array[L]
+    13. C = array[L][2]
+    14. C' = array[L][2]
 
-    16. // Verify bit 0 (with k* component)
-    17. C'[0][0] = H2 * w00 + H3 * z[0][0] - C[0][0] * gamma0[0]
-    18. C'[0][1] = H2 * w01 + H3 * z[0][1] - C[0][1] * gamma1[0]
+    15. // Process bit 0 (with k* component)
+    16. gamma1[0] = gamma - gamma0[0]
+    17. C[0][0] = Com[0]
+    18. C[0][1] = Com[0] - H1
+    19. C'[0][0] = H2 * w00 + H3 * z[0][0] - C[0][0] * gamma0[0]
+    20. C'[0][1] = H2 * w01 + H3 * z[0][1] - C[0][1] * gamma1[0]
 
-    19. // Verify remaining bits
-    20. For j = 1 to L-1:
-    21.     C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
-    22.     C'[j][1] = H3 * z[j][1] - C[j][1] * gamma1[j]
+    21. // Verify remaining bits
+    22. For j = 1 to L-1:
+    23.     gamma1[j] = gamma - gamma0[j]
+    24.     C[j][0] = Com[j]
+    25.     C[j][1] = Com[j] - H1
+    26.     C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
+    27.     C'[j][1] = H3 * z[j][1] - C[j][1] * gamma1[j]
 
-    23. // Verify final commitment
-    24. K' = Product(Com[j] * 2^j for j in [L])
-    25. Com_total = H1 * s + K'
-    26. C_final = H1 * (-c_bar) + H2 * k_bar + H3 * s_bar - Com_total * gamma
+    28. // Verify final commitment
+    29. K' = Sum(Com[j] * 2^j for j in [L])
+    30. Com_total = H1 * s + K'
+    31. C_final = H1 * (-c_bar) + H2 * k_bar + H3 * s_bar - Com_total * gamma
 
-    27. // Recompute challenge using transcript
-    28. transcript = CreateTranscript("spend")
-    29. AddToTranscript(transcript, k)
-    30. AddToTranscript(transcript, A')
-    31. AddToTranscript(transcript, B_bar)
-    32. AddToTranscript(transcript, A1)
-    33. AddToTranscript(transcript, A2)
-    34. For j = 0 to L-1:
-    35.     AddToTranscript(transcript, Com[j])
-    36. For j = 0 to L-1:
-    37.     AddToTranscript(transcript, C'[j][0])
-    38.     AddToTranscript(transcript, C'[j][1])
-    39. AddToTranscript(transcript, C_final)
-    40. gamma_check = GetChallenge(transcript)
+    32. // Recompute challenge using transcript
+    33. transcript = CreateTranscript("spend")
+    34. AddToTranscript(transcript, k)
+    35. AddToTranscript(transcript, A')
+    36. AddToTranscript(transcript, B_bar)
+    37. AddToTranscript(transcript, A1)
+    38. AddToTranscript(transcript, A2)
+    39. For j = 0 to L-1:
+    40.     AddToTranscript(transcript, Com[j])
+    41. For j = 0 to L-1:
+    42.     AddToTranscript(transcript, C'[j][0])
+    43.     AddToTranscript(transcript, C'[j][1])
+    44. AddToTranscript(transcript, C_final)
+    45. gamma_check = GetChallenge(transcript)
 
-    41. // Verify challenge matches
-    42. if gamma != gamma_check:
-    43.     return false
+    46. // Verify challenge matches
+    47. if gamma != gamma_check:
+    48.     return false
 
-    44. return true
+    49. return true
 </pre><a href="#section-3.4.5-2" class="pilcrow">¶</a>
-</div>
-</section>
-</div>
-<div id="range-proof">
-<section id="section-3.4.6">
-          <h4 id="name-range-proof-generation">
-<a href="#section-3.4.6" class="section-number selfRef">3.4.6. </a><a href="#name-range-proof-generation" class="section-name selfRef">Range Proof Generation</a>
-          </h4>
-<p id="section-3.4.6-1">The range proof demonstrates that c - s &gt;= 0 without revealing the actual values. It uses a binary decomposition and proves each bit is either 0 or 1:<a href="#section-3.4.6-1" class="pilcrow">¶</a></p>
-<div class="alignLeft art-text artwork" id="section-3.4.6-2">
-<pre>
-GenerateRangeProof(bits, k*, s, Com):
-  Input:
-    - bits: Binary decomposition of c - s
-    - k*, s: Randomness values
-    - Com: Commitments to each bit
-  Output:
-    - range_proof: Zero-knowledge range proof
-
-  Steps:
-    1. // Initialize arrays for proof components
-    2. C = array[L][2]
-    3. C' = array[L][2]
-    4. gamma0 = array[L]
-    5. w = array[L]
-    6. z = array[L][2]
-
-    7. // Process bit 0 (includes k*)
-    8. C[0][0] = Com[0]
-    9. C[0][1] = Com[0] / H1
-    10. k0' &lt;- Zq
-    11. s0' &lt;- Zq
-    12. gamma0[0] &lt;- Zq
-    13. w[0] &lt;- Zq
-    14. z[0][0] &lt;- Zq
-    15. z[0][1] &lt;- Zq
-    16.
-    17. if bits[0] == 0:
-    18.     C'[0][0] = H2 * k0' + H3 * s0'
-    19.     C'[0][1] = H2 * w[0] + H3 * z[0][1] - C[0][1] * gamma0[0]
-    20. else:
-    21.     C'[0][0] = H2 * w[0] + H3 * z[0][0] - C[0][0] * gamma0[0]
-    22.     C'[0][1] = H2 * k0' + H3 * s0'
-
-    23. // Process remaining bits (no k* component)
-    24. For j = 1 to L-1:
-    25.     C[j][0] = Com[j]
-    26.     C[j][1] = Com[j] / H1
-    27.     sj' &lt;- Zq
-    28.     gamma0[j] &lt;- Zq
-    29.     z[j][0] &lt;- Zq
-    30.     z[j][1] &lt;- Zq
-    31.
-    32.     if bits[j] == 0:
-    33.         C'[j][0] = H3 * sj'
-    34.         C'[j][1] = H3 * z[j][1] - C[j][1] * gamma0[j]
-    35.     else:
-    36.         C'[j][0] = H3 * z[j][0] - C[j][0] * gamma0[j]
-    37.         C'[j][1] = H3 * sj'
-
-    38. // After challenge gamma is computed (externally):
-    39. // Complete the proof with proper response values
-    40.
-    41. // For bit 0:
-    42. if bits[0] == 0:
-    43.     gamma0[0] = gamma - gamma0[0]
-    44.     w00 = gamma0[0] * k* + k0'
-    45.     w01 = w[0]
-    46.     z[0][0] = gamma0[0] * s[0] + s0'
-    47. else:
-    48.     w00 = w[0]
-    49.     w01 = (gamma - gamma0[0]) * k* + k0'
-    50.     z[0][1] = (gamma - gamma0[0]) * s[0] + s0'
-
-    51. // For remaining bits:
-    52. For j = 1 to L-1:
-    53.     if bits[j] == 0:
-    54.         gamma0[j] = gamma - gamma0[j]
-    55.         z[j][0] = gamma0[j] * s[j] + sj'
-    56.     else:
-    57.         z[j][1] = (gamma - gamma0[j]) * s[j] + sj'
-
-    58. range_proof = (C', w00, w01, gamma0, z)
-    59. return range_proof
-</pre><a href="#section-3.4.6-2" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -2194,7 +2174,6 @@ GenerateRangeProof(bits, k*, s, Com):
 PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
 ~~~<a href="#section-3.5.1-1" class="pilcrow">¶</a></p>
 <p id="section-3.5.1-2">This version string <span class="bcp14">MUST</span> be used consistently across all implementations for interoperability. The curve specification is included to prevent cross-curve attacks and ensure implementations using different curves cannot accidentally interact.<a href="#section-3.5.1-2" class="pilcrow">¶</a></p>
-<p id="section-3.5.1-3">Note: The reference implementation currently uses version "v0.2.0" while this specification defines version "v1.0". Implementations <span class="bcp14">MUST</span> use the exact version string for the protocol version they implement. Different version strings create incompatible protocols, which is intentional to prevent version downgrade attacks and ensure implementations are explicitly compatible.<a href="#section-3.5.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="hash-function-and-fiat-shamir-transform">

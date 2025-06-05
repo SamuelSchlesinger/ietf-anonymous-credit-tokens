@@ -405,7 +405,7 @@ ProveSpend(token, s):
     50.     s_prime[j] <- Zq
     51.     gamma0[j] <- Zq
     52.     z[j] <- Zq
-    53.
+    53.     
     54.     if i[j] == 0:
     55.         C'[j][0] = H3 * s_prime[j]
     56.         C'[j][1] = H3 * z[j] - C[j][1] * gamma0[j]
@@ -445,7 +445,7 @@ ProveSpend(token, s):
     86. // Complete range proof responses
     87. z_final = array[L][2]
     88. gamma0_final = array[L]
-    89.
+    89. 
     90. // For bit 0
     91. if i[0] == 0:
     92.     gamma0_final[0] = gamma0[0]
