@@ -215,6 +215,8 @@ GenerateParameters(domain_separator):
     6. return (H1, H2, H3)
 ~~~
 
+The domain_separator MUST be unique for each deployment to ensure cryptographic isolation between different services. Each deployment SHOULD use a domain separator that identifies the specific service, organization, or use case, such as "myservice-act-v1" or "example-corp-credits-v1". Using generic domain separators like "anonymous-credit-tokens-v1" across multiple deployments creates security risks through parameter collision and MUST be avoided in production systems.
+
 ## Key Generation
 
 The issuer generates a key pair as follows:
@@ -1152,7 +1154,7 @@ The security of Anonymous Credit Tokens relies on:
 
 5. **Fiat-Shamir Security**: The non-interactive proofs are secure in the random oracle model {{ORRU-FS}}:
    - The transcript includes all public values to prevent malleability
-   - Domain separation prevents cross-protocol attacks
+   - Domain separation prevents cross-protocol attacks; deployments MUST use unique domain separators to prevent parameter collision attacks between different services
    - Length-prefixing prevents ambiguity in parsing
 
 ## Privacy Properties
