@@ -338,6 +338,15 @@ Parameters:
        5. H3 = HashToRistretto(rng.next())
        6. return (H1, H2, H3)
 
+   The domain_separator MUST be unique for each deployment to ensure
+   cryptographic isolation between different services.  Each deployment
+   SHOULD use a domain separator that identifies the specific service,
+   organization, or use case, such as "myservice-act-v1" or "example-
+   corp-credits-v1".  Using generic domain separators like "anonymous-
+   credit-tokens-v1" across multiple deployments creates security risks
+   through parameter collision and MUST be avoided in production
+   systems.
+
 3.2.  Key Generation
 
    The issuer generates a key pair as follows:
@@ -1131,16 +1140,27 @@ Encode(value):
    3.  *Subgroup Check*: Ristretto guarantees prime-order subgroup
        membership
 
-   Example validation: ~~~ ValidatePoint(P): 1.  If P fails to
-   deserialize: 2.  return INVALID 3.  If P == Identity: 4.  return
-   INVALID 5. // Ristretto ensures prime-order subgroup membership 6.
-   return VALID ~~~
+   Example validation:
 
-   All implementations MUST validate points at these locations: - When
-   receiving K in issuance request - When receiving A in issuance
-   response - When receiving A' and B_bar in spend proof - When
-   receiving Com[j] commitments in spend proof - When receiving A* in
-   refund response
+   ValidatePoint(P):
+     1. If P fails to deserialize:
+     2.     return INVALID
+     3. If P == Identity:
+     4.     return INVALID
+     5. // Ristretto ensures prime-order subgroup membership
+     6. return VALID
+
+   All implementations MUST validate points at these locations:
+
+   *  When receiving K in issuance request
+
+   *  When receiving A in issuance response
+
+   *  When receiving A' and B_bar in spend proof
+
+   *  When receiving Com[j] commitments in spend proof
+
+   *  When receiving A* in refund response
 
 5.5.  Error Handling
 
@@ -1181,12 +1201,19 @@ Encode(value):
    3.  *Security*: L must be less than the bit length of the group order
        (252 bits for Ristretto)
 
-   Common configurations: - L = 32: Suitable for small credit systems
-   (up to ~4 billion credits) - L = 64: Suitable for medium-scale
-   systems (up to ~18 quintillion credits) - L = 128: Suitable for
-   large-scale systems with effectively unlimited credit range - L =
-   256: Maximum practical value, but with doubled proof sizes compared
-   to L = 128
+   Common configurations:
+
+   *  L = 32: Suitable for small credit systems (up to ~4 billion
+      credits)
+
+   *  L = 64: Suitable for medium-scale systems (up to ~18 quintillion
+      credits)
+
+   *  L = 128: Suitable for large-scale systems with effectively
+      unlimited credit range
+
+   *  L = 256: Maximum practical value, but with doubled proof sizes
+      compared to L = 128
 
    The implementation MUST enforce L < 252 to ensure proper scalar
    arithmetic within the group order.
@@ -1216,9 +1243,15 @@ Encode(value):
 
        *  Nullifier database: 32 bytes per spent token
 
-   The proof size scales linearly with L: - L = 32: ~1KB spend proof - L
-   = 64: ~2KB spend proof - L = 128: ~4KB spend proof - L = 256: ~8KB
-   spend proof
+   The proof size scales linearly with L:
+
+   *  L = 32: ~1KB spend proof
+
+   *  L = 64: ~2KB spend proof
+
+   *  L = 128: ~4KB spend proof
+
+   *  L = 256: ~8KB spend proof
 
 5.6.2.  Parameter Trade-offs
 
@@ -1255,15 +1288,28 @@ Encode(value):
 
 6.1.1.  Threat Model
 
-   We consider a setting with: - A single trusted issuer (multiple
-   issuers can operate independently) - Potentially malicious clients
-   who may attempt to forge tokens or double-spend - An adversary who
-   can observe all network communications - Clients who desire privacy
-   from the issuer regarding their spending patterns
+   We consider a setting with:
 
-   Note: The issuer must be trusted not to: - Issue tokens without
-   proper authorization - Create tokens for themselves without limit -
-   Refuse valid spend proofs - Manipulate the nullifier database
+   *  A single trusted issuer (multiple issuers can operate
+      independently)
+
+   *  Potentially malicious clients who may attempt to forge tokens or
+      double-spend
+
+   *  An adversary who can observe all network communications
+
+   *  Clients who desire privacy from the issuer regarding their
+      spending patterns
+
+   Note: The issuer must be trusted not to:
+
+   *  Issue tokens without proper authorization
+
+   *  Create tokens for themselves without limit
+
+   *  Refuse valid spend proofs
+
+   *  Manipulate the nullifier database
 
    The protocol does not protect against a malicious issuer, only
    ensures privacy from an honest-but-curious issuer.
@@ -1353,7 +1399,9 @@ Encode(value):
        *  The transcript includes all public values to prevent
           malleability
 
-       *  Domain separation prevents cross-protocol attacks
+       *  Domain separation prevents cross-protocol attacks; deployments
+          MUST use unique domain separators to prevent parameter
+          collision attacks between different services
 
        *  Length-prefixing prevents ambiguity in parsing
 

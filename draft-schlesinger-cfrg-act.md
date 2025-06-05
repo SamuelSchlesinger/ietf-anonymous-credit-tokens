@@ -997,6 +997,7 @@ All Ristretto points received from external sources MUST be validated:
 3. **Subgroup Check**: Ristretto guarantees prime-order subgroup membership
 
 Example validation:
+
 ~~~
 ValidatePoint(P):
   1. If P fails to deserialize:
@@ -1008,6 +1009,7 @@ ValidatePoint(P):
 ~~~
 
 All implementations MUST validate points at these locations:
+
 - When receiving `K` in issuance request
 - When receiving `A` in issuance response
 - When receiving `A'` and `B_bar` in spend proof
@@ -1039,6 +1041,7 @@ The bit length L is configurable and determines the range of credit values (0 to
 3. **Security**: L must be less than the bit length of the group order (252 bits for Ristretto)
 
 Common configurations:
+
 - L = 32: Suitable for small credit systems (up to ~4 billion credits)
 - L = 64: Suitable for medium-scale systems (up to ~18 quintillion credits)
 - L = 128: Suitable for large-scale systems with effectively unlimited credit range
@@ -1064,6 +1067,7 @@ The protocol has the following computational complexity:
    - Nullifier database: 32 bytes per spent token
 
 The proof size scales linearly with L:
+
 - L = 32: ~1KB spend proof
 - L = 64: ~2KB spend proof
 - L = 128: ~4KB spend proof
@@ -1087,12 +1091,14 @@ Implementations SHOULD choose L based on their maximum credit requirements and p
 ### Threat Model
 
 We consider a setting with:
+
 - A single trusted issuer (multiple issuers can operate independently)
 - Potentially malicious clients who may attempt to forge tokens or double-spend
 - An adversary who can observe all network communications
 - Clients who desire privacy from the issuer regarding their spending patterns
 
 Note: The issuer must be trusted not to:
+
 - Issue tokens without proper authorization
 - Create tokens for themselves without limit
 - Refuse valid spend proofs

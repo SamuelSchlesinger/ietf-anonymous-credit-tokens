@@ -1679,6 +1679,7 @@ GenerateParameters(domain_separator):
     6. return (H1, H2, H3)
 </pre><a href="#section-3.1-4" class="pilcrow">¶</a>
 </div>
+<p id="section-3.1-5">The domain_separator <span class="bcp14">MUST</span> be unique for each deployment to ensure cryptographic isolation between different services. Each deployment <span class="bcp14">SHOULD</span> use a domain separator that identifies the specific service, organization, or use case, such as "myservice-act-v1" or "example-corp-credits-v1". Using generic domain separators like "anonymous-credit-tokens-v1" across multiple deployments creates security risks through parameter collision and <span class="bcp14">MUST</span> be avoided in production systems.<a href="#section-3.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="key-generation">
@@ -2659,8 +2660,9 @@ ConstantTimeSelect(condition, value_if_true, value_if_false):
             <p id="section-5.4-2.3.1"><strong>Subgroup Check</strong>: Ristretto guarantees prime-order subgroup membership<a href="#section-5.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-5.4-3">Example validation:
-~~~
+<p id="section-5.4-3">Example validation:<a href="#section-5.4-3" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5.4-4">
+<pre>
 ValidatePoint(P):
   1. If P fails to deserialize:
   2.     return INVALID
@@ -2668,13 +2670,26 @@ ValidatePoint(P):
   4.     return INVALID
   5. // Ristretto ensures prime-order subgroup membership
   6. return VALID
-~~~<a href="#section-5.4-3" class="pilcrow">¶</a></p>
-<p id="section-5.4-4">All implementations <span class="bcp14">MUST</span> validate points at these locations:
-- When receiving <code>K</code> in issuance request
-- When receiving <code>A</code> in issuance response
-- When receiving <code>A'</code> and <code>B_bar</code> in spend proof
-- When receiving <code>Com[j]</code> commitments in spend proof
-- When receiving <code>A*</code> in refund response<a href="#section-5.4-4" class="pilcrow">¶</a></p>
+</pre><a href="#section-5.4-4" class="pilcrow">¶</a>
+</div>
+<p id="section-5.4-5">All implementations <span class="bcp14">MUST</span> validate points at these locations:<a href="#section-5.4-5" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.4-6.1">
+            <p id="section-5.4-6.1.1">When receiving <code>K</code> in issuance request<a href="#section-5.4-6.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.4-6.2">
+            <p id="section-5.4-6.2.1">When receiving <code>A</code> in issuance response<a href="#section-5.4-6.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.4-6.3">
+            <p id="section-5.4-6.3.1">When receiving <code>A'</code> and <code>B_bar</code> in spend proof<a href="#section-5.4-6.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.4-6.4">
+            <p id="section-5.4-6.4.1">When receiving <code>Com[j]</code> commitments in spend proof<a href="#section-5.4-6.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.4-6.5">
+            <p id="section-5.4-6.5.1">When receiving <code>A*</code> in refund response<a href="#section-5.4-6.5.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
 </section>
 </div>
 <div id="error-handling">
@@ -2733,12 +2748,22 @@ ValidatePoint(P):
             <p id="section-5.6-2.3.1"><strong>Security</strong>: L must be less than the bit length of the group order (252 bits for Ristretto)<a href="#section-5.6-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-5.6-3">Common configurations:
-- L = 32: Suitable for small credit systems (up to ~4 billion credits)
-- L = 64: Suitable for medium-scale systems (up to ~18 quintillion credits)
-- L = 128: Suitable for large-scale systems with effectively unlimited credit range
-- L = 256: Maximum practical value, but with doubled proof sizes compared to L = 128<a href="#section-5.6-3" class="pilcrow">¶</a></p>
-<p id="section-5.6-4">The implementation <span class="bcp14">MUST</span> enforce L &lt; 252 to ensure proper scalar arithmetic within the group order.<a href="#section-5.6-4" class="pilcrow">¶</a></p>
+<p id="section-5.6-3">Common configurations:<a href="#section-5.6-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.6-4.1">
+            <p id="section-5.6-4.1.1">L = 32: Suitable for small credit systems (up to ~4 billion credits)<a href="#section-5.6-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.6-4.2">
+            <p id="section-5.6-4.2.1">L = 64: Suitable for medium-scale systems (up to ~18 quintillion credits)<a href="#section-5.6-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.6-4.3">
+            <p id="section-5.6-4.3.1">L = 128: Suitable for large-scale systems with effectively unlimited credit range<a href="#section-5.6-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.6-4.4">
+            <p id="section-5.6-4.4.1">L = 256: Maximum practical value, but with doubled proof sizes compared to L = 128<a href="#section-5.6-4.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-5.6-5">The implementation <span class="bcp14">MUST</span> enforce L &lt; 252 to ensure proper scalar arithmetic within the group order.<a href="#section-5.6-5" class="pilcrow">¶</a></p>
 <div id="performance-characteristics">
 <section id="section-5.6.1">
           <h4 id="name-performance-characteristics">
@@ -2783,11 +2808,21 @@ ValidatePoint(P):
               </ul>
 </li>
           </ol>
-<p id="section-5.6.1-3">The proof size scales linearly with L:
-- L = 32: ~1KB spend proof
-- L = 64: ~2KB spend proof
-- L = 128: ~4KB spend proof
-- L = 256: ~8KB spend proof<a href="#section-5.6.1-3" class="pilcrow">¶</a></p>
+<p id="section-5.6.1-3">The proof size scales linearly with L:<a href="#section-5.6.1-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.6.1-4.1">
+              <p id="section-5.6.1-4.1.1">L = 32: ~1KB spend proof<a href="#section-5.6.1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.6.1-4.2">
+              <p id="section-5.6.1-4.2.1">L = 64: ~2KB spend proof<a href="#section-5.6.1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.6.1-4.3">
+              <p id="section-5.6.1-4.3.1">L = 128: ~4KB spend proof<a href="#section-5.6.1-4.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-5.6.1-4.4">
+              <p id="section-5.6.1-4.4.1">L = 256: ~8KB spend proof<a href="#section-5.6.1-4.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
 </section>
 </div>
 <div id="parameter-trade-offs">
@@ -2859,17 +2894,37 @@ ValidatePoint(P):
           <h4 id="name-threat-model">
 <a href="#section-6.1.1" class="section-number selfRef">6.1.1. </a><a href="#name-threat-model" class="section-name selfRef">Threat Model</a>
           </h4>
-<p id="section-6.1.1-1">We consider a setting with:
-- A single trusted issuer (multiple issuers can operate independently)
-- Potentially malicious clients who may attempt to forge tokens or double-spend
-- An adversary who can observe all network communications
-- Clients who desire privacy from the issuer regarding their spending patterns<a href="#section-6.1.1-1" class="pilcrow">¶</a></p>
-<p id="section-6.1.1-2">Note: The issuer must be trusted not to:
-- Issue tokens without proper authorization
-- Create tokens for themselves without limit
-- Refuse valid spend proofs
-- Manipulate the nullifier database<a href="#section-6.1.1-2" class="pilcrow">¶</a></p>
-<p id="section-6.1.1-3">The protocol does not protect against a malicious issuer, only ensures privacy from an honest-but-curious issuer.<a href="#section-6.1.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-1">We consider a setting with:<a href="#section-6.1.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.1-2.1">
+              <p id="section-6.1.1-2.1.1">A single trusted issuer (multiple issuers can operate independently)<a href="#section-6.1.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-2.2">
+              <p id="section-6.1.1-2.2.1">Potentially malicious clients who may attempt to forge tokens or double-spend<a href="#section-6.1.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-2.3">
+              <p id="section-6.1.1-2.3.1">An adversary who can observe all network communications<a href="#section-6.1.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-2.4">
+              <p id="section-6.1.1-2.4.1">Clients who desire privacy from the issuer regarding their spending patterns<a href="#section-6.1.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.1-3">Note: The issuer must be trusted not to:<a href="#section-6.1.1-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1.1-4.1">
+              <p id="section-6.1.1-4.1.1">Issue tokens without proper authorization<a href="#section-6.1.1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-4.2">
+              <p id="section-6.1.1-4.2.1">Create tokens for themselves without limit<a href="#section-6.1.1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-4.3">
+              <p id="section-6.1.1-4.3.1">Refuse valid spend proofs<a href="#section-6.1.1-4.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.1.1-4.4">
+              <p id="section-6.1.1-4.4.1">Manipulate the nullifier database<a href="#section-6.1.1-4.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-6.1.1-5">The protocol does not protect against a malicious issuer, only ensures privacy from an honest-but-curious issuer.<a href="#section-6.1.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-properties">
@@ -2994,7 +3049,7 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
                 <p id="section-6.2-2.5.2.1.1">The transcript includes all public values to prevent malleability<a href="#section-6.2-2.5.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-6.2-2.5.2.2">
-                <p id="section-6.2-2.5.2.2.1">Domain separation prevents cross-protocol attacks<a href="#section-6.2-2.5.2.2.1" class="pilcrow">¶</a></p>
+                <p id="section-6.2-2.5.2.2.1">Domain separation prevents cross-protocol attacks; deployments <span class="bcp14">MUST</span> use unique domain separators to prevent parameter collision attacks between different services<a href="#section-6.2-2.5.2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-6.2-2.5.2.3">
                 <p id="section-6.2-2.5.2.3.1">Length-prefixing prevents ambiguity in parsing<a href="#section-6.2-2.5.2.3.1" class="pilcrow">¶</a></p>
