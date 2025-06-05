@@ -5,7 +5,7 @@
 CFRG                                                      S. Schlesinger
 Internet-Draft                                                   J. Katz
 Intended status: Informational                                    Google
-Expires: 7 December 2025                                       June 2025
+Expires: 7 December 2025                                     5 June 2025
 
 
                         Anonymous Credit Tokens
@@ -63,7 +63,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 December 2025.
+   This Internet-Draft will expire on 7 December 2025.
 
 Copyright Notice
 
@@ -891,9 +891,9 @@ Encode(value):
     3. If value is a Scalar:
     4.     return value.to_bytes_le()  // 32 bytes, little-endian
 
-   Note: Implementations MAY use standard serialization formats (e.g.,
-   bincode, CBOR) for complex structures, but MUST ensure deterministic
-   encoding for hash inputs.
+   Note: Implementations MAY use standard serialization formats (e.g.
+   CBOR) for complex structures, but MUST ensure deterministic encoding
+   for hash inputs.
 
 3.5.4.  Binary Decomposition
 
@@ -1321,7 +1321,7 @@ Encode(value):
 
        *  Multiple spending transactions by the same client
 
-       This holds under the DDH assumption in the Ristretto group.
+       *  This property is information theoretic in nature.
 
    3.  *Balance Security*: No PPT adversary can spend more credits than
        issued.  Specifically:
@@ -1449,7 +1449,9 @@ Encode(value):
 
        *  Binary decomposition in range proofs
 
-       *  Conditional selections based on secret bits
+       *  Conditionals based on secret bits, as in the range proof.
+          Conditional selection operations using constant time CPU
+          instructions should be used in these cases.
 
    3.  *Nullifier Database Integrity*: Corruption of the nullifier
        database could enable double-spending.  Implementations SHOULD:
@@ -1504,7 +1506,9 @@ Encode(value):
    This protocol is NOT quantum-resistant.  The discrete logarithm
    problem can be solved efficiently by quantum computers using Shor's
    algorithm.  Organizations requiring long-term security should
-   consider post-quantum alternatives.
+   consider post-quantum alternatives.  However, user privacy is
+   preserved even in the presence of a cryptographically relevant
+   quantum computer.
 
 7.  IANA Considerations
 

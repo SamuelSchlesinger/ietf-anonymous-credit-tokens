@@ -8,9 +8,19 @@
 <meta content="Samuel Schlesinger" name="author">
 <meta content="Jonathan Katz" name="author">
 <meta content="
-       This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving payment protocol based on keyed-verification anonymous credentials. The protocol enables issuers to grant numerical credit values to clients, who can later redeem these credits anonymously while preventing double-spending through the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge proofs to ensure both security and privacy. 
-       Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving client privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token. 
-       This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF. 
+       This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
+payment protocol based on keyed-verification anonymous credentials. The
+protocol enables issuers to grant numerical credit values to clients, who can
+later redeem these credits anonymously while preventing double-spending through
+the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge
+proofs to ensure both security and privacy. 
+       Anonymous Credit Tokens are particularly suitable for web services that need to
+implement rate limiting, resource allocation, or micropayments while preserving
+client privacy. The protocol supports partial spending, allowing clients to
+spend a portion of their credits and receive change in the form of a new
+anonymous token. 
+       This document is a product of the Crypto Forum Research Group (CFRG) in the
+IRTF. 
     " name="description">
 <meta content="xml2rfc 3.28.1" name="generator">
 <meta content="anonymous credentials" name="keyword">
@@ -1069,7 +1079,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-schlesinger-cfrg-act-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-06" class="published">June 2025</time>
+<time datetime="2025-06-05" class="published">5 June 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
@@ -1091,9 +1101,19 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">Anonymous Credit Tokens</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving payment protocol based on keyed-verification anonymous credentials. The protocol enables issuers to grant numerical credit values to clients, who can later redeem these credits anonymously while preventing double-spending through the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge proofs to ensure both security and privacy.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving client privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
-<p id="section-abstract-3">This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
+payment protocol based on keyed-verification anonymous credentials. The
+protocol enables issuers to grant numerical credit values to clients, who can
+later redeem these credits anonymously while preventing double-spending through
+the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge
+proofs to ensure both security and privacy.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">Anonymous Credit Tokens are particularly suitable for web services that need to
+implement rate limiting, resource allocation, or micropayments while preserving
+client privacy. The protocol supports partial spending, allowing clients to
+spend a portion of their credits and receive change in the form of a new
+anonymous token.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-3">This document is a product of the Crypto Forum Research Group (CFRG) in the
+IRTF.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1130,7 +1150,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 3 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 7 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1409,20 +1429,31 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">Many online services need mechanisms to allocate resources, implement rate limiting, or process micropayments. Traditional approaches to these problems typically require tracking client identity, which raises privacy concerns. Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables services to issue and track credits without linking transactions to client identities.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">The Anonymous Credit Token protocol is a specialization of keyed-verification anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> that focuses on numerical credit values. It allows:<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-1">Many online services need mechanisms to allocate resources, implement rate
+limiting, or process micropayments. Traditional approaches to these problems
+typically require tracking client identity, which raises privacy concerns.
+Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables
+services to issue and track credits without linking transactions to client
+identities.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">The Anonymous Credit Token protocol is a specialization of keyed-verification
+anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> that focuses on numerical credit values. It
+allows:<a href="#section-1-2" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-1-3">
 <li id="section-1-3.1">
-          <p id="section-1-3.1.1"><strong>Anonymous Issuance</strong>: An issuer can grant credits to a client without learning any client-specific information beyond the credit amount.<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
+          <p id="section-1-3.1.1"><strong>Anonymous Issuance</strong>: An issuer can grant credits to a client without
+learning any client-specific information beyond the credit amount.<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-1-3.2">
-          <p id="section-1-3.2.1"><strong>Anonymous Spending</strong>: Clients can spend their credits without revealing their identity or linking multiple transactions.<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
+          <p id="section-1-3.2.1"><strong>Anonymous Spending</strong>: Clients can spend their credits without revealing
+their identity or linking multiple transactions.<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-1-3.3">
-          <p id="section-1-3.3.1"><strong>Partial Spending</strong>: Clients can spend a portion of their credits and receive the remainder as a new anonymous token.<a href="#section-1-3.3.1" class="pilcrow">¶</a></p>
+          <p id="section-1-3.3.1"><strong>Partial Spending</strong>: Clients can spend a portion of their credits and
+receive the remainder as a new anonymous token.<a href="#section-1-3.3.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-1-3.4">
-          <p id="section-1-3.4.1"><strong>Double-Spend Prevention</strong>: Each credit token has an associated nullifier that prevents the same credits from being spent multiple times.<a href="#section-1-3.4.1" class="pilcrow">¶</a></p>
+          <p id="section-1-3.4.1"><strong>Double-Spend Prevention</strong>: Each credit token has an associated nullifier
+that prevents the same credits from being spent multiple times.<a href="#section-1-3.4.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
 <div id="use-cases">
@@ -1433,16 +1464,20 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <p id="section-1.1-1">Anonymous Credit Tokens can be applied to various scenarios:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.1-2.1">
-            <p id="section-1.1-2.1.1"><strong>Rate Limiting</strong>: Services can issue daily credit allowances that users spend anonymously for API calls or resource access.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.1.1"><strong>Rate Limiting</strong>: Services can issue daily credit allowances that users
+spend anonymously for API calls or resource access.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.2">
-            <p id="section-1.1-2.2.1"><strong>Privacy-Preserving Micropayments</strong>: Users can purchase credit bundles and spend them over time without creating a transaction history.<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.2.1"><strong>Privacy-Preserving Micropayments</strong>: Users can purchase credit bundles and
+spend them over time without creating a transaction history.<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.3">
-            <p id="section-1.1-2.3.1"><strong>Anonymous Ticketing</strong>: Event organizers can issue transferable tickets that can be verified without tracking ownership changes.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.3.1"><strong>Anonymous Ticketing</strong>: Event organizers can issue transferable tickets that
+can be verified without tracking ownership changes.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.4">
-            <p id="section-1.1-2.4.1"><strong>Resource Allocation</strong>: Cloud services can allocate computational resources using credits while preserving client privacy.<a href="#section-1.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.4.1"><strong>Resource Allocation</strong>: Cloud services can allocate computational resources
+using credits while preserving client privacy.<a href="#section-1.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1452,16 +1487,22 @@ svg :is([fill="white"], [fill^="#fff"]) {
         <h3 id="name-protocol-overview">
 <a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-protocol-overview" class="section-name selfRef">Protocol Overview</a>
         </h3>
-<p id="section-1.2-1">The protocol involves two parties: an issuer (typically a service provider) and clients (users of the service). The interaction follows three main phases:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<p id="section-1.2-1">The protocol involves two parties: an issuer (typically a service provider) and
+clients (users of the service). The interaction follows three main phases:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-1.2-2">
 <li id="section-1.2-2.1">
             <p id="section-1.2-2.1.1"><strong>Setup</strong>: The issuer generates a key pair and publishes the public key.<a href="#section-1.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-1.2-2.2">
-            <p id="section-1.2-2.2.1"><strong>Issuance</strong>: A client requests credits from the issuer. The issuer creates a blind signature on the credit value and a client-chosen nullifier, producing a credit token.<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-1.2-2.2.1"><strong>Issuance</strong>: A client requests credits from the issuer. The issuer creates
+a blind signature on the credit value and a client-chosen nullifier,
+producing a credit token.<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-1.2-2.3">
-            <p id="section-1.2-2.3.1"><strong>Spending</strong>: To spend credits, the client reveals the nullifier and proves possession of a valid token with sufficient balance. The issuer verifies the proof, checks the nullifier hasn't been used before, and issues a new token for any remaining balance.<a href="#section-1.2-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.2-2.3.1"><strong>Spending</strong>: To spend credits, the client reveals the nullifier and proves
+possession of a valid token with sufficient balance. The issuer verifies the
+proof, checks the nullifier hasn't been used before, and issues a new token for
+any remaining balance.<a href="#section-1.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -1474,16 +1515,20 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <p id="section-1.3-1">The protocol is designed with the following goals:<a href="#section-1.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.3-2.1">
-            <p id="section-1.3-2.1.1"><strong>Privacy</strong>: The issuer cannot link credit tokens to specific clients or link multiple transactions by the same client.<a href="#section-1.3-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.3-2.1.1"><strong>Privacy</strong>: The issuer cannot link credit tokens to specific clients or link
+multiple transactions by the same client.<a href="#section-1.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.3-2.2">
-            <p id="section-1.3-2.2.1"><strong>Security</strong>: Clients cannot spend more credits than they possess or use the same credits multiple times.<a href="#section-1.3-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-1.3-2.2.1"><strong>Security</strong>: Clients cannot spend more credits than they possess or use the
+same credits multiple times.<a href="#section-1.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.3-2.3">
-            <p id="section-1.3-2.3.1"><strong>Efficiency</strong>: All operations should be computationally efficient, suitable for high-volume web services.<a href="#section-1.3-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.3-2.3.1"><strong>Efficiency</strong>: All operations should be computationally efficient, suitable
+for high-volume web services.<a href="#section-1.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.3-2.4">
-            <p id="section-1.3-2.4.1"><strong>Simplicity</strong>: The protocol should be straightforward to implement and integrate into existing systems.<a href="#section-1.3-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-1.3-2.4.1"><strong>Simplicity</strong>: The protocol should be straightforward to implement and
+integrate into existing systems.<a href="#section-1.3-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1496,16 +1541,21 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <p id="section-1.4-1">This protocol builds upon several cryptographic primitives:<a href="#section-1.4-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.4-2.1">
-            <p id="section-1.4-2.1.1"><strong>BBS Signatures</strong> <span>[<a href="#BBS" class="cite xref">BBS</a>]</span>: The core signature scheme that enables efficient proofs of possession.<a href="#section-1.4-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.4-2.1.1"><strong>BBS Signatures</strong> <span>[<a href="#BBS" class="cite xref">BBS</a>]</span>: The core signature scheme that enables efficient
+proofs of possession.<a href="#section-1.4-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.4-2.2">
-            <p id="section-1.4-2.2.1"><strong>Sigma Protocols</strong> <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>: The zero-knowledge proof framework used for spending proofs.<a href="#section-1.4-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-1.4-2.2.1"><strong>Sigma Protocols</strong> <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>: The zero-knowledge proof framework used
+for spending proofs.<a href="#section-1.4-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.4-2.3">
-            <p id="section-1.4-2.3.1"><strong>Fiat-Shamir Transform</strong> <span>[<a href="#ORRU-FS" class="cite xref">ORRU-FS</a>]</span>: The technique to make the interactive proofs non-interactive.<a href="#section-1.4-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.4-2.3.1"><strong>Fiat-Shamir Transform</strong> <span>[<a href="#ORRU-FS" class="cite xref">ORRU-FS</a>]</span>: The technique to make the interactive
+proofs non-interactive.<a href="#section-1.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-1.4-3">The protocol can be viewed as a specialized instantiation of keyed-verification anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> optimized for numerical values and partial spending.<a href="#section-1.4-3" class="pilcrow">¶</a></p>
+<p id="section-1.4-3">The protocol can be viewed as a specialized instantiation of keyed-verification
+anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> optimized for numerical values and partial
+spending.<a href="#section-1.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1545,7 +1595,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-2.1-2.6.1"><code>0x</code> prefix: Hexadecimal values<a href="#section-2.1-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-2.1-2.7">
-            <p id="section-2.1-2.7.1">We use additive notation for group operations, so group elements are added together like <code>a + b</code> and exponentiation of a group element by a scalar element is written as <code>a * n</code>, with group element <code>a</code> and scalar <code>n</code>.<a href="#section-2.1-2.7.1" class="pilcrow">¶</a></p>
+            <p id="section-2.1-2.7.1">We use additive notation for group operations, so group elements are added
+together like <code>a + b</code> and exponentiation of a group element by a scalar
+element is written as <code>a * n</code>, with group element <code>a</code> and scalar <code>n</code>.<a href="#section-2.1-2.7.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1574,7 +1626,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-cryptographic-parameters">
 <a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-cryptographic-parameters" class="section-name selfRef">Cryptographic Parameters</a>
         </h3>
-<p id="section-2.3-1">The protocol uses the Ristretto group <span>[<a href="#RISTRETTO" class="cite xref">RISTRETTO</a>]</span>, which provides a prime-order group abstraction over Curve25519. It would be easy to adapt this approach to using any other prime order group. The key parameters are:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
+<p id="section-2.3-1">The protocol uses the Ristretto group <span>[<a href="#RISTRETTO" class="cite xref">RISTRETTO</a>]</span>, which provides a
+prime-order group abstraction over Curve25519. It would be easy to adapt this
+approach to using any other prime order group. The key parameters are:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-2.3-2.1">
             <p id="section-2.3-2.1.1"><strong>q</strong>: The prime order of the group (2^252 + 27742317777372353535851937790883648493)<a href="#section-2.3-2.1.1" class="pilcrow">¶</a></p>
@@ -1609,7 +1663,12 @@ Parameters:
   - L: Bit length for credit values (configurable, must satisfy L &lt;= 252)
 </pre><a href="#section-3.1-2" class="pilcrow">¶</a>
 </div>
-<p id="section-3.1-3">The generators H1, H2, and H3 <span class="bcp14">MUST</span> be generated deterministically from a nothing-up-my-sleeve value to ensure they are independent of each other and of G. This prevents attacks where malicious parameters could compromise security, for instance by the discrete logarithms of <code>H1</code>, <code>H2</code>, or <code>H3</code> being known, or them having known relationships between each other like <code>H1^10 = H2</code>. Note that these generators are independent of the choice of L:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-3">The generators H1, H2, and H3 <span class="bcp14">MUST</span> be generated deterministically from a
+nothing-up-my-sleeve value to ensure they are independent of each other and of
+G. This prevents attacks where malicious parameters could compromise security,
+for instance by the discrete logarithms of <code>H1</code>, <code>H2</code>, or <code>H3</code> being known, or
+them having known relationships between each other like <code>H1^10 = H2</code>. Note that
+these generators are independent of the choice of L:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.1-4">
 <pre>
 GenerateParameters(domain_separator):
@@ -1627,7 +1686,9 @@ GenerateParameters(domain_separator):
     6. return (H1, H2, H3)
 </pre><a href="#section-3.1-4" class="pilcrow">¶</a>
 </div>
-<p id="section-3.1-5">The domain_separator <span class="bcp14">MUST</span> be unique for each deployment to ensure cryptographic isolation between different services. The domain separator <span class="bcp14">SHOULD</span> follow this structured format:<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+<p id="section-3.1-5">The domain_separator <span class="bcp14">MUST</span> be unique for each deployment to ensure
+cryptographic isolation between different services. The domain separator <span class="bcp14">SHOULD</span>
+follow this structured format:<a href="#section-3.1-5" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.1-6">
 <pre>
 domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deployment_id || ":" || version
@@ -1645,7 +1706,10 @@ domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deploym
 3. Service-level separation within organizations
 4. Environment isolation (production vs staging)
 5. Version tracking for parameter updates<a href="#section-3.1-9" class="pilcrow">¶</a></p>
-<p id="section-3.1-10">Using generic or unstructured domain separators creates security risks through parameter collision and <span class="bcp14">MUST NOT</span> be used. When parameters need to be updated (e.g., for security reasons or protocol upgrades), a new version date <span class="bcp14">MUST</span> be used, creating entirely new parameters.<a href="#section-3.1-10" class="pilcrow">¶</a></p>
+<p id="section-3.1-10">Using generic or unstructured domain separators creates security risks through
+parameter collision and <span class="bcp14">MUST NOT</span> be used. When parameters need to be updated
+(e.g., for security reasons or protocol upgrades), a new version date <span class="bcp14">MUST</span> be
+used, creating entirely new parameters.<a href="#section-3.1-10" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="key-generation">
@@ -1677,7 +1741,8 @@ KeyGen():
         <h3 id="name-token-issuance">
 <a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-token-issuance" class="section-name selfRef">Token Issuance</a>
         </h3>
-<p id="section-3.3-1">The issuance protocol is an interactive protocol between a client and the issuer:<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.3-1">The issuance protocol is an interactive protocol between a client and the
+issuer:<a href="#section-3.3-1" class="pilcrow">¶</a></p>
 <div id="client-issuance-request">
 <section id="section-3.3.1">
           <h4 id="name-client-issuance-request">
@@ -1810,7 +1875,8 @@ VerifyIssuance(pk, request, response, state):
         <h3 id="name-token-spending">
 <a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-token-spending" class="section-name selfRef">Token Spending</a>
         </h3>
-<p id="section-3.4-1">The spending protocol allows a client to spend s credits from a token containing c credits (where s &lt;= c):<a href="#section-3.4-1" class="pilcrow">¶</a></p>
+<p id="section-3.4-1">The spending protocol allows a client to spend s credits from a token
+containing c credits (where s &lt;= c):<a href="#section-3.4-1" class="pilcrow">¶</a></p>
 <div id="client-spend-proof-generation">
 <section id="section-3.4.1">
           <h4 id="name-client-spend-proof-generati">
@@ -2005,7 +2071,8 @@ VerifyAndRefund(sk, proof):
           <h4 id="name-refund-issuance">
 <a href="#section-3.4.3" class="section-number selfRef">3.4.3. </a><a href="#name-refund-issuance" class="section-name selfRef">Refund Issuance</a>
           </h4>
-<p id="section-3.4.3-1">After verifying a spend proof, the issuer creates a refund token for the remaining balance:<a href="#section-3.4.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.4.3-1">After verifying a spend proof, the issuer creates a refund token for the
+remaining balance:<a href="#section-3.4.3-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.4.3-2">
 <pre>
 IssueRefund(sk, K'):
@@ -2191,7 +2258,10 @@ VerifySpendProof(sk, proof):
 ~~~
 PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
 ~~~<a href="#section-3.5.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.5.1-2">This version string <span class="bcp14">MUST</span> be used consistently across all implementations for interoperability. The curve specification is included to prevent cross-curve attacks and ensure implementations using different curves cannot accidentally interact.<a href="#section-3.5.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.5.1-2">This version string <span class="bcp14">MUST</span> be used consistently across all implementations for
+interoperability. The curve specification is included to prevent cross-curve
+attacks and ensure implementations using different curves cannot accidentally
+interact.<a href="#section-3.5.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="hash-function-and-fiat-shamir-transform">
@@ -2199,7 +2269,10 @@ PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
           <h4 id="name-hash-function-and-fiat-sham">
 <a href="#section-3.5.2" class="section-number selfRef">3.5.2. </a><a href="#name-hash-function-and-fiat-sham" class="section-name selfRef">Hash Function and Fiat-Shamir Transform</a>
           </h4>
-<p id="section-3.5.2-1">The protocol uses BLAKE3 <span>[<a href="#BLAKE3" class="cite xref">BLAKE3</a>]</span> as the underlying hash function for the Fiat-Shamir transform <span>[<a href="#ORRU-FS" class="cite xref">ORRU-FS</a>]</span>. Following the sigma protocol framework <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>, challenges are generated using a transcript that accumulates all protocol messages:<a href="#section-3.5.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.5.2-1">The protocol uses BLAKE3 <span>[<a href="#BLAKE3" class="cite xref">BLAKE3</a>]</span> as the underlying hash function for the
+Fiat-Shamir transform <span>[<a href="#ORRU-FS" class="cite xref">ORRU-FS</a>]</span>. Following the sigma protocol framework
+<span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>, challenges are generated using a transcript that accumulates
+all protocol messages:<a href="#section-3.5.2-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.5.2-2">
 <pre>
 CreateTranscript(label):
@@ -2266,7 +2339,8 @@ Encode(value):
     4.     return value.to_bytes_le()  // 32 bytes, little-endian
 </pre><a href="#section-3.5.3-2" class="pilcrow">¶</a>
 </div>
-<p id="section-3.5.3-3">Note: Implementations <span class="bcp14">MAY</span> use standard serialization formats (e.g., bincode, CBOR) for complex structures, but <span class="bcp14">MUST</span> ensure deterministic encoding for hash inputs.<a href="#section-3.5.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.5.3-3">Note: Implementations <span class="bcp14">MAY</span> use standard serialization formats (e.g. CBOR) for
+complex structures, but <span class="bcp14">MUST</span> ensure deterministic encoding for hash inputs.<a href="#section-3.5.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="binary-decomposition">
@@ -2293,7 +2367,10 @@ BitDecompose(s):
     7. return bits
 </pre><a href="#section-3.5.4-2" class="pilcrow">¶</a>
 </div>
-<p id="section-3.5.4-3">Note: This algorithm produces bits in LSB-first order (i.e., <code>bits[0]</code> is the least significant bit). The algorithm works for any L &lt; 252, as the scalar is represented in 32 bytes (256 bits), which accommodates the full range of the Ristretto group order.<a href="#section-3.5.4-3" class="pilcrow">¶</a></p>
+<p id="section-3.5.4-3">Note: This algorithm produces bits in LSB-first order (i.e., <code>bits[0]</code> is the
+least significant bit). The algorithm works for any L &lt; 252, as the scalar is
+represented in 32 bytes (256 bits), which accommodates the full range of the
+Ristretto group order.<a href="#section-3.5.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="scalar-conversion">
@@ -2347,7 +2424,9 @@ ScalarToCredit(s):
         <h3 id="name-message-encoding">
 <a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-message-encoding" class="section-name selfRef">Message Encoding</a>
         </h3>
-<p id="section-4.1-1">All protocol messages <span class="bcp14">SHOULD</span> be encoded using deterministic CBOR (RFC 8949) for interoperability. The following sections define the structure of each message type.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-1">All protocol messages <span class="bcp14">SHOULD</span> be encoded using deterministic CBOR (RFC 8949) for
+interoperability. The following sections define the structure of each message
+type.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
 <div id="issuance-request-message">
 <section id="section-4.1.1">
           <h4 id="name-issuance-request-message">
@@ -2485,16 +2564,21 @@ Client                                          Issuer
         <h3 id="name-nullifier-management">
 <a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-nullifier-management" class="section-name selfRef">Nullifier Management</a>
         </h3>
-<p id="section-5.1-1">Implementations <span class="bcp14">MUST</span> maintain a persistent database of used nullifiers to prevent double-spending. The nullifier storage requirements grow linearly with the number of spent tokens. Implementations <span class="bcp14">MAY</span> use the following strategies to manage storage:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-1">Implementations <span class="bcp14">MUST</span> maintain a persistent database of used nullifiers to
+prevent double-spending. The nullifier storage requirements grow linearly with
+the number of spent tokens. Implementations <span class="bcp14">MAY</span> use the following strategies to
+manage storage:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-5.1-2">
 <li id="section-5.1-2.1">
-            <p id="section-5.1-2.1.1"><strong>Expiration</strong>: If tokens have expiration dates, old nullifiers can be pruned.<a href="#section-5.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-2.1.1"><strong>Expiration</strong>: If tokens have expiration dates, old nullifiers can be
+pruned.<a href="#section-5.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.1-2.2">
             <p id="section-5.1-2.2.1"><strong>Sharding</strong>: Nullifiers can be partitioned across multiple databases.<a href="#section-5.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.1-2.3">
-            <p id="section-5.1-2.3.1"><strong>Bloom Filters</strong>: Probabilistic data structures can reduce memory usage with a small false-positive rate.<a href="#section-5.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-2.3.1"><strong>Bloom Filters</strong>: Probabilistic data structures can reduce memory usage
+with a small false-positive rate.<a href="#section-5.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -2504,7 +2588,8 @@ Client                                          Issuer
         <h3 id="name-constant-time-operations">
 <a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-constant-time-operations" class="section-name selfRef">Constant-Time Operations</a>
         </h3>
-<p id="section-5.2-1">To prevent timing attacks, implementations <span class="bcp14">MUST</span> use constant-time operations for:<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.2-1">To prevent timing attacks, implementations <span class="bcp14">MUST</span> use constant-time operations
+for:<a href="#section-5.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.2-2.1">
             <p id="section-5.2-2.1.1">Scalar arithmetic<a href="#section-5.2-2.1.1" class="pilcrow">¶</a></p>
@@ -2516,7 +2601,9 @@ Client                                          Issuer
             <p id="section-5.2-2.3.1">Conditional selections in range proofs<a href="#section-5.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-5.2-3">In particular, the range proof generation <span class="bcp14">MUST</span> use constant-time conditional selection when choosing between bit values 0 and 1. The following pattern should be used:<a href="#section-5.2-3" class="pilcrow">¶</a></p>
+<p id="section-5.2-3">In particular, the range proof generation <span class="bcp14">MUST</span> use constant-time conditional
+selection when choosing between bit values 0 and 1. The following pattern
+should be used:<a href="#section-5.2-3" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-5.2-4">
 <pre>
 ConstantTimeSelect(condition, value_if_true, value_if_false):
@@ -2525,7 +2612,8 @@ ConstantTimeSelect(condition, value_if_true, value_if_false):
   // Must execute in constant time regardless of condition
 </pre><a href="#section-5.2-4" class="pilcrow">¶</a>
 </div>
-<p id="section-5.2-5">This is critical in the range proof generation where bit values must not leak through timing channels.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
+<p id="section-5.2-5">This is critical in the range proof generation where bit values must not leak
+through timing channels.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="randomness-generation">
@@ -2533,7 +2621,9 @@ ConstantTimeSelect(condition, value_if_true, value_if_false):
         <h3 id="name-randomness-generation">
 <a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-randomness-generation" class="section-name selfRef">Randomness Generation</a>
         </h3>
-<p id="section-5.3-1">The security of the protocol critically depends on the quality of random number generation. Implementations <span class="bcp14">MUST</span> use cryptographically secure random number generators (CSPRNGs) for:<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<p id="section-5.3-1">The security of the protocol critically depends on the quality of random number
+generation. Implementations <span class="bcp14">MUST</span> use cryptographically secure random number
+generators (CSPRNGs) for:<a href="#section-5.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.3-2.1">
             <p id="section-5.3-2.1.1">Private key generation<a href="#section-5.3-2.1.1" class="pilcrow">¶</a></p>
@@ -2568,7 +2658,8 @@ ConstantTimeSelect(condition, value_if_true, value_if_false):
           <h4 id="name-nonce-generation">
 <a href="#section-5.3.2" class="section-number selfRef">5.3.2. </a><a href="#name-nonce-generation" class="section-name selfRef">Nonce Generation</a>
           </h4>
-<p id="section-5.3.2-1">Following <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>, nonces (the randomness used in proofs) <span class="bcp14">MUST</span> be generated with extreme care:<a href="#section-5.3.2-1" class="pilcrow">¶</a></p>
+<p id="section-5.3.2-1">Following <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>, nonces (the randomness used in proofs) <span class="bcp14">MUST</span> be
+generated with extreme care:<a href="#section-5.3.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-5.3.2-2">
 <li id="section-5.3.2-2.1">
               <p id="section-5.3.2-2.1.1"><strong>Fresh Randomness</strong>: Generate new nonces for every proof<a href="#section-5.3.2-2.1.1" class="pilcrow">¶</a></p>
@@ -2642,13 +2733,16 @@ ValidatePoint(P):
         <h3 id="name-error-handling">
 <a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-error-handling" class="section-name selfRef">Error Handling</a>
         </h3>
-<p id="section-5.5-1">Implementations <span class="bcp14">SHOULD NOT</span> provide detailed error messages that could leak information about the verification process. A single INVALID response should be returned for all verification failures.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
+<p id="section-5.5-1">Implementations <span class="bcp14">SHOULD NOT</span> provide detailed error messages that could leak
+information about the verification process. A single INVALID response should be
+returned for all verification failures.<a href="#section-5.5-1" class="pilcrow">¶</a></p>
 <div id="error-codes">
 <section id="section-5.5.1">
           <h4 id="name-error-codes">
 <a href="#section-5.5.1" class="section-number selfRef">5.5.1. </a><a href="#name-error-codes" class="section-name selfRef">Error Codes</a>
           </h4>
-<p id="section-5.5.1-1">While detailed error messages should not be exposed to untrusted parties, implementations <span class="bcp14">MAY</span> use the following internal error codes:<a href="#section-5.5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.5.1-1">While detailed error messages should not be exposed to untrusted parties,
+implementations <span class="bcp14">MAY</span> use the following internal error codes:<a href="#section-5.5.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.5.1-2.1">
               <p id="section-5.5.1-2.1.1"><code>INVALID_PROOF</code>: Proof verification failed<a href="#section-5.5.1-2.1.1" class="pilcrow">¶</a></p>
@@ -2681,7 +2775,8 @@ ValidatePoint(P):
         <h3 id="name-parameter-selection">
 <a href="#section-5.6" class="section-number selfRef">5.6. </a><a href="#name-parameter-selection" class="section-name selfRef">Parameter Selection</a>
         </h3>
-<p id="section-5.6-1">The bit length L is configurable and determines the range of credit values (0 to 2^L - 1). The choice of L involves several trade-offs:<a href="#section-5.6-1" class="pilcrow">¶</a></p>
+<p id="section-5.6-1">The bit length L is configurable and determines the range of credit values (0
+to 2^L - 1). The choice of L involves several trade-offs:<a href="#section-5.6-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-5.6-2">
 <li id="section-5.6-2.1">
             <p id="section-5.6-2.1.1"><strong>Range</strong>: Larger L supports higher credit values<a href="#section-5.6-2.1.1" class="pilcrow">¶</a></p>
@@ -2708,7 +2803,8 @@ ValidatePoint(P):
             <p id="section-5.6-4.4.1">L = 256: Maximum practical value, but with doubled proof sizes compared to L = 128<a href="#section-5.6-4.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-5.6-5">The implementation <span class="bcp14">MUST</span> enforce L &lt; 252 to ensure proper scalar arithmetic within the group order.<a href="#section-5.6-5" class="pilcrow">¶</a></p>
+<p id="section-5.6-5">The implementation <span class="bcp14">MUST</span> enforce L &lt; 252 to ensure proper scalar arithmetic
+within the group order.<a href="#section-5.6-5" class="pilcrow">¶</a></p>
 <div id="performance-characteristics">
 <section id="section-5.6.1">
           <h4 id="name-performance-characteristics">
@@ -2817,7 +2913,9 @@ ValidatePoint(P):
               </tr>
             </tbody>
           </table>
-<p id="section-5.6.2-2">Implementations <span class="bcp14">SHOULD</span> choose L based on their maximum credit requirements and performance constraints. Note that L <span class="bcp14">MUST</span> be less than 252 to fit within the Ristretto group order.<a href="#section-5.6.2-2" class="pilcrow">¶</a></p>
+<p id="section-5.6.2-2">Implementations <span class="bcp14">SHOULD</span> choose L based on their maximum credit requirements and
+performance constraints. Note that L <span class="bcp14">MUST</span> be less than 252 to fit within the
+Ristretto group order.<a href="#section-5.6.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2869,7 +2967,8 @@ ValidatePoint(P):
               <p id="section-6.1.1-4.4.1">Manipulate the nullifier database<a href="#section-6.1.1-4.4.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-6.1.1-5">The protocol does not protect against a malicious issuer, only ensures privacy from an honest-but-curious issuer.<a href="#section-6.1.1-5" class="pilcrow">¶</a></p>
+<p id="section-6.1.1-5">The protocol does not protect against a malicious issuer, only ensures privacy
+from an honest-but-curious issuer.<a href="#section-6.1.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-properties">
@@ -2880,7 +2979,9 @@ ValidatePoint(P):
 <p id="section-6.1.2-1">The protocol provides the following security guarantees:<a href="#section-6.1.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.1.2-2">
 <li id="section-6.1.2-2.1">
-              <p id="section-6.1.2-2.1.1"><strong>Unforgeability</strong>: No probabilistic polynomial-time (PPT) adversary can create a valid credit token without the issuer's cooperation. Formally, for any PPT adversary A:<a href="#section-6.1.2-2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-6.1.2-2.1.1"><strong>Unforgeability</strong>: No probabilistic polynomial-time (PPT) adversary can
+create a valid credit token without the issuer's cooperation. Formally, for
+any PPT adversary A:<a href="#section-6.1.2-2.1.1" class="pilcrow">¶</a></p>
 <p id="section-6.1.2-2.1.2"><code>
 Pr[A(pk, params) -&gt; valid_token] ≤ negl(λ)
 </code><a href="#section-6.1.2-2.1.2" class="pilcrow">¶</a></p>
@@ -2896,9 +2997,10 @@ where λ is the security parameter.<a href="#section-6.1.2-2.1.3" class="pilcrow
                 <li class="normal" id="section-6.1.2-2.2.2.2">
                   <p id="section-6.1.2-2.2.2.2.1">Multiple spending transactions by the same client<a href="#section-6.1.2-2.2.2.2.1" class="pilcrow">¶</a></p>
 </li>
+                <li class="normal" id="section-6.1.2-2.2.2.3">
+                  <p id="section-6.1.2-2.2.2.3.1">This property is information theoretic in nature.<a href="#section-6.1.2-2.2.2.3.1" class="pilcrow">¶</a></p>
+</li>
               </ul>
-<p id="section-6.1.2-2.2.3">
-This holds under the DDH assumption in the Ristretto group.<a href="#section-6.1.2-2.2.3" class="pilcrow">¶</a></p>
 </li>
             <li id="section-6.1.2-2.3">
               <p id="section-6.1.2-2.3.1"><strong>Balance Security</strong>: No PPT adversary can spend more credits than issued. Specifically:<a href="#section-6.1.2-2.3.1" class="pilcrow">¶</a></p>
@@ -3012,10 +3114,12 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
 <p id="section-6.3-1">The protocol provides the following privacy guarantees:<a href="#section-6.3-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.3-2">
 <li id="section-6.3-2.1">
-            <p id="section-6.3-2.1.1"><strong>Unlinkability</strong>: The issuer cannot link a token to its issuance request or link multiple spends by the same client.<a href="#section-6.3-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.3-2.1.1"><strong>Unlinkability</strong>: The issuer cannot link a token to its issuance request or
+link multiple spends by the same client.<a href="#section-6.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.3-2.2">
-            <p id="section-6.3-2.2.1"><strong>Balance Privacy</strong>: The amount of credits in a token is not revealed during spending (only that it's sufficient for the transaction).<a href="#section-6.3-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-6.3-2.2.1"><strong>Balance Privacy</strong>: The amount of credits in a token is not revealed during
+spending (only that it's sufficient for the transaction).<a href="#section-6.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="section-6.3-3">However, the protocol does NOT provide:<a href="#section-6.3-3" class="pilcrow">¶</a></p>
@@ -3082,7 +3186,9 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
                 <p id="section-6.5-2.2.2.2.1">Binary decomposition in range proofs<a href="#section-6.5-2.2.2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-6.5-2.2.2.3">
-                <p id="section-6.5-2.2.2.3.1">Conditional selections based on secret bits<a href="#section-6.5-2.2.2.3.1" class="pilcrow">¶</a></p>
+                <p id="section-6.5-2.2.2.3.1">Conditionals based on secret bits, as in the range proof. Conditional
+selection operations using constant time CPU instructions should be used
+ in these cases.<a href="#section-6.5-2.2.2.3.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </li>
@@ -3101,13 +3207,19 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
             </ul>
 </li>
           <li id="section-6.5-2.4">
-            <p id="section-6.5-2.4.1"><strong>Nullifier Collisions</strong>: While nullifiers are 256-bit values with negligible collision probability (approximately 2^-128 for 2^64 tokens), implementations should still handle potential collisions gracefully.<a href="#section-6.5-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-6.5-2.4.1"><strong>Nullifier Collisions</strong>: While nullifiers are 256-bit values with
+negligible collision probability (approximately 2^-128 for 2^64 tokens),
+implementations should still handle potential collisions gracefully.<a href="#section-6.5-2.4.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.5-2.5">
-            <p id="section-6.5-2.5.1"><strong>Serialization Attacks</strong>: Implementations <span class="bcp14">MUST</span> use canonical serialization for all values included in hash computations to prevent malleability attacks.<a href="#section-6.5-2.5.1" class="pilcrow">¶</a></p>
+            <p id="section-6.5-2.5.1"><strong>Serialization Attacks</strong>: Implementations <span class="bcp14">MUST</span> use canonical serialization
+for all values included in hash computations to prevent malleability
+attacks.<a href="#section-6.5-2.5.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.5-2.6">
-            <p id="section-6.5-2.6.1"><strong>Concurrent Access</strong>: The protocol does not specify thread-safety requirements. Implementations <span class="bcp14">SHOULD</span> document their concurrency model and use appropriate locking mechanisms.<a href="#section-6.5-2.6.1" class="pilcrow">¶</a></p>
+            <p id="section-6.5-2.6.1"><strong>Concurrent Access</strong>: The protocol does not specify thread-safety
+requirements. Implementations <span class="bcp14">SHOULD</span> document their concurrency model and
+use appropriate locking mechanisms.<a href="#section-6.5-2.6.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -3122,7 +3234,9 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
           <h4 id="name-atomicity-requirements">
 <a href="#section-6.6.1" class="section-number selfRef">6.6.1. </a><a href="#name-atomicity-requirements" class="section-name selfRef">Atomicity Requirements</a>
           </h4>
-<p id="section-6.6.1-1">The spend and refund operations <span class="bcp14">MUST</span> be treated as an atomic transaction. If the refund fails after a spend proof is accepted, credits could be permanently lost. Implementations <span class="bcp14">SHOULD</span>:<a href="#section-6.6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.6.1-1">The spend and refund operations <span class="bcp14">MUST</span> be treated as an atomic transaction. If
+the refund fails after a spend proof is accepted, credits could be permanently
+lost. Implementations <span class="bcp14">SHOULD</span>:<a href="#section-6.6.1-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.6.1-2">
 <li id="section-6.6.1-2.1">
               <p id="section-6.6.1-2.1.1">Use two-phase commit or similar mechanisms<a href="#section-6.6.1-2.1.1" class="pilcrow">¶</a></p>
@@ -3152,7 +3266,9 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
           <h4 id="name-version-negotiation">
 <a href="#section-6.6.3" class="section-number selfRef">6.6.3. </a><a href="#name-version-negotiation" class="section-name selfRef">Version Negotiation</a>
           </h4>
-<p id="section-6.6.3-1">To support protocol evolution, implementations <span class="bcp14">MAY</span> include version negotiation in the initial handshake. All parties <span class="bcp14">MUST</span> agree on the protocol version before proceeding.<a href="#section-6.6.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.6.3-1">To support protocol evolution, implementations <span class="bcp14">MAY</span> include version negotiation
+in the initial handshake. All parties <span class="bcp14">MUST</span> agree on the protocol version before
+proceeding.<a href="#section-6.6.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3162,7 +3278,11 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
         <h3 id="name-quantum-resistance">
 <a href="#section-6.7" class="section-number selfRef">6.7. </a><a href="#name-quantum-resistance" class="section-name selfRef">Quantum Resistance</a>
         </h3>
-<p id="section-6.7-1">This protocol is NOT quantum-resistant. The discrete logarithm problem can be solved efficiently by quantum computers using Shor's algorithm. Organizations requiring long-term security should consider post-quantum alternatives.<a href="#section-6.7-1" class="pilcrow">¶</a></p>
+<p id="section-6.7-1">This protocol is NOT quantum-resistant. The discrete logarithm problem can be
+solved efficiently by quantum computers using Shor's algorithm. Organizations
+requiring long-term security should consider post-quantum alternatives. However,
+user privacy is preserved even in the presence of a cryptographically relevant
+quantum computer.<a href="#section-6.7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3249,7 +3369,9 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
       <h2 id="name-test-vectors">
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-test-vectors" class="section-name selfRef">Test Vectors</a>
       </h2>
-<p id="appendix-A-1">This appendix provides test vectors for implementers to verify their implementations. All values are encoded in hexadecimal. Scalars are 32 bytes each.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">This appendix provides test vectors for implementers to verify their
+implementations. All values are encoded in hexadecimal. Scalars are 32 bytes
+each.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <p id="appendix-A-2">TODO<a href="#appendix-A-2" class="pilcrow">¶</a></p>
 </section>
 </div>

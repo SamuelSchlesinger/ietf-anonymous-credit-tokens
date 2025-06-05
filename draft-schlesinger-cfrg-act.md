@@ -74,65 +74,113 @@ informative:
 
 --- abstract
 
-This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving payment protocol based on keyed-verification anonymous credentials. The protocol enables issuers to grant numerical credit values to clients, who can later redeem these credits anonymously while preventing double-spending through the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge proofs to ensure both security and privacy.
+This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
+payment protocol based on keyed-verification anonymous credentials. The
+protocol enables issuers to grant numerical credit values to clients, who can
+later redeem these credits anonymously while preventing double-spending through
+the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge
+proofs to ensure both security and privacy.
 
-Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving client privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token.
+Anonymous Credit Tokens are particularly suitable for web services that need to
+implement rate limiting, resource allocation, or micropayments while preserving
+client privacy. The protocol supports partial spending, allowing clients to
+spend a portion of their credits and receive change in the form of a new
+anonymous token.
 
-This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF.
+This document is a product of the Crypto Forum Research Group (CFRG) in the
+IRTF.
 
 --- middle
 
 # Introduction
 
-Many online services need mechanisms to allocate resources, implement rate limiting, or process micropayments. Traditional approaches to these problems typically require tracking client identity, which raises privacy concerns. Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables services to issue and track credits without linking transactions to client identities.
+Many online services need mechanisms to allocate resources, implement rate
+limiting, or process micropayments. Traditional approaches to these problems
+typically require tracking client identity, which raises privacy concerns.
+Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables
+services to issue and track credits without linking transactions to client
+identities.
 
-The Anonymous Credit Token protocol is a specialization of keyed-verification anonymous credentials {{KVAC}} that focuses on numerical credit values. It allows:
+The Anonymous Credit Token protocol is a specialization of keyed-verification
+anonymous credentials {{KVAC}} that focuses on numerical credit values. It
+allows:
 
-1. **Anonymous Issuance**: An issuer can grant credits to a client without learning any client-specific information beyond the credit amount.
+1. **Anonymous Issuance**: An issuer can grant credits to a client without
+   learning any client-specific information beyond the credit amount.
 
-2. **Anonymous Spending**: Clients can spend their credits without revealing their identity or linking multiple transactions.
+2. **Anonymous Spending**: Clients can spend their credits without revealing
+   their identity or linking multiple transactions.
 
-3. **Partial Spending**: Clients can spend a portion of their credits and receive the remainder as a new anonymous token.
+3. **Partial Spending**: Clients can spend a portion of their credits and
+   receive the remainder as a new anonymous token.
 
-4. **Double-Spend Prevention**: Each credit token has an associated nullifier that prevents the same credits from being spent multiple times.
+4. **Double-Spend Prevention**: Each credit token has an associated nullifier
+   that prevents the same credits from being spent multiple times.
 
 ## Use Cases
 
 Anonymous Credit Tokens can be applied to various scenarios:
 
-- **Rate Limiting**: Services can issue daily credit allowances that users spend anonymously for API calls or resource access.
-- **Privacy-Preserving Micropayments**: Users can purchase credit bundles and spend them over time without creating a transaction history.
-- **Anonymous Ticketing**: Event organizers can issue transferable tickets that can be verified without tracking ownership changes.
-- **Resource Allocation**: Cloud services can allocate computational resources using credits while preserving client privacy.
+- **Rate Limiting**: Services can issue daily credit allowances that users
+  spend anonymously for API calls or resource access.
+
+- **Privacy-Preserving Micropayments**: Users can purchase credit bundles and
+  spend them over time without creating a transaction history.
+
+- **Anonymous Ticketing**: Event organizers can issue transferable tickets that
+  can be verified without tracking ownership changes.
+
+- **Resource Allocation**: Cloud services can allocate computational resources
+  using credits while preserving client privacy.
 
 ## Protocol Overview
 
-The protocol involves two parties: an issuer (typically a service provider) and clients (users of the service). The interaction follows three main phases:
+The protocol involves two parties: an issuer (typically a service provider) and
+clients (users of the service). The interaction follows three main phases:
 
 1. **Setup**: The issuer generates a key pair and publishes the public key.
 
-2. **Issuance**: A client requests credits from the issuer. The issuer creates a blind signature on the credit value and a client-chosen nullifier, producing a credit token.
+2. **Issuance**: A client requests credits from the issuer. The issuer creates
+   a blind signature on the credit value and a client-chosen nullifier,
+   producing a credit token.
 
-3. **Spending**: To spend credits, the client reveals the nullifier and proves possession of a valid token with sufficient balance. The issuer verifies the proof, checks the nullifier hasn't been used before, and issues a new token for any remaining balance.
+3. **Spending**: To spend credits, the client reveals the nullifier and proves
+   possession of a valid token with sufficient balance. The issuer verifies the
+   proof, checks the nullifier hasn't been used before, and issues a new token for
+   any remaining balance.
 
 ## Design Goals
 
 The protocol is designed with the following goals:
 
-- **Privacy**: The issuer cannot link credit tokens to specific clients or link multiple transactions by the same client.
-- **Security**: Clients cannot spend more credits than they possess or use the same credits multiple times.
-- **Efficiency**: All operations should be computationally efficient, suitable for high-volume web services.
-- **Simplicity**: The protocol should be straightforward to implement and integrate into existing systems.
+- **Privacy**: The issuer cannot link credit tokens to specific clients or link
+  multiple transactions by the same client.
+
+- **Security**: Clients cannot spend more credits than they possess or use the
+  same credits multiple times.
+
+- **Efficiency**: All operations should be computationally efficient, suitable
+  for high-volume web services.
+
+- **Simplicity**: The protocol should be straightforward to implement and
+  integrate into existing systems.
 
 ## Relation to Existing Work
 
 This protocol builds upon several cryptographic primitives:
 
-- **BBS Signatures** {{BBS}}: The core signature scheme that enables efficient proofs of possession.
-- **Sigma Protocols** {{ORRU-SIGMA}}: The zero-knowledge proof framework used for spending proofs.
-- **Fiat-Shamir Transform** {{ORRU-FS}}: The technique to make the interactive proofs non-interactive.
+- **BBS Signatures** {{BBS}}: The core signature scheme that enables efficient
+  proofs of possession.
 
-The protocol can be viewed as a specialized instantiation of keyed-verification anonymous credentials {{KVAC}} optimized for numerical values and partial spending.
+- **Sigma Protocols** {{ORRU-SIGMA}}: The zero-knowledge proof framework used
+  for spending proofs.
+
+- **Fiat-Shamir Transform** {{ORRU-FS}}: The technique to make the interactive
+  proofs non-interactive.
+
+The protocol can be viewed as a specialized instantiation of keyed-verification
+anonymous credentials {{KVAC}} optimized for numerical values and partial
+spending.
 
 # Conventions and Definitions
 
@@ -143,12 +191,20 @@ The protocol can be viewed as a specialized instantiation of keyed-verification 
 This document uses the following notation:
 
 - `||`: Concatenation of byte strings
+
 - `x <- S`: Sampling x uniformly at random from the set S
+
 - `x := y`: Assignment of the value y to the variable x
+
 - `[n]`: The set of integers {0, 1, ..., n-1}
+
 - `|x|`: The length of byte string x
+
 - `0x` prefix: Hexadecimal values
-- We use additive notation for group operations, so group elements are added together like `a + b` and exponentiation of a group element by a scalar element is written as `a * n`, with group element `a` and scalar `n`.
+
+- We use additive notation for group operations, so group elements are added
+  together like `a + b` and exponentiation of a group element by a scalar
+element is written as `a * n`, with group element `a` and scalar `n`.
 
 ## Data Types
 
@@ -160,7 +216,9 @@ The protocol uses the following data types:
 
 ## Cryptographic Parameters
 
-The protocol uses the Ristretto group {{RISTRETTO}}, which provides a prime-order group abstraction over Curve25519. It would be easy to adapt this approach to using any other prime order group. The key parameters are:
+The protocol uses the Ristretto group {{RISTRETTO}}, which provides a
+prime-order group abstraction over Curve25519. It would be easy to adapt this
+approach to using any other prime order group. The key parameters are:
 
 - **q**: The prime order of the group (2^252 + 27742317777372353535851937790883648493)
 - **G**: The standard generator of the Ristretto group
@@ -179,7 +237,12 @@ Parameters:
   - L: Bit length for credit values (configurable, must satisfy L <= 252)
 ~~~
 
-The generators H1, H2, and H3 MUST be generated deterministically from a nothing-up-my-sleeve value to ensure they are independent of each other and of G. This prevents attacks where malicious parameters could compromise security, for instance by the discrete logarithms of `H1`, `H2`, or `H3` being known, or them having known relationships between each other like `H1^10 = H2`. Note that these generators are independent of the choice of L:
+The generators H1, H2, and H3 MUST be generated deterministically from a
+nothing-up-my-sleeve value to ensure they are independent of each other and of
+G. This prevents attacks where malicious parameters could compromise security,
+for instance by the discrete logarithms of `H1`, `H2`, or `H3` being known, or
+them having known relationships between each other like `H1^10 = H2`. Note that
+these generators are independent of the choice of L:
 
 ~~~
 GenerateParameters(domain_separator):
@@ -197,13 +260,16 @@ GenerateParameters(domain_separator):
     6. return (H1, H2, H3)
 ~~~
 
-The domain\_separator MUST be unique for each deployment to ensure cryptographic isolation between different services. The domain separator SHOULD follow this structured format:
+The domain\_separator MUST be unique for each deployment to ensure
+cryptographic isolation between different services. The domain separator SHOULD
+follow this structured format:
 
 ~~~
 domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deployment_id || ":" || version
 ~~~
 
 Where:
+
 - `organization`: A unique identifier for the organization (e.g., "example-corp", "acme-inc")
 - `service`: The specific service or application name (e.g., "payment-api", "rate-limiter")
 - `deployment_id`: The deployment environment (e.g., "production", "staging", "us-west-1")
@@ -218,7 +284,10 @@ This structured format ensures:
 4. Environment isolation (production vs staging)
 5. Version tracking for parameter updates
 
-Using generic or unstructured domain separators creates security risks through parameter collision and MUST NOT be used. When parameters need to be updated (e.g., for security reasons or protocol upgrades), a new version date MUST be used, creating entirely new parameters.
+Using generic or unstructured domain separators creates security risks through
+parameter collision and MUST NOT be used. When parameters need to be updated
+(e.g., for security reasons or protocol upgrades), a new version date MUST be
+used, creating entirely new parameters.
 
 ## Key Generation
 
@@ -241,7 +310,8 @@ KeyGen():
 
 ## Token Issuance
 
-The issuance protocol is an interactive protocol between a client and the issuer:
+The issuance protocol is an interactive protocol between a client and the
+issuer:
 
 ### Client: Issuance Request
 
@@ -352,7 +422,8 @@ VerifyIssuance(pk, request, response, state):
 
 ## Token Spending
 
-The spending protocol allows a client to spend s credits from a token containing c credits (where s <= c):
+The spending protocol allows a client to spend s credits from a token
+containing c credits (where s <= c):
 
 ### Client: Spend Proof Generation
 
@@ -533,7 +604,8 @@ VerifyAndRefund(sk, proof):
 
 ### Refund Issuance {#refund-issuance}
 
-After verifying a spend proof, the issuer creates a refund token for the remaining balance:
+After verifying a spend proof, the issuer creates a refund token for the
+remaining balance:
 
 ~~~
 IssueRefund(sk, K'):
@@ -701,11 +773,17 @@ The protocol version string for domain separation is:
 PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
 ~~~
 
-This version string MUST be used consistently across all implementations for interoperability. The curve specification is included to prevent cross-curve attacks and ensure implementations using different curves cannot accidentally interact.
+This version string MUST be used consistently across all implementations for
+interoperability. The curve specification is included to prevent cross-curve
+attacks and ensure implementations using different curves cannot accidentally
+interact.
 
 ### Hash Function and Fiat-Shamir Transform
 
-The protocol uses BLAKE3 {{BLAKE3}} as the underlying hash function for the Fiat-Shamir transform {{ORRU-FS}}. Following the sigma protocol framework {{ORRU-SIGMA}}, challenges are generated using a transcript that accumulates all protocol messages:
+The protocol uses BLAKE3 {{BLAKE3}} as the underlying hash function for the
+Fiat-Shamir transform {{ORRU-FS}}. Following the sigma protocol framework
+{{ORRU-SIGMA}}, challenges are generated using a transcript that accumulates
+all protocol messages:
 
 ~~~
 CreateTranscript(label):
@@ -768,7 +846,8 @@ Encode(value):
     4.     return value.to_bytes_le()  // 32 bytes, little-endian
 ~~~
 
-Note: Implementations MAY use standard serialization formats (e.g., bincode, CBOR) for complex structures, but MUST ensure deterministic encoding for hash inputs.
+Note: Implementations MAY use standard serialization formats (e.g. CBOR) for
+complex structures, but MUST ensure deterministic encoding for hash inputs.
 
 ### Binary Decomposition {#binary-decomposition}
 
@@ -791,7 +870,10 @@ BitDecompose(s):
     7. return bits
 ~~~
 
-Note: This algorithm produces bits in LSB-first order (i.e., `bits[0]` is the least significant bit). The algorithm works for any L < 252, as the scalar is represented in 32 bytes (256 bits), which accommodates the full range of the Ristretto group order.
+Note: This algorithm produces bits in LSB-first order (i.e., `bits[0]` is the
+least significant bit). The algorithm works for any L < 252, as the scalar is
+represented in 32 bytes (256 bits), which accommodates the full range of the
+Ristretto group order.
 
 ### Scalar Conversion
 
@@ -829,7 +911,9 @@ ScalarToCredit(s):
 
 ## Message Encoding
 
-All protocol messages SHOULD be encoded using deterministic CBOR (RFC 8949) for interoperability. The following sections define the structure of each message type.
+All protocol messages SHOULD be encoded using deterministic CBOR (RFC 8949) for
+interoperability. The following sections define the structure of each message
+type.
 
 ### Issuance Request Message
 
@@ -925,21 +1009,31 @@ Client                                          Issuer
 
 ## Nullifier Management
 
-Implementations MUST maintain a persistent database of used nullifiers to prevent double-spending. The nullifier storage requirements grow linearly with the number of spent tokens. Implementations MAY use the following strategies to manage storage:
+Implementations MUST maintain a persistent database of used nullifiers to
+prevent double-spending. The nullifier storage requirements grow linearly with
+the number of spent tokens. Implementations MAY use the following strategies to
+manage storage:
 
-1. **Expiration**: If tokens have expiration dates, old nullifiers can be pruned.
+1. **Expiration**: If tokens have expiration dates, old nullifiers can be
+   pruned.
+
 2. **Sharding**: Nullifiers can be partitioned across multiple databases.
-3. **Bloom Filters**: Probabilistic data structures can reduce memory usage with a small false-positive rate.
+
+3. **Bloom Filters**: Probabilistic data structures can reduce memory usage
+   with a small false-positive rate.
 
 ## Constant-Time Operations
 
-To prevent timing attacks, implementations MUST use constant-time operations for:
+To prevent timing attacks, implementations MUST use constant-time operations
+for:
 
 - Scalar arithmetic
 - Point operations
 - Conditional selections in range proofs
 
-In particular, the range proof generation MUST use constant-time conditional selection when choosing between bit values 0 and 1. The following pattern should be used:
+In particular, the range proof generation MUST use constant-time conditional
+selection when choosing between bit values 0 and 1. The following pattern
+should be used:
 
 ~~~
 ConstantTimeSelect(condition, value_if_true, value_if_false):
@@ -948,11 +1042,14 @@ ConstantTimeSelect(condition, value_if_true, value_if_false):
   // Must execute in constant time regardless of condition
 ~~~
 
-This is critical in the range proof generation where bit values must not leak through timing channels.
+This is critical in the range proof generation where bit values must not leak
+through timing channels.
 
 ## Randomness Generation
 
-The security of the protocol critically depends on the quality of random number generation. Implementations MUST use cryptographically secure random number generators (CSPRNGs) for:
+The security of the protocol critically depends on the quality of random number
+generation. Implementations MUST use cryptographically secure random number
+generators (CSPRNGs) for:
 
 - Private key generation
 - Blinding factors (r, k)
@@ -966,7 +1063,8 @@ The security of the protocol critically depends on the quality of random number 
 
 ### Nonce Generation
 
-Following {{ORRU-SIGMA}}, nonces (the randomness used in proofs) MUST be generated with extreme care:
+Following {{ORRU-SIGMA}}, nonces (the randomness used in proofs) MUST be
+generated with extreme care:
 
 1. **Fresh Randomness**: Generate new nonces for every proof
 2. **No Reuse**: Never reuse nonces across different proofs
@@ -1005,11 +1103,14 @@ All implementations MUST validate points at these locations:
 
 ## Error Handling
 
-Implementations SHOULD NOT provide detailed error messages that could leak information about the verification process. A single INVALID response should be returned for all verification failures.
+Implementations SHOULD NOT provide detailed error messages that could leak
+information about the verification process. A single INVALID response should be
+returned for all verification failures.
 
 ### Error Codes
 
-While detailed error messages should not be exposed to untrusted parties, implementations MAY use the following internal error codes:
+While detailed error messages should not be exposed to untrusted parties,
+implementations MAY use the following internal error codes:
 
 - `INVALID_PROOF`: Proof verification failed
 - `INSUFFICIENT_BALANCE`: Attempting to spend more than available credits
@@ -1021,7 +1122,8 @@ While detailed error messages should not be exposed to untrusted parties, implem
 
 ## Parameter Selection
 
-The bit length L is configurable and determines the range of credit values (0 to 2^L - 1). The choice of L involves several trade-offs:
+The bit length L is configurable and determines the range of credit values (0
+to 2^L - 1). The choice of L involves several trade-offs:
 
 1. **Range**: Larger L supports higher credit values
 2. **Performance**: Proof size and verification time scale linearly with L
@@ -1034,7 +1136,8 @@ Common configurations:
 - L = 128: Suitable for large-scale systems with effectively unlimited credit range
 - L = 256: Maximum practical value, but with doubled proof sizes compared to L = 128
 
-The implementation MUST enforce L < 252 to ensure proper scalar arithmetic within the group order.
+The implementation MUST enforce L < 252 to ensure proper scalar arithmetic
+within the group order.
 
 ### Performance Characteristics
 
@@ -1069,7 +1172,9 @@ The proof size scales linearly with L:
 | L | 128 | 3.4 × 10^38 | ~4 KB | Large-scale systems, general purpose |
 | L | 192 | 6.3 × 10^57 | ~6 KB | Very large values, future-proofing |
 
-Implementations SHOULD choose L based on their maximum credit requirements and performance constraints. Note that L MUST be less than 252 to fit within the Ristretto group order.
+Implementations SHOULD choose L based on their maximum credit requirements and
+performance constraints. Note that L MUST be less than 252 to fit within the
+Ristretto group order.
 
 # Security Considerations
 
@@ -1091,13 +1196,16 @@ Note: The issuer must be trusted not to:
 - Refuse valid spend proofs
 - Manipulate the nullifier database
 
-The protocol does not protect against a malicious issuer, only ensures privacy from an honest-but-curious issuer.
+The protocol does not protect against a malicious issuer, only ensures privacy
+from an honest-but-curious issuer.
 
 ### Security Properties
 
 The protocol provides the following security guarantees:
 
-1. **Unforgeability**: No probabilistic polynomial-time (PPT) adversary can create a valid credit token without the issuer's cooperation. Formally, for any PPT adversary A:
+1. **Unforgeability**: No probabilistic polynomial-time (PPT) adversary can
+   create a valid credit token without the issuer's cooperation. Formally, for
+   any PPT adversary A:
 
    ```
    Pr[A(pk, params) -> valid_token] ≤ negl(λ)
@@ -1108,8 +1216,7 @@ The protocol provides the following security guarantees:
 2. **Unlinkability**: The issuer cannot link:
    - A spending transaction to the original issuance
    - Multiple spending transactions by the same client
-
-   This holds under the DDH assumption in the Ristretto group.
+   - This property is information theoretic in nature.
 
 3. **Balance Security**: No PPT adversary can spend more credits than issued. Specifically:
    - Credits cannot be created from nothing
@@ -1154,8 +1261,11 @@ The security of Anonymous Credit Tokens relies on:
 
 The protocol provides the following privacy guarantees:
 
-1. **Unlinkability**: The issuer cannot link a token to its issuance request or link multiple spends by the same client.
-2. **Balance Privacy**: The amount of credits in a token is not revealed during spending (only that it's sufficient for the transaction).
+1. **Unlinkability**: The issuer cannot link a token to its issuance request or
+   link multiple spends by the same client.
+
+2. **Balance Privacy**: The amount of credits in a token is not revealed during
+   spending (only that it's sufficient for the transaction).
 
 However, the protocol does NOT provide:
 
@@ -1183,24 +1293,34 @@ Implementers should be aware of:
 2. **Timing Attacks**: Variable-time operations can leak information about secret values. Critical operations requiring constant-time implementation:
    - Scalar arithmetic in proofs
    - Binary decomposition in range proofs
-   - Conditional selections based on secret bits
+   - Conditionals based on secret bits, as in the range proof. Conditional
+     selection operations using constant time CPU instructions should be used
+    in these cases.
 
 3. **Nullifier Database Integrity**: Corruption of the nullifier database could enable double-spending. Implementations SHOULD:
    - Use atomic database operations
    - Implement database backups
    - Include integrity checks (e.g., Merkle trees)
 
-4. **Nullifier Collisions**: While nullifiers are 256-bit values with negligible collision probability (approximately 2^-128 for 2^64 tokens), implementations should still handle potential collisions gracefully.
+4. **Nullifier Collisions**: While nullifiers are 256-bit values with
+   negligible collision probability (approximately 2^-128 for 2^64 tokens),
+implementations should still handle potential collisions gracefully.
 
-5. **Serialization Attacks**: Implementations MUST use canonical serialization for all values included in hash computations to prevent malleability attacks.
+5. **Serialization Attacks**: Implementations MUST use canonical serialization
+   for all values included in hash computations to prevent malleability
+attacks.
 
-6. **Concurrent Access**: The protocol does not specify thread-safety requirements. Implementations SHOULD document their concurrency model and use appropriate locking mechanisms.
+6. **Concurrent Access**: The protocol does not specify thread-safety
+   requirements. Implementations SHOULD document their concurrency model and
+use appropriate locking mechanisms.
 
 ## Protocol Composition and State Management
 
 ### Atomicity Requirements
 
-The spend and refund operations MUST be treated as an atomic transaction. If the refund fails after a spend proof is accepted, credits could be permanently lost. Implementations SHOULD:
+The spend and refund operations MUST be treated as an atomic transaction. If
+the refund fails after a spend proof is accepted, credits could be permanently
+lost. Implementations SHOULD:
 
 1. Use two-phase commit or similar mechanisms
 2. Implement rollback capabilities for failed refunds
@@ -1215,11 +1335,17 @@ Each protocol session (issuance or spend/refund) MUST:
 
 ### Version Negotiation
 
-To support protocol evolution, implementations MAY include version negotiation in the initial handshake. All parties MUST agree on the protocol version before proceeding.
+To support protocol evolution, implementations MAY include version negotiation
+in the initial handshake. All parties MUST agree on the protocol version before
+proceeding.
 
 ## Quantum Resistance
 
-This protocol is NOT quantum-resistant. The discrete logarithm problem can be solved efficiently by quantum computers using Shor's algorithm. Organizations requiring long-term security should consider post-quantum alternatives.
+This protocol is NOT quantum-resistant. The discrete logarithm problem can be
+solved efficiently by quantum computers using Shor's algorithm. Organizations
+requiring long-term security should consider post-quantum alternatives. However,
+user privacy is preserved even in the presence of a cryptographically relevant
+quantum computer.
 
 # IANA Considerations
 
@@ -1229,7 +1355,9 @@ This document has no IANA actions.
 
 # Test Vectors {#test-vectors}
 
-This appendix provides test vectors for implementers to verify their implementations. All values are encoded in hexadecimal. Scalars are 32 bytes each.
+This appendix provides test vectors for implementers to verify their
+implementations. All values are encoded in hexadecimal. Scalars are 32 bytes
+each.
 
 TODO
 
