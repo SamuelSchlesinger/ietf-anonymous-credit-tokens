@@ -76,7 +76,7 @@ informative:
 
 This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving payment protocol based on keyed-verification anonymous credentials. The protocol enables issuers to grant numerical credit values to clients, who can later redeem these credits anonymously while preventing double-spending through the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge proofs to ensure both security and privacy.
 
-Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving user privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token.
+Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving client privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token.
 
 This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF.
 
@@ -84,7 +84,7 @@ This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF
 
 # Introduction
 
-Many online services need mechanisms to allocate resources, implement rate limiting, or process micropayments. Traditional approaches to these problems typically require tracking user identity, which raises privacy concerns. Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables services to issue and track credits without linking transactions to user identities.
+Many online services need mechanisms to allocate resources, implement rate limiting, or process micropayments. Traditional approaches to these problems typically require tracking client identity, which raises privacy concerns. Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables services to issue and track credits without linking transactions to client identities.
 
 The Anonymous Credit Token protocol is a specialization of keyed-verification anonymous credentials {{KVAC}} that focuses on numerical credit values. It allows:
 
@@ -103,7 +103,7 @@ Anonymous Credit Tokens can be applied to various scenarios:
 - **Rate Limiting**: Services can issue daily credit allowances that users spend anonymously for API calls or resource access.
 - **Privacy-Preserving Micropayments**: Users can purchase credit bundles and spend them over time without creating a transaction history.
 - **Anonymous Ticketing**: Event organizers can issue transferable tickets that can be verified without tracking ownership changes.
-- **Resource Allocation**: Cloud services can allocate computational resources using credits while preserving user privacy.
+- **Resource Allocation**: Cloud services can allocate computational resources using credits while preserving client privacy.
 
 ## Protocol Overview
 

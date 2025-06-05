@@ -9,7 +9,7 @@
 <meta content="Jonathan Katz" name="author">
 <meta content="
        This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving payment protocol based on keyed-verification anonymous credentials. The protocol enables issuers to grant numerical credit values to clients, who can later redeem these credits anonymously while preventing double-spending through the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge proofs to ensure both security and privacy. 
-       Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving user privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token. 
+       Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving client privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token. 
        This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF. 
     " name="description">
 <meta content="xml2rfc 3.28.1" name="generator">
@@ -1069,7 +1069,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-schlesinger-cfrg-act-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-06-05" class="published">5 June 2025</time>
+<time datetime="2025-06" class="published">June 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
@@ -1092,7 +1092,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving payment protocol based on keyed-verification anonymous credentials. The protocol enables issuers to grant numerical credit values to clients, who can later redeem these credits anonymously while preventing double-spending through the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge proofs to ensure both security and privacy.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving user privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">Anonymous Credit Tokens are particularly suitable for web services that need to implement rate limiting, resource allocation, or micropayments while preserving client privacy. The protocol supports partial spending, allowing clients to spend a portion of their credits and receive change in the form of a new anonymous token.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 <p id="section-abstract-3">This document is a product of the Crypto Forum Research Group (CFRG) in the IRTF.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
@@ -1130,7 +1130,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 7 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 3 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1409,7 +1409,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">Many online services need mechanisms to allocate resources, implement rate limiting, or process micropayments. Traditional approaches to these problems typically require tracking user identity, which raises privacy concerns. Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables services to issue and track credits without linking transactions to user identities.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-1">Many online services need mechanisms to allocate resources, implement rate limiting, or process micropayments. Traditional approaches to these problems typically require tracking client identity, which raises privacy concerns. Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables services to issue and track credits without linking transactions to client identities.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">The Anonymous Credit Token protocol is a specialization of keyed-verification anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> that focuses on numerical credit values. It allows:<a href="#section-1-2" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-1-3">
 <li id="section-1-3.1">
@@ -1442,7 +1442,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
             <p id="section-1.1-2.3.1"><strong>Anonymous Ticketing</strong>: Event organizers can issue transferable tickets that can be verified without tracking ownership changes.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.1-2.4">
-            <p id="section-1.1-2.4.1"><strong>Resource Allocation</strong>: Cloud services can allocate computational resources using credits while preserving user privacy.<a href="#section-1.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.4.1"><strong>Resource Allocation</strong>: Cloud services can allocate computational resources using credits while preserving client privacy.<a href="#section-1.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1627,7 +1627,25 @@ GenerateParameters(domain_separator):
     6. return (H1, H2, H3)
 </pre><a href="#section-3.1-4" class="pilcrow">¶</a>
 </div>
-<p id="section-3.1-5">The domain_separator <span class="bcp14">MUST</span> be unique for each deployment to ensure cryptographic isolation between different services. Each deployment <span class="bcp14">SHOULD</span> use a domain separator that identifies the specific service, organization, or use case, such as "myservice-act-v1" or "example-corp-credits-v1". Using generic domain separators like "anonymous-credit-tokens-v1" across multiple deployments creates security risks through parameter collision and <span class="bcp14">MUST</span> be avoided in production systems.<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+<p id="section-3.1-5">The domain_separator <span class="bcp14">MUST</span> be unique for each deployment to ensure cryptographic isolation between different services. The domain separator <span class="bcp14">SHOULD</span> follow this structured format:<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.1-6">
+<pre>
+domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deployment_id || ":" || version
+</pre><a href="#section-3.1-6" class="pilcrow">¶</a>
+</div>
+<p id="section-3.1-7">Where:
+- <code>organization</code>: A unique identifier for the organization (e.g., "example-corp", "acme-inc")
+- <code>service</code>: The specific service or application name (e.g., "payment-api", "rate-limiter")
+- <code>deployment_id</code>: The deployment environment (e.g., "production", "staging", "us-west-1")
+- <code>version</code>: An ISO 8601 date (YYYY-MM-DD) indicating when parameters were generated<a href="#section-3.1-7" class="pilcrow">¶</a></p>
+<p id="section-3.1-8">Example: <code>"ACT-v1:example-corp:payment-api:production:2024-01-15"</code><a href="#section-3.1-8" class="pilcrow">¶</a></p>
+<p id="section-3.1-9">This structured format ensures:
+1. Protocol identification through the "ACT-v1:" prefix
+2. Organizational namespace isolation
+3. Service-level separation within organizations
+4. Environment isolation (production vs staging)
+5. Version tracking for parameter updates<a href="#section-3.1-9" class="pilcrow">¶</a></p>
+<p id="section-3.1-10">Using generic or unstructured domain separators creates security risks through parameter collision and <span class="bcp14">MUST NOT</span> be used. When parameters need to be updated (e.g., for security reasons or protocol upgrades), a new version date <span class="bcp14">MUST</span> be used, creating entirely new parameters.<a href="#section-3.1-10" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="key-generation">
