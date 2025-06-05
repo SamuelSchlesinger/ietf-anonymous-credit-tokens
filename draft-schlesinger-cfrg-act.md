@@ -197,7 +197,28 @@ GenerateParameters(domain_separator):
     6. return (H1, H2, H3)
 ~~~
 
-The domain\_separator MUST be unique for each deployment to ensure cryptographic isolation between different services. Each deployment SHOULD use a domain separator that identifies the specific service, organization, or use case, such as "myservice-act-v1" or "example-corp-credits-v1". Using generic domain separators like "anonymous-credit-tokens-v1" across multiple deployments creates security risks through parameter collision and MUST be avoided in production systems.
+The domain\_separator MUST be unique for each deployment to ensure cryptographic isolation between different services. The domain separator SHOULD follow this structured format:
+
+~~~
+domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deployment_id || ":" || version
+~~~
+
+Where:
+- `organization`: A unique identifier for the organization (e.g., "example-corp", "acme-inc")
+- `service`: The specific service or application name (e.g., "payment-api", "rate-limiter")
+- `deployment_id`: The deployment environment (e.g., "production", "staging", "us-west-1")
+- `version`: An ISO 8601 date (YYYY-MM-DD) indicating when parameters were generated
+
+Example: `"ACT-v1:example-corp:payment-api:production:2024-01-15"`
+
+This structured format ensures:
+1. Protocol identification through the "ACT-v1:" prefix
+2. Organizational namespace isolation
+3. Service-level separation within organizations
+4. Environment isolation (production vs staging)
+5. Version tracking for parameter updates
+
+Using generic or unstructured domain separators creates security risks through parameter collision and MUST NOT be used. When parameters need to be updated (e.g., for security reasons or protocol upgrades), a new version date MUST be used, creating entirely new parameters.
 
 ## Key Generation
 
