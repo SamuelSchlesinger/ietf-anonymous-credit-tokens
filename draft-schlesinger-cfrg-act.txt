@@ -145,20 +145,6 @@ Table of Contents
      8.1.  Normative References
      8.2.  Informative References
    Appendix A.  Test Vectors
-     A.1.  Test Configuration
-     A.2.  Complete Protocol Flow Example
-       A.2.1.  1.  Issuance Phase (100 credits)
-       A.2.2.  2.  Spending Phase (30 credits)
-     A.3.  Edge Cases
-       A.3.1.  Zero Credit Token
-       A.3.2.  Maximum Credit Token
-       A.3.3.  Invalid Operation: Overspend
-       A.3.4.  Double-Spend Prevention
-     A.4.  Intermediate Test Values
-       A.4.1.  Binary Decomposition of c - s = 70
-       A.4.2.  Protocol Message Sizes
-     A.5.  Test Vector Summary
-       A.5.1.  Implementation Validation
    Appendix B.  Implementation Status
      B.1.  anonymous-credit-tokens
    Appendix C.  Acknowledgments
@@ -1579,103 +1565,7 @@ Appendix A.  Test Vectors
    implementations.  All values are encoded in hexadecimal.  Scalars are
    32 bytes each.
 
-A.1.  Test Configuration
-
-RNG Seed: 0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20
-Domain Separator: "anonymous-credit-tokens-v1"
-Protocol Version: "curve25519-ristretto anonymous-credentials v1.0"
-L: 128 (configurable parameter for this example)
-
-A.2.  Complete Protocol Flow Example
-
-   This example demonstrates issuing 100 credits and spending 30.
-
-A.2.1.  1.  Issuance Phase (100 credits)
-
-Credits to issue: 100
-Token successfully created
-Token balance: 100
-Token nullifier (k): 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
-
-A.2.2.  2.  Spending Phase (30 credits)
-
-Amount to spend: 30
-Nullifier revealed: 0x6014ab1f6729d791c5a40752ff015efd3a33187a22f6b51f5914d2c22ce67805
-Spend amount (s): 30
-
-Refund issued successfully
-New token balance: 70
-New token nullifier (k*): 0xe844bad01bd4f034fcdd5c594960b7860abf46f8f5b876f600ffff16e0de1b07
-
-A.3.  Edge Cases
-
-A.3.1.  Zero Credit Token
-
-Zero credit token created
-Balance: 0
-Nullifier: 0x603fdef3d44fbc72098e638618daf2079f9034f803492794791cdc77d9909b04
-
-A.3.2.  Maximum Credit Token
-
-Maximum credit token created
-Balance: 340282366920938463463374607431768211455 (2^128 - 1)
-Nullifier: 0x4997bd7475c72eed6065c545e791475d4192059d6f41279f794504233df19a06
-
-A.3.3.  Invalid Operation: Overspend
-
-   Token balance: 20
-   Attempting to spend: 30
-   Result: INVALID (correctly rejected)
-
-A.3.4.  Double-Spend Prevention
-
-Original token balance: 50
-First spend: 20
-Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804
-
-Attempting second spend from original token: 15
-Nullifier: 0x5534aae1691f76607a32586128cd11553a51d5ae749b852c98f103333dc85804
-Same nullifier: true
-Result: Would be rejected by nullifier database
-
-A.4.  Intermediate Test Values
-
-   For debugging implementations, here are the expected intermediate
-   values for the main test case (100 credits, spend 30):
-
-A.4.1.  Binary Decomposition of c - s = 70
-
-   m = 70 = 0x46
-   Binary: 01000110 (LSB first)
-   i[0] = 0, i[1] = 1, i[2] = 1, i[3] = 0,
-   i[4] = 0, i[5] = 0, i[6] = 1, i[7] = 0
-   i[8..L-1] = 0 (where L = 128 for this example)
-
-A.4.2.  Protocol Message Sizes
-
-   IssuanceRequestMsg: 4 × 32 = 128 bytes
-   IssuanceResponseMsg: 5 × 32 = 160 bytes
-   SpendProofMsg: O(L) × 32 bytes (e.g., ~4,096 bytes with L=128)
-   RefundMsg: 4 × 32 = 128 bytes
-
-A.5.  Test Vector Summary
-
-   These test vectors demonstrate: 1.  Successful issuance and spending
-   with correct balances 2.  Edge cases (zero and maximum credit
-   amounts) work correctly 3.  Invalid operations (overspending) are
-   properly rejected 4.  Double-spend prevention through nullifier reuse
-   detection 5.  Correct binary decomposition for range proofs
-
-A.5.1.  Implementation Validation
-
-   Implementations can validate correctness by: 1.  Reproducing the
-   nullifier values with the same RNG seed 2.  Verifying balance
-   calculations after spending 3.  Ensuring invalid operations are
-   rejected 4.  Checking that double-spends produce identical nullifiers
-
-   Note: Full cryptographic values (points, signatures) depend on the
-   specific implementation's representation and cannot be compared
-   directly across implementations.
+   TODO
 
 Appendix B.  Implementation Status
 
