@@ -3323,78 +3323,196 @@ spending (only that it's sufficient for the transaction).<a href="#section-6.3-2
 <li id="section-6.5.1-1.1">
               <p id="section-6.5.1-1.1.1"><strong>RNG Failures</strong>: Weak randomness can completely break the protocol's security.<a href="#section-6.5.1-1.1.1" class="pilcrow">¶</a></p>
 <p id="section-6.5.1-1.1.2"><strong>Attack Vector</strong>: Predictable or repeated nonces in proofs can allow complete recovery of secret values including private keys and token contents.<a href="#section-6.5.1-1.1.2" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.1.3"><strong>Mitigations</strong>:
-- <span class="bcp14">MUST</span> use cryptographically secure RNGs (e.g., OS-provided entropy sources)
-- <span class="bcp14">MUST</span> reseed after fork() operations to prevent nonce reuse
-- <span class="bcp14">MUST</span> implement forward-secure RNG state management
-- <span class="bcp14">SHOULD</span> use separate RNG instances for different protocol components
-- <span class="bcp14">MUST</span> zeroize RNG state on process termination<a href="#section-6.5.1-1.1.3" class="pilcrow">¶</a></p>
+<p id="section-6.5.1-1.1.3"><strong>Mitigations</strong>:<a href="#section-6.5.1-1.1.3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.1.4.1">
+                  <p id="section-6.5.1-1.1.4.1.1"><span class="bcp14">MUST</span> use cryptographically secure RNGs (e.g., OS-provided entropy sources)<a href="#section-6.5.1-1.1.4.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.1.4.2">
+                  <p id="section-6.5.1-1.1.4.2.1"><span class="bcp14">MUST</span> reseed after fork() operations to prevent nonce reuse<a href="#section-6.5.1-1.1.4.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.1.4.3">
+                  <p id="section-6.5.1-1.1.4.3.1"><span class="bcp14">MUST</span> implement forward-secure RNG state management<a href="#section-6.5.1-1.1.4.3.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.1.4.4">
+                  <p id="section-6.5.1-1.1.4.4.1"><span class="bcp14">SHOULD</span> use separate RNG instances for different protocol components<a href="#section-6.5.1-1.1.4.4.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.1.4.5">
+                  <p id="section-6.5.1-1.1.4.5.1"><span class="bcp14">MUST</span> zeroize RNG state on process termination<a href="#section-6.5.1-1.1.4.5.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
 </li>
             <li id="section-6.5.1-1.2">
               <p id="section-6.5.1-1.2.1"><strong>Timing Attacks</strong>: Variable-time operations can leak information about secret values.<a href="#section-6.5.1-1.2.1" class="pilcrow">¶</a></p>
 <p id="section-6.5.1-1.2.2"><strong>Attack Vector</strong>: Timing variations in scalar arithmetic or bit operations can reveal secret bit patterns, potentially exposing credit balances or allowing token forgery.<a href="#section-6.5.1-1.2.2" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.2.3"><strong>Mitigations</strong>:
-- <span class="bcp14">MUST</span> use constant-time scalar arithmetic libraries
-- <span class="bcp14">MUST</span> use constant-time conditional selection for range proof bit operations
-- <span class="bcp14">MUST</span> avoid early-exit conditions based on secret values
-- <span class="bcp14">SHOULD</span> use blinding techniques for particularly sensitive operations
-- Critical constant-time operations include:
-  * Scalar multiplication and addition
-  * Binary decomposition in range proofs
-  * Conditional assignments based on secret bits
-  * Challenge verification comparisons<a href="#section-6.5.1-1.2.3" class="pilcrow">¶</a></p>
+<p id="section-6.5.1-1.2.3"><strong>Mitigations</strong>:<a href="#section-6.5.1-1.2.3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.2.4.1">
+                  <p id="section-6.5.1-1.2.4.1.1"><span class="bcp14">MUST</span> use constant-time scalar arithmetic libraries<a href="#section-6.5.1-1.2.4.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.2.4.2">
+                  <p id="section-6.5.1-1.2.4.2.1"><span class="bcp14">MUST</span> use constant-time conditional selection for range proof bit operations<a href="#section-6.5.1-1.2.4.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.2.4.3">
+                  <p id="section-6.5.1-1.2.4.3.1"><span class="bcp14">MUST</span> avoid early-exit conditions based on secret values<a href="#section-6.5.1-1.2.4.3.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.2.4.4">
+                  <p id="section-6.5.1-1.2.4.4.1"><span class="bcp14">SHOULD</span> use blinding techniques for particularly sensitive operations<a href="#section-6.5.1-1.2.4.4.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.2.4.5">
+                  <p id="section-6.5.1-1.2.4.5.1">Critical constant-time operations include:<a href="#section-6.5.1-1.2.4.5.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.2.4.5.2.1">
+                      <p id="section-6.5.1-1.2.4.5.2.1.1">Scalar multiplication and addition<a href="#section-6.5.1-1.2.4.5.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                    <li class="normal" id="section-6.5.1-1.2.4.5.2.2">
+                      <p id="section-6.5.1-1.2.4.5.2.2.1">Binary decomposition in range proofs<a href="#section-6.5.1-1.2.4.5.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                    <li class="normal" id="section-6.5.1-1.2.4.5.2.3">
+                      <p id="section-6.5.1-1.2.4.5.2.3.1">Conditional assignments based on secret bits<a href="#section-6.5.1-1.2.4.5.2.3.1" class="pilcrow">¶</a></p>
+</li>
+                    <li class="normal" id="section-6.5.1-1.2.4.5.2.4">
+                      <p id="section-6.5.1-1.2.4.5.2.4.1">Challenge verification comparisons<a href="#section-6.5.1-1.2.4.5.2.4.1" class="pilcrow">¶</a></p>
+</li>
+                  </ul>
+</li>
+              </ul>
 </li>
             <li id="section-6.5.1-1.3">
               <p id="section-6.5.1-1.3.1"><strong>Nullifier Database Attacks</strong>: Corruption or manipulation of the nullifier database enables double-spending.<a href="#section-6.5.1-1.3.1" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.3.2"><strong>Attack Vectors</strong>:
-- Database corruption allowing nullifier deletion
-- Race conditions in concurrent nullifier checks
-- Rollback attacks reverting nullifier storage<a href="#section-6.5.1-1.3.2" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.3.3"><strong>Mitigations</strong>:
-- <span class="bcp14">MUST</span> use ACID-compliant database transactions
-- <span class="bcp14">MUST</span> check nullifier uniqueness within the same transaction as insertion
-- <span class="bcp14">SHOULD</span> implement append-only audit logs for nullifier operations
-- <span class="bcp14">SHOULD</span> use cryptographic commitments (e.g., Merkle trees) for integrity
-- <span class="bcp14">MUST</span> implement proper database backup and recovery procedures
-- <span class="bcp14">SHOULD</span> monitor for anomalous nullifier patterns<a href="#section-6.5.1-1.3.3" class="pilcrow">¶</a></p>
+<p id="section-6.5.1-1.3.2"><strong>Attack Vectors</strong>:<a href="#section-6.5.1-1.3.2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.3.3.1">
+                  <p id="section-6.5.1-1.3.3.1.1">Database corruption allowing nullifier deletion<a href="#section-6.5.1-1.3.3.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.3.3.2">
+                  <p id="section-6.5.1-1.3.3.2.1">Race conditions in concurrent nullifier checks<a href="#section-6.5.1-1.3.3.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.3.3.3">
+                  <p id="section-6.5.1-1.3.3.3.1">Rollback attacks reverting nullifier storage<a href="#section-6.5.1-1.3.3.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+<p id="section-6.5.1-1.3.4">
+<strong>Mitigations</strong>:<a href="#section-6.5.1-1.3.4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.3.5.1">
+                  <p id="section-6.5.1-1.3.5.1.1"><span class="bcp14">MUST</span> use ACID-compliant database transactions<a href="#section-6.5.1-1.3.5.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.3.5.2">
+                  <p id="section-6.5.1-1.3.5.2.1"><span class="bcp14">MUST</span> check nullifier uniqueness within the same transaction as insertion<a href="#section-6.5.1-1.3.5.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.3.5.3">
+                  <p id="section-6.5.1-1.3.5.3.1"><span class="bcp14">SHOULD</span> implement append-only audit logs for nullifier operations<a href="#section-6.5.1-1.3.5.3.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.3.5.4">
+                  <p id="section-6.5.1-1.3.5.4.1"><span class="bcp14">SHOULD</span> use cryptographic commitments (e.g., Merkle trees) for integrity<a href="#section-6.5.1-1.3.5.4.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.3.5.5">
+                  <p id="section-6.5.1-1.3.5.5.1"><span class="bcp14">MUST</span> implement proper database backup and recovery procedures<a href="#section-6.5.1-1.3.5.5.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.3.5.6">
+                  <p id="section-6.5.1-1.3.5.6.1"><span class="bcp14">SHOULD</span> monitor for anomalous nullifier patterns<a href="#section-6.5.1-1.3.5.6.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
 </li>
             <li id="section-6.5.1-1.4">
               <p id="section-6.5.1-1.4.1"><strong>Protocol Message Attacks</strong>: Malformed or replayed messages can compromise security.<a href="#section-6.5.1-1.4.1" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.4.2"><strong>Attack Vectors</strong>:
-- Message replay attacks
-- Parameter substitution attacks
-- Malformed point attacks<a href="#section-6.5.1-1.4.2" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.4.3"><strong>Mitigations</strong>:
-- <span class="bcp14">MUST</span> validate all received points (non-identity, proper encoding)
-- <span class="bcp14">MUST</span> include session identifiers in transcripts to prevent replay
-- <span class="bcp14">MUST</span> use deterministic encoding for all protocol messages
-- <span class="bcp14">SHOULD</span> implement message sequence numbering
-- <span class="bcp14">MUST</span> reject messages with unexpected fields or formats<a href="#section-6.5.1-1.4.3" class="pilcrow">¶</a></p>
+<p id="section-6.5.1-1.4.2"><strong>Attack Vectors</strong>:<a href="#section-6.5.1-1.4.2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.4.3.1">
+                  <p id="section-6.5.1-1.4.3.1.1">Message replay attacks<a href="#section-6.5.1-1.4.3.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.4.3.2">
+                  <p id="section-6.5.1-1.4.3.2.1">Parameter substitution attacks<a href="#section-6.5.1-1.4.3.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.4.3.3">
+                  <p id="section-6.5.1-1.4.3.3.1">Malformed point attacks<a href="#section-6.5.1-1.4.3.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+<p id="section-6.5.1-1.4.4">
+<strong>Mitigations</strong>:<a href="#section-6.5.1-1.4.4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.4.5.1">
+                  <p id="section-6.5.1-1.4.5.1.1"><span class="bcp14">MUST</span> validate all received points (non-identity, proper encoding)<a href="#section-6.5.1-1.4.5.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.4.5.2">
+                  <p id="section-6.5.1-1.4.5.2.1"><span class="bcp14">MUST</span> include session identifiers in transcripts to prevent replay<a href="#section-6.5.1-1.4.5.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.4.5.3">
+                  <p id="section-6.5.1-1.4.5.3.1"><span class="bcp14">MUST</span> use deterministic encoding for all protocol messages<a href="#section-6.5.1-1.4.5.3.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.4.5.4">
+                  <p id="section-6.5.1-1.4.5.4.1"><span class="bcp14">SHOULD</span> implement message sequence numbering<a href="#section-6.5.1-1.4.5.4.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.4.5.5">
+                  <p id="section-6.5.1-1.4.5.5.1"><span class="bcp14">MUST</span> reject messages with unexpected fields or formats<a href="#section-6.5.1-1.4.5.5.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
 </li>
             <li id="section-6.5.1-1.5">
               <p id="section-6.5.1-1.5.1"><strong>State Management Vulnerabilities</strong>: Improper state handling can lead to security breaches.<a href="#section-6.5.1-1.5.1" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.5.2"><strong>Attack Vectors</strong>:
-- State confusion between protocol sessions
-- Memory disclosure of sensitive state
-- Incomplete state cleanup<a href="#section-6.5.1-1.5.2" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.5.3"><strong>Mitigations</strong>:
-- <span class="bcp14">MUST</span> use separate state objects for each protocol session
-- <span class="bcp14">MUST</span> zero all sensitive data (keys, nonces, intermediate values) after use
-- <span class="bcp14">SHOULD</span> use memory protection mechanisms (e.g., mlock) for sensitive data
-- <span class="bcp14">MUST</span> implement proper error handling that doesn't leak state information
-- <span class="bcp14">SHOULD</span> use explicit state machines for protocol flow<a href="#section-6.5.1-1.5.3" class="pilcrow">¶</a></p>
+<p id="section-6.5.1-1.5.2"><strong>Attack Vectors</strong>:<a href="#section-6.5.1-1.5.2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.5.3.1">
+                  <p id="section-6.5.1-1.5.3.1.1">State confusion between protocol sessions<a href="#section-6.5.1-1.5.3.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.5.3.2">
+                  <p id="section-6.5.1-1.5.3.2.1">Memory disclosure of sensitive state<a href="#section-6.5.1-1.5.3.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.5.3.3">
+                  <p id="section-6.5.1-1.5.3.3.1">Incomplete state cleanup<a href="#section-6.5.1-1.5.3.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+<p id="section-6.5.1-1.5.4">
+<strong>Mitigations</strong>:<a href="#section-6.5.1-1.5.4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.5.5.1">
+                  <p id="section-6.5.1-1.5.5.1.1"><span class="bcp14">MUST</span> use separate state objects for each protocol session<a href="#section-6.5.1-1.5.5.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.5.5.2">
+                  <p id="section-6.5.1-1.5.5.2.1"><span class="bcp14">MUST</span> zero all sensitive data (keys, nonces, intermediate values) after use<a href="#section-6.5.1-1.5.5.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.5.5.3">
+                  <p id="section-6.5.1-1.5.5.3.1"><span class="bcp14">SHOULD</span> use memory protection mechanisms (e.g., mlock) for sensitive data<a href="#section-6.5.1-1.5.5.3.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.5.5.4">
+                  <p id="section-6.5.1-1.5.5.4.1"><span class="bcp14">MUST</span> implement proper error handling that doesn't leak state information<a href="#section-6.5.1-1.5.5.4.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.5.5.5">
+                  <p id="section-6.5.1-1.5.5.5.1"><span class="bcp14">SHOULD</span> use explicit state machines for protocol flow<a href="#section-6.5.1-1.5.5.5.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
 </li>
             <li id="section-6.5.1-1.6">
               <p id="section-6.5.1-1.6.1"><strong>Concurrency and Race Conditions</strong>: Parallel operations can introduce vulnerabilities.<a href="#section-6.5.1-1.6.1" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.6.2"><strong>Attack Vectors</strong>:
-- TOCTOU (Time-of-check to time-of-use) vulnerabilities in nullifier checking
-- Race conditions in balance updates
-- Concurrent modification of shared state<a href="#section-6.5.1-1.6.2" class="pilcrow">¶</a></p>
-<p id="section-6.5.1-1.6.3"><strong>Mitigations</strong>:
-- <span class="bcp14">MUST</span> use appropriate locking for all shared resources
-- <span class="bcp14">MUST</span> perform nullifier check and insertion atomically
-- <span class="bcp14">SHOULD</span> document thread-safety guarantees
-- <span class="bcp14">MUST</span> ensure atomic read-modify-write for all critical operations<a href="#section-6.5.1-1.6.3" class="pilcrow">¶</a></p>
+<p id="section-6.5.1-1.6.2"><strong>Attack Vectors</strong>:<a href="#section-6.5.1-1.6.2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.6.3.1">
+                  <p id="section-6.5.1-1.6.3.1.1">TOCTOU (Time-of-check to time-of-use) vulnerabilities in nullifier checking<a href="#section-6.5.1-1.6.3.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.6.3.2">
+                  <p id="section-6.5.1-1.6.3.2.1">Race conditions in balance updates<a href="#section-6.5.1-1.6.3.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.6.3.3">
+                  <p id="section-6.5.1-1.6.3.3.1">Concurrent modification of shared state<a href="#section-6.5.1-1.6.3.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
+<p id="section-6.5.1-1.6.4">
+<strong>Mitigations</strong>:<a href="#section-6.5.1-1.6.4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.5.1-1.6.5.1">
+                  <p id="section-6.5.1-1.6.5.1.1"><span class="bcp14">MUST</span> use appropriate locking for all shared resources<a href="#section-6.5.1-1.6.5.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.6.5.2">
+                  <p id="section-6.5.1-1.6.5.2.1"><span class="bcp14">MUST</span> perform nullifier check and insertion atomically<a href="#section-6.5.1-1.6.5.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.6.5.3">
+                  <p id="section-6.5.1-1.6.5.3.1"><span class="bcp14">SHOULD</span> document thread-safety guarantees<a href="#section-6.5.1-1.6.5.3.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-6.5.1-1.6.5.4">
+                  <p id="section-6.5.1-1.6.5.4.1"><span class="bcp14">MUST</span> ensure atomic read-modify-write for all critical operations<a href="#section-6.5.1-1.6.5.4.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
 </li>
           </ol>
 </section>
@@ -3466,10 +3584,18 @@ lost. Implementations <span class="bcp14">SHOULD</span>:<a href="#section-6.7.1-
           <h4 id="name-session-management">
 <a href="#section-6.7.2" class="section-number selfRef">6.7.2. </a><a href="#name-session-management" class="section-name selfRef">Session Management</a>
           </h4>
-<p id="section-6.7.2-1">Each protocol session (issuance or spend/refund) <span class="bcp14">MUST</span>:
-- Use fresh randomness
-- Complete without interruption
-- Not reuse any random values across sessions<a href="#section-6.7.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.7.2-1">Each protocol session (issuance or spend/refund) <span class="bcp14">MUST</span>:<a href="#section-6.7.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.7.2-2.1">
+              <p id="section-6.7.2-2.1.1">Use fresh randomness<a href="#section-6.7.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.7.2-2.2">
+              <p id="section-6.7.2-2.2.1">Complete without interruption<a href="#section-6.7.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.7.2-2.3">
+              <p id="section-6.7.2-2.3.1">Not reuse any random values across sessions<a href="#section-6.7.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
 </section>
 </div>
 <div id="version-negotiation">

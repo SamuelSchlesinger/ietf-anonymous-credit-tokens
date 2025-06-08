@@ -1539,12 +1539,19 @@ Encode(value):
        allow complete recovery of secret values including private keys
        and token contents.
 
-       *Mitigations*: - MUST use cryptographically secure RNGs (e.g.,
-       OS-provided entropy sources) - MUST reseed after fork()
-       operations to prevent nonce reuse - MUST implement forward-secure
-       RNG state management - SHOULD use separate RNG instances for
-       different protocol components - MUST zeroize RNG state on process
-       termination
+       *Mitigations*:
+
+       *  MUST use cryptographically secure RNGs (e.g., OS-provided
+          entropy sources)
+
+       *  MUST reseed after fork() operations to prevent nonce reuse
+
+       *  MUST implement forward-secure RNG state management
+
+       *  SHOULD use separate RNG instances for different protocol
+          components
+
+       *  MUST zeroize RNG state on process termination
 
    2.  *Timing Attacks*: Variable-time operations can leak information
        about secret values.
@@ -1553,67 +1560,129 @@ Encode(value):
        operations can reveal secret bit patterns, potentially exposing
        credit balances or allowing token forgery.
 
-       *Mitigations*: - MUST use constant-time scalar arithmetic
-       libraries - MUST use constant-time conditional selection for
-       range proof bit operations - MUST avoid early-exit conditions
-       based on secret values - SHOULD use blinding techniques for
-       particularly sensitive operations - Critical constant-time
-       operations include: * Scalar multiplication and addition * Binary
-       decomposition in range proofs * Conditional assignments based on
-       secret bits * Challenge verification comparisons
+       *Mitigations*:
+
+       *  MUST use constant-time scalar arithmetic libraries
+
+       *  MUST use constant-time conditional selection for range proof
+          bit operations
+
+       *  MUST avoid early-exit conditions based on secret values
+
+       *  SHOULD use blinding techniques for particularly sensitive
+          operations
+
+       *  Critical constant-time operations include:
+
+          -  Scalar multiplication and addition
+
+          -  Binary decomposition in range proofs
+
+          -  Conditional assignments based on secret bits
+
+          -  Challenge verification comparisons
 
    3.  *Nullifier Database Attacks*: Corruption or manipulation of the
        nullifier database enables double-spending.
 
-       *Attack Vectors*: - Database corruption allowing nullifier
-       deletion - Race conditions in concurrent nullifier checks -
-       Rollback attacks reverting nullifier storage
+       *Attack Vectors*:
 
-       *Mitigations*: - MUST use ACID-compliant database transactions -
-       MUST check nullifier uniqueness within the same transaction as
-       insertion - SHOULD implement append-only audit logs for nullifier
-       operations - SHOULD use cryptographic commitments (e.g., Merkle
-       trees) for integrity - MUST implement proper database backup and
-       recovery procedures - SHOULD monitor for anomalous nullifier
-       patterns
+       *  Database corruption allowing nullifier deletion
+
+       *  Race conditions in concurrent nullifier checks
+
+       *  Rollback attacks reverting nullifier storage
+
+       *Mitigations*:
+
+       *  MUST use ACID-compliant database transactions
+
+       *  MUST check nullifier uniqueness within the same transaction as
+          insertion
+
+       *  SHOULD implement append-only audit logs for nullifier
+          operations
+
+       *  SHOULD use cryptographic commitments (e.g., Merkle trees) for
+          integrity
+
+       *  MUST implement proper database backup and recovery procedures
+
+       *  SHOULD monitor for anomalous nullifier patterns
 
    4.  *Protocol Message Attacks*: Malformed or replayed messages can
        compromise security.
 
-       *Attack Vectors*: - Message replay attacks - Parameter
-       substitution attacks - Malformed point attacks
+       *Attack Vectors*:
 
-       *Mitigations*: - MUST validate all received points (non-identity,
-       proper encoding) - MUST include session identifiers in
-       transcripts to prevent replay - MUST use deterministic encoding
-       for all protocol messages - SHOULD implement message sequence
-       numbering - MUST reject messages with unexpected fields or
-       formats
+       *  Message replay attacks
+
+       *  Parameter substitution attacks
+
+       *  Malformed point attacks
+
+       *Mitigations*:
+
+       *  MUST validate all received points (non-identity, proper
+          encoding)
+
+       *  MUST include session identifiers in transcripts to prevent
+          replay
+
+       *  MUST use deterministic encoding for all protocol messages
+
+       *  SHOULD implement message sequence numbering
+
+       *  MUST reject messages with unexpected fields or formats
 
    5.  *State Management Vulnerabilities*: Improper state handling can
        lead to security breaches.
 
-       *Attack Vectors*: - State confusion between protocol sessions -
-       Memory disclosure of sensitive state - Incomplete state cleanup
+       *Attack Vectors*:
 
-       *Mitigations*: - MUST use separate state objects for each
-       protocol session - MUST zero all sensitive data (keys, nonces,
-       intermediate values) after use - SHOULD use memory protection
-       mechanisms (e.g., mlock) for sensitive data - MUST implement
-       proper error handling that doesn't leak state information -
-       SHOULD use explicit state machines for protocol flow
+       *  State confusion between protocol sessions
+
+       *  Memory disclosure of sensitive state
+
+       *  Incomplete state cleanup
+
+       *Mitigations*:
+
+       *  MUST use separate state objects for each protocol session
+
+       *  MUST zero all sensitive data (keys, nonces, intermediate
+          values) after use
+
+       *  SHOULD use memory protection mechanisms (e.g., mlock) for
+          sensitive data
+
+       *  MUST implement proper error handling that doesn't leak state
+          information
+
+       *  SHOULD use explicit state machines for protocol flow
 
    6.  *Concurrency and Race Conditions*: Parallel operations can
        introduce vulnerabilities.
 
-       *Attack Vectors*: - TOCTOU (Time-of-check to time-of-use)
-       vulnerabilities in nullifier checking - Race conditions in
-       balance updates - Concurrent modification of shared state
+       *Attack Vectors*:
 
-       *Mitigations*: - MUST use appropriate locking for all shared
-       resources - MUST perform nullifier check and insertion atomically
-       - SHOULD document thread-safety guarantees - MUST ensure atomic
-       read-modify-write for all critical operations
+       *  TOCTOU (Time-of-check to time-of-use) vulnerabilities in
+          nullifier checking
+
+       *  Race conditions in balance updates
+
+       *  Concurrent modification of shared state
+
+       *Mitigations*:
+
+       *  MUST use appropriate locking for all shared resources
+
+       *  MUST perform nullifier check and insertion atomically
+
+       *  SHOULD document thread-safety guarantees
+
+       *  MUST ensure atomic read-modify-write for all critical
+          operations
 
 6.6.  Known Attack Scenarios
 
@@ -1661,9 +1730,13 @@ Encode(value):
 
 6.7.2.  Session Management
 
-   Each protocol session (issuance or spend/refund) MUST: - Use fresh
-   randomness - Complete without interruption - Not reuse any random
-   values across sessions
+   Each protocol session (issuance or spend/refund) MUST:
+
+   *  Use fresh randomness
+
+   *  Complete without interruption
+
+   *  Not reuse any random values across sessions
 
 6.7.3.  Version Negotiation
 

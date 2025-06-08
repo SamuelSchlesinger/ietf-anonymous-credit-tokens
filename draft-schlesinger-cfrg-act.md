@@ -1351,6 +1351,7 @@ The protocol ensures:
    **Attack Vector**: Predictable or repeated nonces in proofs can allow complete recovery of secret values including private keys and token contents.
 
    **Mitigations**:
+
    - MUST use cryptographically secure RNGs (e.g., OS-provided entropy sources)
    - MUST reseed after fork() operations to prevent nonce reuse
    - MUST implement forward-secure RNG state management
@@ -1362,6 +1363,7 @@ The protocol ensures:
    **Attack Vector**: Timing variations in scalar arithmetic or bit operations can reveal secret bit patterns, potentially exposing credit balances or allowing token forgery.
 
    **Mitigations**:
+
    - MUST use constant-time scalar arithmetic libraries
    - MUST use constant-time conditional selection for range proof bit operations
    - MUST avoid early-exit conditions based on secret values
@@ -1375,11 +1377,13 @@ The protocol ensures:
 3. **Nullifier Database Attacks**: Corruption or manipulation of the nullifier database enables double-spending.
 
    **Attack Vectors**:
+
    - Database corruption allowing nullifier deletion
    - Race conditions in concurrent nullifier checks
    - Rollback attacks reverting nullifier storage
 
    **Mitigations**:
+
    - MUST use ACID-compliant database transactions
    - MUST check nullifier uniqueness within the same transaction as insertion
    - SHOULD implement append-only audit logs for nullifier operations
@@ -1390,11 +1394,13 @@ The protocol ensures:
 4. **Protocol Message Attacks**: Malformed or replayed messages can compromise security.
 
    **Attack Vectors**:
+
    - Message replay attacks
    - Parameter substitution attacks
    - Malformed point attacks
 
    **Mitigations**:
+
    - MUST validate all received points (non-identity, proper encoding)
    - MUST include session identifiers in transcripts to prevent replay
    - MUST use deterministic encoding for all protocol messages
@@ -1404,11 +1410,13 @@ The protocol ensures:
 5. **State Management Vulnerabilities**: Improper state handling can lead to security breaches.
 
    **Attack Vectors**:
+
    - State confusion between protocol sessions
    - Memory disclosure of sensitive state
    - Incomplete state cleanup
 
    **Mitigations**:
+
    - MUST use separate state objects for each protocol session
    - MUST zero all sensitive data (keys, nonces, intermediate values) after use
    - SHOULD use memory protection mechanisms (e.g., mlock) for sensitive data
@@ -1418,11 +1426,13 @@ The protocol ensures:
 6. **Concurrency and Race Conditions**: Parallel operations can introduce vulnerabilities.
 
    **Attack Vectors**:
+
    - TOCTOU (Time-of-check to time-of-use) vulnerabilities in nullifier checking
    - Race conditions in balance updates
    - Concurrent modification of shared state
 
    **Mitigations**:
+
    - MUST use appropriate locking for all shared resources
    - MUST perform nullifier check and insertion atomically
    - SHOULD document thread-safety guarantees
@@ -1460,6 +1470,7 @@ lost. Implementations SHOULD:
 ### Session Management
 
 Each protocol session (issuance or spend/refund) MUST:
+
 - Use fresh randomness
 - Complete without interruption
 - Not reuse any random values across sessions
