@@ -75,17 +75,22 @@ informative:
 --- abstract
 
 This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
-payment protocol based on keyed-verification anonymous credentials. The
-protocol enables issuers to grant numerical credit values to clients, who can
-later redeem these credits anonymously while preventing double-spending through
-the use of nullifiers. The scheme uses BBS-style signatures and zero-knowledge
-proofs to ensure both security and privacy.
+authentication protocol that enables numerical credit systems without tracking
+individual clients. Based on keyed-verification anonymous credentials and
+BBS-style signatures, the protocol allows issuers to grant credits that clients
+can later spend anonymously.
 
-Anonymous Credit Tokens are particularly suitable for web services that need to
-implement rate limiting, resource allocation, or micropayments while preserving
-client privacy. The protocol supports partial spending, allowing clients to
-spend a portion of their credits and receive change in the form of a new
-anonymous token.
+The protocol's key features include: (1) unlinkable transactions - the issuer
+cannot correlate credit issuance with spending or link multiple transactions by
+the same client, (2) partial spending - clients can spend a portion of their
+credits and receive anonymous change, and (3) double-spend prevention through
+cryptographic nullifiers that preserve privacy while ensuring each token is used
+only once.
+
+Anonymous Credit Tokens are designed for modern web services requiring rate
+limiting, usage-based billing, or resource allocation while respecting user
+privacy. Example applications include API credit systems, privacy-preserving
+micropayments, and anonymous ticketing systems.
 
 This document is a product of the Crypto Forum Research Group (CFRG) in the
 IRTF.
@@ -94,37 +99,57 @@ IRTF.
 
 # Introduction
 
-Many online services need mechanisms to allocate resources, implement rate
-limiting, or process micropayments. Traditional approaches to these problems
-typically require tracking client identity, which raises privacy concerns.
-Anonymous Credit Tokens (ACT) provide a cryptographic solution that enables
-services to issue and track credits without linking transactions to client
-identities.
+Modern web services face a fundamental tension between operational needs and
+user privacy. Services need to implement rate limiting to prevent abuse,
+charge for API usage to sustain operations, and allocate computational
+resources fairly. However, traditional approaches require tracking client
+identities and creating detailed logs of client behavior, raising significant
+privacy concerns in an era of increasing data protection awareness and
+regulation.
 
-The Anonymous Credit Token protocol is a specialization of keyed-verification
-anonymous credentials {{KVAC}} that focuses on numerical credit values. It
-allows:
+Anonymous Credit Tokens (ACT) resolve this tension by providing a
+cryptographic protocol that enables credit-based systems without client
+tracking. Built on keyed-verification anonymous credentials {{KVAC}} and
+BBS-style signatures {{BBS}}, the protocol allows services to issue,
+track, and spend credits while maintaining complete client anonymity.
 
-1. **Anonymous Issuance**: An issuer can grant credits to a client without
-   learning any client-specific information beyond the credit amount.
+## Key Properties
 
-2. **Anonymous Spending**: Clients can spend their credits without revealing
-   their identity or linking multiple transactions.
+The protocol provides four essential properties that make it suitable for
+privacy-preserving credit systems:
 
-3. **Partial Spending**: Clients can spend a portion of their credits and
-   receive the remainder as a new anonymous token.
+1. **Unlinkability**: The issuer cannot link credit issuance to spending,
+   or connect multiple transactions by the same client. This property is
+   information-theoretic, not merely computational.
 
-4. **Double-Spend Prevention**: Each credit token has an associated nullifier
-   that prevents the same credits from being spent multiple times.
+2. **Partial Spending**: Clients can spend any amount up to their balance and
+   receive anonymous change, enabling flexible micropayment scenarios without
+   revealing their total balance.
+
+3. **Double-Spend Prevention**: Cryptographic nullifiers ensure each credit
+   is spent only once, without revealing which token is being spent or
+   linking it to issuance.
+
+4. **Balance Privacy**: During spending, only the amount being spent is
+   revealed, not the total balance in the token, protecting clients from
+   balance-based profiling.
 
 ## Use Cases
 
 Anonymous Credit Tokens can be applied to various scenarios:
 
-- **Rate Limiting**: Services can issue daily credit allowances that users
+- **Rate Limiting**: Services can issue daily credit allowances that clients
   spend anonymously for API calls or resource access.
 
-- **Privacy-Preserving Micropayments**: Users can purchase credit bundles and
+- **API Credits**: API providers can sell credit packages that developers use to
+  pay for API requests without creating a detailed usage history linked to their
+  identity. This enables:
+  - Pre-paid API access without requiring credit cards for each transaction
+  - Anonymous API usage for privacy-sensitive applications
+  - Usage-based billing without tracking individual request patterns
+  - Protection against competitive analysis through usage monitoring
+
+- **Privacy-Preserving Micropayments**: Clients can purchase credit bundles and
   spend them over time without creating a transaction history.
 
 - **Anonymous Ticketing**: Event organizers can issue transferable tickets that
@@ -253,11 +278,27 @@ GenerateParameters(domain_separator):
 
   Steps:
     1. seed = BLAKE3(domain_separator)
-    2. rng = ChaCha20RNG(seed)
-    3. H1 = HashToRistretto(rng.next())
-    4. H2 = HashToRistretto(rng.next())
-    5. H3 = HashToRistretto(rng.next())
+    2. counter = 0
+    3. H1 = HashToRistretto255(seed, counter++)
+    4. H2 = HashToRistretto255(seed, counter++)
+    5. H3 = HashToRistretto255(seed, counter++)
     6. return (H1, H2, H3)
+
+HashToRistretto255(seed, counter):
+  Input:
+    - seed: 32-byte seed value
+    - counter: Integer counter for domain separation
+  Output:
+    - P: A valid Ristretto255 point
+
+  Steps:
+    1. hasher = BLAKE3.new()
+    2. hasher.update("ACT-v1:HashToRistretto255")
+    3. hasher.update(seed)
+    4. hasher.update(counter.to_le_bytes(4))
+    5. uniform_bytes = hasher.finalize_xof(64)
+    6. P = Ristretto255::from_uniform_bytes(uniform_bytes)
+    7. return P
 ~~~
 
 The domain\_separator MUST be unique for each deployment to ensure
@@ -316,7 +357,7 @@ issuer:
 ### Client: Issuance Request
 
 ~~~
-IssueRequest(pk, c):
+IssueRequest(pk):
   Input:
     - pk: Issuer's public key
   Output:
@@ -324,7 +365,7 @@ IssueRequest(pk, c):
     - state: Client state for later verification
 
   Steps:
-    1. k <- Zq  // Token identifier
+    1. k <- Zq  // Nullifier (will prevent double-spending)
     2. r <- Zq  // Blinding factor
     3. K = H2 * k + H3 * r
     4. // Generate proof of knowledge of k, r
@@ -338,7 +379,7 @@ IssueRequest(pk, c):
     12. k_bar = k' + gamma * k
     13. r_bar = r' + gamma * r
     14. request = (K, gamma, k_bar, r_bar)
-    15. state = (k, r, c)
+    15. state = (k, r)
     16. return (request, state)
 ~~~
 
@@ -362,9 +403,9 @@ Issue(sk, request, c):
     6. AddToTranscript(transcript, K1)
     7. if GetChallenge(transcript) != gamma:
     8.     return INVALID
-    9. // Create BBS signature
+    9. // Create BBS signature on (c, k, r)
     10. e <- Zq
-    11. A = (G + H1 * c + K)^(1/(e + sk))
+    11. A = (G + H1 * c + K)^(1/(e + sk))  // K = H2 * k + H3 * r
     12. // Generate proof of correct computation
     13. alpha <- Zq
     14. Y_A = A * alpha
@@ -1004,6 +1045,30 @@ Client                                          Issuer
   |                                               |
 ~~~
 
+### Example Usage Scenario
+
+Consider an API service that sells credits in bundles of 1000:
+
+1. **Purchase**: Alice buys 1000 API credits
+   - Alice generates a random nullifier k and blinding factor r
+   - Alice sends IssuanceRequestMsg to the service
+   - Service creates a BBS signature on (1000, k, r) and returns it
+   - Alice now has a token worth 1000 credits
+
+2. **First API Call**: Alice makes an API call costing 50 credits
+   - Alice creates a SpendProofMsg proving she has ≥ 50 credits
+   - Alice reveals nullifier k to prevent double-spending
+   - Service verifies the proof and records k as used
+   - Service issues a RefundMsg for a new token worth 950 credits
+   - Alice generates new nullifier k' for the refund token
+
+3. **Subsequent Calls**: Alice continues using the API
+   - Each call repeats the spend/refund process
+   - Each new token has a fresh nullifier
+   - The service cannot link Alice's calls together
+
+This example demonstrates how the protocol maintains privacy while preventing double-spending and enabling flexible partial payments.
+
 # Implementation Considerations
 
 ## Nullifier Management
@@ -1280,38 +1345,108 @@ The protocol ensures:
 2. **Non-Transferability**: While tokens can be shared, this requires sharing the entire token state.
 3. **Double-Spend Prevention**: Each token can only be fully spent once due to nullifier checking.
 
-## Implementation Vulnerabilities
+## Implementation Vulnerabilities and Mitigations
 
-Implementers should be aware of:
+### Critical Security Requirements
 
-1. **RNG Failures**: Weak randomness can completely break the protocol's security. Implementations MUST:
-   - Use cryptographically secure RNGs
-   - Reseed after fork() operations
-   - Implement forward-secure RNG state management
+1. **RNG Failures**: Weak randomness can completely break the protocol's security.
 
-2. **Timing Attacks**: Variable-time operations can leak information about secret values. Critical operations requiring constant-time implementation:
-   - Scalar arithmetic in proofs
-   - Binary decomposition in range proofs
-   - Conditionals based on secret bits, as in the range proof. Conditional
-     selection operations using constant time CPU instructions should be used
-    in these cases.
+   **Attack Vector**: Predictable or repeated nonces in proofs can allow complete recovery of secret values including private keys and token contents.
 
-3. **Nullifier Database Integrity**: Corruption of the nullifier database could enable double-spending. Implementations SHOULD:
-   - Use atomic database operations
-   - Implement database backups
-   - Include integrity checks (e.g., Merkle trees)
+   **Mitigations**:
+   - MUST use cryptographically secure RNGs (e.g., OS-provided entropy sources)
+   - MUST reseed after fork() operations to prevent nonce reuse
+   - MUST implement forward-secure RNG state management
+   - SHOULD use separate RNG instances for different protocol components
+   - MUST zeroize RNG state on process termination
 
-4. **Nullifier Collisions**: While nullifiers are 256-bit values with
-   negligible collision probability (approximately 2^-128 for 2^64 tokens),
-implementations should still handle potential collisions gracefully.
+2. **Timing Attacks**: Variable-time operations can leak information about secret values.
 
-5. **Serialization Attacks**: Implementations MUST use canonical serialization
-   for all values included in hash computations to prevent malleability
-attacks.
+   **Attack Vector**: Timing variations in scalar arithmetic or bit operations can reveal secret bit patterns, potentially exposing credit balances or allowing token forgery.
 
-6. **Concurrent Access**: The protocol does not specify thread-safety
-   requirements. Implementations SHOULD document their concurrency model and
-use appropriate locking mechanisms.
+   **Mitigations**:
+   - MUST use constant-time scalar arithmetic libraries
+   - MUST use constant-time conditional selection for range proof bit operations
+   - MUST avoid early-exit conditions based on secret values
+   - SHOULD use blinding techniques for particularly sensitive operations
+   - Critical constant-time operations include:
+     * Scalar multiplication and addition
+     * Binary decomposition in range proofs
+     * Conditional assignments based on secret bits
+     * Challenge verification comparisons
+
+3. **Nullifier Database Attacks**: Corruption or manipulation of the nullifier database enables double-spending.
+
+   **Attack Vectors**:
+   - Database corruption allowing nullifier deletion
+   - Race conditions in concurrent nullifier checks
+   - Rollback attacks reverting nullifier storage
+
+   **Mitigations**:
+   - MUST use ACID-compliant database transactions
+   - MUST check nullifier uniqueness within the same transaction as insertion
+   - SHOULD implement append-only audit logs for nullifier operations
+   - SHOULD use cryptographic commitments (e.g., Merkle trees) for integrity
+   - MUST implement proper database backup and recovery procedures
+   - SHOULD monitor for anomalous nullifier patterns
+
+4. **Protocol Message Attacks**: Malformed or replayed messages can compromise security.
+
+   **Attack Vectors**:
+   - Message replay attacks
+   - Parameter substitution attacks
+   - Malformed point attacks
+
+   **Mitigations**:
+   - MUST validate all received points (non-identity, proper encoding)
+   - MUST include session identifiers in transcripts to prevent replay
+   - MUST use deterministic encoding for all protocol messages
+   - SHOULD implement message sequence numbering
+   - MUST reject messages with unexpected fields or formats
+
+5. **State Management Vulnerabilities**: Improper state handling can lead to security breaches.
+
+   **Attack Vectors**:
+   - State confusion between protocol sessions
+   - Memory disclosure of sensitive state
+   - Incomplete state cleanup
+
+   **Mitigations**:
+   - MUST use separate state objects for each protocol session
+   - MUST zero all sensitive data (keys, nonces, intermediate values) after use
+   - SHOULD use memory protection mechanisms (e.g., mlock) for sensitive data
+   - MUST implement proper error handling that doesn't leak state information
+   - SHOULD use explicit state machines for protocol flow
+
+6. **Concurrency and Race Conditions**: Parallel operations can introduce vulnerabilities.
+
+   **Attack Vectors**:
+   - TOCTOU (Time-of-check to time-of-use) vulnerabilities in nullifier checking
+   - Race conditions in balance updates
+   - Concurrent modification of shared state
+
+   **Mitigations**:
+   - MUST use appropriate locking for all shared resources
+   - MUST perform nullifier check and insertion atomically
+   - SHOULD document thread-safety guarantees
+   - MUST ensure atomic read-modify-write for all critical operations
+
+## Known Attack Scenarios
+
+### 1. Parallel Spend Attack
+**Scenario**: A malicious client attempts to spend the same token multiple times by initiating parallel spend operations before any nullifier is recorded.
+
+**Prevention**: The issuer MUST ensure atomic nullifier checking and recording within a single database transaction. Network-level rate limiting can provide additional protection.
+
+### 2. Balance Inflation Attack
+**Scenario**: An attacker attempts to create a proof claiming to have more credits than actually issued by manipulating the range proof.
+
+**Prevention**: The cryptographic soundness of the range proof prevents this attack. Implementations MUST correctly validate all L bits of the range proof.
+
+### 3. Token Linking Attack
+**Scenario**: An issuer attempts to link transactions by analyzing patterns in nullifiers, amounts, or timing.
+
+**Prevention**: Nullifiers are cryptographically random and unlinkable. However, implementations SHOULD add random delays and amount obfuscation where possible.
 
 ## Protocol Composition and State Management
 
@@ -1355,8 +1490,7 @@ This document has no IANA actions.
 # Test Vectors {#test-vectors}
 
 This appendix provides test vectors for implementers to verify their
-implementations. All values are encoded in hexadecimal. Scalars are 32 bytes
-each.
+implementations. All values are encoded in hexadecimal.
 
 TODO
 
