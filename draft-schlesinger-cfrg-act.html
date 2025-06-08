@@ -11,8 +11,8 @@
        This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
 authentication protocol that enables numerical credit systems without tracking
 individual clients. Based on keyed-verification anonymous credentials and
-BBS-style signatures, the protocol allows issuers to grant credits that clients
-can later spend anonymously. 
+privately verifiable BBS-style signatures, the protocol allows issuers to grant
+credits that clients can later spend anonymously. 
        The protocol's key features include: (1) unlinkable transactions - the issuer
 cannot correlate credit issuance with spending or link multiple transactions by
 the same client, (2) partial spending - clients can spend a portion of their
@@ -1108,8 +1108,8 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <p id="section-abstract-1">This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
 authentication protocol that enables numerical credit systems without tracking
 individual clients. Based on keyed-verification anonymous credentials and
-BBS-style signatures, the protocol allows issuers to grant credits that clients
-can later spend anonymously.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+privately verifiable BBS-style signatures, the protocol allows issuers to grant
+credits that clients can later spend anonymously.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 <p id="section-abstract-2">The protocol's key features include: (1) unlinkable transactions - the issuer
 cannot correlate credit issuance with spending or link multiple transactions by
 the same client, (2) partial spending - clients can spend a portion of their
@@ -1471,11 +1471,11 @@ resources fairly. However, traditional approaches require tracking client
 identities and creating detailed logs of client behavior, raising significant
 privacy concerns in an era of increasing data protection awareness and
 regulation.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">Anonymous Credit Tokens (ACT) resolve this tension by providing a
+<p id="section-1-2">Anonymous Credit Tokens (ACT) helps to resolve this tension by providing a
 cryptographic protocol that enables credit-based systems without client
 tracking. Built on keyed-verification anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> and
-BBS-style signatures <span>[<a href="#BBS" class="cite xref">BBS</a>]</span>, the protocol allows services to issue,
-track, and spend credits while maintaining complete client anonymity.<a href="#section-1-2" class="pilcrow">¶</a></p>
+privately verifiable BBS-style signatures <span>[<a href="#BBS" class="cite xref">BBS</a>]</span>, the protocol allows services
+to issue, track, and spend credits while maintaining complete client anonymity.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <div id="key-properties">
 <section id="section-1.1">
         <h3 id="name-key-properties">
@@ -1541,14 +1541,6 @@ identity. This enables:<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
             <p id="section-1.2-2.3.1"><strong>Privacy-Preserving Micropayments</strong>: Clients can purchase credit bundles and
 spend them over time without creating a transaction history.<a href="#section-1.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-1.2-2.4">
-            <p id="section-1.2-2.4.1"><strong>Anonymous Ticketing</strong>: Event organizers can issue transferable tickets that
-can be verified without tracking ownership changes.<a href="#section-1.2-2.4.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-1.2-2.5">
-            <p id="section-1.2-2.5.1"><strong>Resource Allocation</strong>: Cloud services can allocate computational resources
-using credits while preserving client privacy.<a href="#section-1.2-2.5.1" class="pilcrow">¶</a></p>
-</li>
         </ul>
 </section>
 </div>
@@ -1558,7 +1550,8 @@ using credits while preserving client privacy.<a href="#section-1.2-2.5.1" class
 <a href="#section-1.3" class="section-number selfRef">1.3. </a><a href="#name-protocol-overview" class="section-name selfRef">Protocol Overview</a>
         </h3>
 <p id="section-1.3-1">The protocol involves two parties: an issuer (typically a service provider) and
-clients (users of the service). The interaction follows three main phases:<a href="#section-1.3-1" class="pilcrow">¶</a></p>
+clients (typically users of the service). The interaction follows three main
+phases:<a href="#section-1.3-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-1.3-2">
 <li id="section-1.3-2.1">
             <p id="section-1.3-2.1.1"><strong>Setup</strong>: The issuer generates a key pair and publishes the public key.<a href="#section-1.3-2.1.1" class="pilcrow">¶</a></p>
@@ -1572,7 +1565,7 @@ producing a credit token.<a href="#section-1.3-2.2.1" class="pilcrow">¶</a></p>
             <p id="section-1.3-2.3.1"><strong>Spending</strong>: To spend credits, the client reveals the nullifier and proves
 possession of a valid token with sufficient balance. The issuer verifies the
 proof, checks the nullifier hasn't been used before, and issues a new token for
-any remaining balance.<a href="#section-1.3-2.3.1" class="pilcrow">¶</a></p>
+any remaining balance, which remains hidden from the issuer.<a href="#section-1.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -1598,7 +1591,7 @@ for high-volume web services.<a href="#section-1.4-2.3.1" class="pilcrow">¶</a>
 </li>
           <li class="normal" id="section-1.4-2.4">
             <p id="section-1.4-2.4.1"><strong>Simplicity</strong>: The protocol should be straightforward to implement and
-integrate into existing systems.<a href="#section-1.4-2.4.1" class="pilcrow">¶</a></p>
+integrate into existing systems relative to other comparable solutions.<a href="#section-1.4-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1612,7 +1605,8 @@ integrate into existing systems.<a href="#section-1.4-2.4.1" class="pilcrow">¶<
 <ul class="normal">
 <li class="normal" id="section-1.5-2.1">
             <p id="section-1.5-2.1.1"><strong>BBS Signatures</strong> <span>[<a href="#BBS" class="cite xref">BBS</a>]</span>: The core signature scheme that enables efficient
-proofs of possession.<a href="#section-1.5-2.1.1" class="pilcrow">¶</a></p>
+proofs of possession. We use a variant which is privately verifiable, which
+makes our security assumptions more conservative and our protocol more efficient.<a href="#section-1.5-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.5-2.2">
             <p id="section-1.5-2.2.1"><strong>Sigma Protocols</strong> <span>[<a href="#ORRU-SIGMA" class="cite xref">ORRU-SIGMA</a>]</span>: The zero-knowledge proof framework used
@@ -1683,7 +1677,7 @@ element is written as <code>a * n</code>, with group element <code>a</code> and 
             <p id="section-2.2-2.1.1"><strong>Scalar</strong>: An integer modulo the group order q<a href="#section-2.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-2.2-2.2">
-            <p id="section-2.2-2.2.1"><strong>Element</strong>: A point on the Ristretto curve<a href="#section-2.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-2.2-2.2.1"><strong>Element</strong>: An element of the Ristretto255 group<a href="#section-2.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-2.2-2.3">
             <p id="section-2.2-2.3.1"><strong>ByteString</strong>: A sequence of bytes<a href="#section-2.2-2.3.1" class="pilcrow">¶</a></p>
@@ -1696,9 +1690,10 @@ element is written as <code>a * n</code>, with group element <code>a</code> and 
         <h3 id="name-cryptographic-parameters">
 <a href="#section-2.3" class="section-number selfRef">2.3. </a><a href="#name-cryptographic-parameters" class="section-name selfRef">Cryptographic Parameters</a>
         </h3>
-<p id="section-2.3-1">The protocol uses the Ristretto group <span>[<a href="#RISTRETTO" class="cite xref">RISTRETTO</a>]</span>, which provides a
-prime-order group abstraction over Curve25519. It would be easy to adapt this
-approach to using any other prime order group. The key parameters are:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
+<p id="section-2.3-1">The protocol uses the Ristretto group <span>[<a href="#RFC9496" class="cite xref">RFC9496</a>]</span>, which provides a prime-order
+group abstraction over Curve25519. It would be easy to adapt this approach to
+using any other prime order group based on the contents of this document. The
+key parameters are:<a href="#section-2.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-2.3-2.1">
             <p id="section-2.3-2.1.1"><strong>q</strong>: The prime order of the group (2^252 + 27742317777372353535851937790883648493)<a href="#section-2.3-2.1.1" class="pilcrow">¶</a></p>
@@ -1733,12 +1728,13 @@ Parameters:
   - L: Bit length for credit values (configurable, must satisfy L &lt;= 252)
 </pre><a href="#section-3.1-2" class="pilcrow">¶</a>
 </div>
-<p id="section-3.1-3">The generators H1, H2, and H3 <span class="bcp14">MUST</span> be generated deterministically from a
+<p id="section-3.1-3">The generators H1, H2, and H3 <span class="bcp14">SHOULD</span> be generated deterministically from a
 nothing-up-my-sleeve value to ensure they are independent of each other and of
-G. This prevents attacks where malicious parameters could compromise security,
-for instance by the discrete logarithms of <code>H1</code>, <code>H2</code>, or <code>H3</code> being known, or
-them having known relationships between each other like <code>H1^10 = H2</code>. Note that
-these generators are independent of the choice of L:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+G. They <span class="bcp14">MAY</span> be generated uniformly randomly, otherwise. This prevents attacks
+where malicious parameters could compromise security, for instance by the
+discrete logarithms of <code>H1</code>, <code>H2</code>, or <code>H3</code> being known, or them having known
+relationships between each other. Note that these generators are independent of
+the choice of L:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-3.1-4">
 <pre>
 GenerateParameters(domain_separator):
@@ -1764,11 +1760,11 @@ HashToRistretto255(seed, counter):
 
   Steps:
     1. hasher = BLAKE3.new()
-    2. hasher.update("ACT-v1:HashToRistretto255")
+    2. hasher.update(domain_separator)
     3. hasher.update(seed)
     4. hasher.update(counter.to_le_bytes(4))
     5. uniform_bytes = hasher.finalize_xof(64)
-    6. P = Ristretto255::from_uniform_bytes(uniform_bytes)
+    6. P = OneWayMap(uniform_bytes)
     7. return P
 </pre><a href="#section-3.1-4" class="pilcrow">¶</a>
 </div>
@@ -1806,6 +1802,7 @@ domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deploym
 parameter collision and <span class="bcp14">MUST NOT</span> be used. When parameters need to be updated
 (e.g., for security reasons or protocol upgrades), a new version date <span class="bcp14">MUST</span> be
 used, creating entirely new parameters.<a href="#section-3.1-11" class="pilcrow">¶</a></p>
+<p id="section-3.1-12">The OneWayMap is the one referenced in <span>[<a href="#RFC9496" class="cite xref">RFC9496</a>]</span> in section 4.3.4.<a href="#section-3.1-12" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="key-generation">
@@ -3540,9 +3537,9 @@ quantum computer.<a href="#section-6.8-1" class="pilcrow">¶</a></p>
         <dd>
 <span class="refAuthor">Faz-Hernandez, A.</span>, <span class="refAuthor">Scott, S.</span>, <span class="refAuthor">Sullivan, N.</span>, <span class="refAuthor">Wahby, R. S.</span>, and <span class="refAuthor">C. A. Wood</span>, <span class="refTitle">"Hashing to Elliptic Curves"</span>, <span class="seriesInfo">RFC 9380</span>, <span class="seriesInfo">DOI 10.17487/RFC9380</span>, <time datetime="2023-08" class="refDate">August 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9380">https://www.rfc-editor.org/rfc/rfc9380</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RISTRETTO">[RISTRETTO]</dt>
+<dt id="RFC9496">[RFC9496]</dt>
       <dd>
-<span class="refTitle">"The Ristretto Group"</span>, <span>&lt;<a href="https://ristretto.group/">https://ristretto.group/</a>&gt;</span>. </dd>
+<span class="refAuthor">de Valence, H.</span>, <span class="refAuthor">Grigg, J.</span>, <span class="refAuthor">Hamburg, M.</span>, <span class="refAuthor">Lovecruft, I.</span>, <span class="refAuthor">Tankersley, G.</span>, and <span class="refAuthor">F. Valsorda</span>, <span class="refTitle">"The ristretto255 and decaf448 Groups"</span>, <span class="seriesInfo">RFC 9496</span>, <span class="seriesInfo">DOI 10.17487/RFC9496</span>, <time datetime="2023-12" class="refDate">December 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc9496">https://www.rfc-editor.org/rfc/rfc9496</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

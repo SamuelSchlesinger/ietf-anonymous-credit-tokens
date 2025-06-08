@@ -16,9 +16,9 @@ Abstract
    This document specifies Anonymous Credit Tokens (ACT), a privacy-
    preserving authentication protocol that enables numerical credit
    systems without tracking individual clients.  Based on keyed-
-   verification anonymous credentials and BBS-style signatures, the
-   protocol allows issuers to grant credits that clients can later spend
-   anonymously.
+   verification anonymous credentials and privately verifiable BBS-style
+   signatures, the protocol allows issuers to grant credits that clients
+   can later spend anonymously.
 
    The protocol's key features include: (1) unlinkable transactions -
    the issuer cannot correlate credit issuance with spending or link
@@ -173,12 +173,12 @@ Table of Contents
    logs of client behavior, raising significant privacy concerns in an
    era of increasing data protection awareness and regulation.
 
-   Anonymous Credit Tokens (ACT) resolve this tension by providing a
-   cryptographic protocol that enables credit-based systems without
-   client tracking.  Built on keyed-verification anonymous credentials
-   [KVAC] and BBS-style signatures [BBS], the protocol allows services
-   to issue, track, and spend credits while maintaining complete client
-   anonymity.
+   Anonymous Credit Tokens (ACT) helps to resolve this tension by
+   providing a cryptographic protocol that enables credit-based systems
+   without client tracking.  Built on keyed-verification anonymous
+   credentials [KVAC] and privately verifiable BBS-style signatures
+   [BBS], the protocol allows services to issue, track, and spend
+   credits while maintaining complete client anonymity.
 
 1.1.  Key Properties
 
@@ -227,17 +227,11 @@ Table of Contents
       bundles and spend them over time without creating a transaction
       history.
 
-   *  *Anonymous Ticketing*: Event organizers can issue transferable
-      tickets that can be verified without tracking ownership changes.
-
-   *  *Resource Allocation*: Cloud services can allocate computational
-      resources using credits while preserving client privacy.
-
 1.3.  Protocol Overview
 
    The protocol involves two parties: an issuer (typically a service
-   provider) and clients (users of the service).  The interaction
-   follows three main phases:
+   provider) and clients (typically users of the service).  The
+   interaction follows three main phases:
 
    1.  *Setup*: The issuer generates a key pair and publishes the public
        key.
@@ -249,7 +243,8 @@ Table of Contents
    3.  *Spending*: To spend credits, the client reveals the nullifier
        and proves possession of a valid token with sufficient balance.
        The issuer verifies the proof, checks the nullifier hasn't been
-       used before, and issues a new token for any remaining balance.
+       used before, and issues a new token for any remaining balance,
+       which remains hidden from the issuer.
 
 1.4.  Design Goals
 
@@ -265,14 +260,17 @@ Table of Contents
       suitable for high-volume web services.
 
    *  *Simplicity*: The protocol should be straightforward to implement
-      and integrate into existing systems.
+      and integrate into existing systems relative to other comparable
+      solutions.
 
 1.5.  Relation to Existing Work
 
    This protocol builds upon several cryptographic primitives:
 
    *  *BBS Signatures* [BBS]: The core signature scheme that enables
-      efficient proofs of possession.
+      efficient proofs of possession.  We use a variant which is
+      privately verifiable, which makes our security assumptions more
+      conservative and our protocol more efficient.
 
    *  *Sigma Protocols* [ORRU-SIGMA]: The zero-knowledge proof framework
       used for spending proofs.
@@ -319,16 +317,16 @@ Table of Contents
 
    *  *Scalar*: An integer modulo the group order q
 
-   *  *Element*: A point on the Ristretto curve
+   *  *Element*: An element of the Ristretto255 group
 
    *  *ByteString*: A sequence of bytes
 
 2.3.  Cryptographic Parameters
 
-   The protocol uses the Ristretto group [RISTRETTO], which provides a
+   The protocol uses the Ristretto group [RFC9496], which provides a
    prime-order group abstraction over Curve25519.  It would be easy to
-   adapt this approach to using any other prime order group.  The key
-   parameters are:
+   adapt this approach to using any other prime order group based on the
+   contents of this document.  The key parameters are:
 
    *  *q*: The prime order of the group (2^252 +
       27742317777372353535851937790883648493)
@@ -349,13 +347,14 @@ Parameters:
   - H1, H2, H3: Additional generators for commitments
   - L: Bit length for credit values (configurable, must satisfy L <= 252)
 
-   The generators H1, H2, and H3 MUST be generated deterministically
+   The generators H1, H2, and H3 SHOULD be generated deterministically
    from a nothing-up-my-sleeve value to ensure they are independent of
-   each other and of G.  This prevents attacks where malicious
-   parameters could compromise security, for instance by the discrete
-   logarithms of H1, H2, or H3 being known, or them having known
-   relationships between each other like H1^10 = H2.  Note that these
-   generators are independent of the choice of L:
+   each other and of G.  They MAY be generated uniformly randomly,
+   otherwise.  This prevents attacks where malicious parameters could
+   compromise security, for instance by the discrete logarithms of H1,
+   H2, or H3 being known, or them having known relationships between
+   each other.  Note that these generators are independent of the choice
+   of L:
 
    GenerateParameters(domain_separator):
      Input:
@@ -380,11 +379,11 @@ Parameters:
 
      Steps:
        1. hasher = BLAKE3.new()
-       2. hasher.update("ACT-v1:HashToRistretto255")
+       2. hasher.update(domain_separator)
        3. hasher.update(seed)
        4. hasher.update(counter.to_le_bytes(4))
        5. uniform_bytes = hasher.finalize_xof(64)
-       6. P = Ristretto255::from_uniform_bytes(uniform_bytes)
+       6. P = OneWayMap(uniform_bytes)
        7. return P
 
    The domain_separator MUST be unique for each deployment to ensure
@@ -420,6 +419,8 @@ domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deploym
    parameters need to be updated (e.g., for security reasons or protocol
    upgrades), a new version date MUST be used, creating entirely new
    parameters.
+
+   The OneWayMap is the one referenced in [RFC9496] in section 4.3.4.
 
 3.2.  Key Generation
 
@@ -1710,8 +1711,10 @@ Encode(value):
               DOI 10.17487/RFC9380, August 2023,
               <https://www.rfc-editor.org/rfc/rfc9380>.
 
-   [RISTRETTO]
-              "The Ristretto Group", <https://ristretto.group/>.
+   [RFC9496]  de Valence, H., Grigg, J., Hamburg, M., Lovecruft, I.,
+              Tankersley, G., and F. Valsorda, "The ristretto255 and
+              decaf448 Groups", RFC 9496, DOI 10.17487/RFC9496, December
+              2023, <https://www.rfc-editor.org/rfc/rfc9496>.
 
 8.2.  Informative References
 
