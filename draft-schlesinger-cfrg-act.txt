@@ -5,7 +5,7 @@
 CFRG                                                      S. Schlesinger
 Internet-Draft                                                   J. Katz
 Intended status: Informational                                    Google
-Expires: 7 December 2025                                     5 June 2025
+Expires: 10 December 2025                                    8 June 2025
 
 
                         Anonymous Credit Tokens
@@ -63,7 +63,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 7 December 2025.
+   This Internet-Draft will expire on 10 December 2025.
 
 Copyright Notice
 
@@ -473,8 +473,8 @@ domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deploym
        4. // Verify proof
        6. X_A = G + H1 * c + K
        7. X_G = G * e + pk
-       8. Y_A = A * z + X_A * (-gamma_resp)
-       9. Y_G = G * z + X_G * (-gamma_resp)
+       8. Y_A = A * z - X_A * gamma_resp
+       9. Y_G = G * z - X_G * gamma_resp
        10. transcript_resp = CreateTranscript("respond")
        11. AddToTranscript(transcript_resp, c)
        12. AddToTranscript(transcript_resp, e)
@@ -495,152 +495,151 @@ domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deploym
 
 3.4.1.  Client: Spend Proof Generation
 
-   ProveSpend(token, s):
-     Input:
-       - token: Credit token (A, e, k, r, c)
-       - s: Amount to spend (0 <= s <= c)
-     Output:
-       - proof: Spend proof
-       - state: Client state for receiving change
+ProveSpend(token, s):
+  Input:
+    - token: Credit token (A, e, k, r, c)
+    - s: Amount to spend (0 <= s <= c)
+  Output:
+    - proof: Spend proof
+    - state: Client state for receiving change
 
-     Steps:
-       1. // Randomize the signature
-       2. r1, r2 <- Zq
-       3. B = G + H1 * c + H2 * k + H3 * r
-       4. A' = A * (r1 * r2)
-       5. B_bar = B * r1
-       6. r3 = 1/r1
+  Steps:
+    1. // Randomize the signature
+    2. r1, r2 <- Zq
+    3. B = G + H1 * c + H2 * k + H3 * r
+    4. A' = A * (r1 * r2)
+    5. B_bar = B * r1
+    6. r3 = 1/r1
 
-       7. // Generate initial proof components
-       8. c' <- Zq
-       9. r' <- Zq
-       10. e' <- Zq
-       11. r2' <- Zq
-       12. r3' <- Zq
+    7. // Generate initial proof components
+    8. c' <- Zq
+    9. r' <- Zq
+    10. e' <- Zq
+    11. r2' <- Zq
+    12. r3' <- Zq
 
-       13. // Compute first round messages
-       14. A1 = A' * e' + B_bar * r2'
-       15. A2 = B_bar * r3' + H1 * c' + H3 * r'
+    13. // Compute first round messages
+    14. A1 = A' * e' + B_bar * r2'
+    15. A2 = B_bar * r3' + H1 * c' + H3 * r'
 
-       16. // Decompose c - s into bits
-       17. m = c - s
-       18. (i[0], ..., i[L-1]) = BitDecompose(m)  // See Section 3.7
+    16. // Decompose c - s into bits
+    17. m = c - s
+    18. (i[0], ..., i[L-1]) = BitDecompose(m)  // See Section 3.7
 
-       19. // Create commitments for each bit
-       20. k* <- Zq
-       21. s[0] <- Zq
-       22. Com[0] = H1 * i[0] + H2 * k* + H3 * s[0]
-       23. For j = 1 to L-1:
-       24.     s[j] <- Zq
-       25.     Com[j] = H1 * i[j] + H3 * s[j]
+    19. // Create commitments for each bit
+    20. k* <- Zq
+    21. s[0] <- Zq
+    22. Com[0] = H1 * i[0] + H2 * k* + H3 * s[0]
+    23. For j = 1 to L-1:
+    24.     s[j] <- Zq
+    25.     Com[j] = H1 * i[j] + H3 * s[j]
 
-       26. // Initialize range proof arrays
-       27. C = array[L][2]
-       28. C' = array[L][2]
-       29. gamma0 = array[L]
-       30. z = array[L][2]
+    26. // Initialize range proof arrays
+    27. C = array[L][2]
+    28. C' = array[L][2]
+    29. gamma0 = array[L]
+    30. z = array[L][2]
 
-       31. // Process bit 0 (with k* component)
-       32. C[0][0] = Com[0]
-       33. C[0][1] = Com[0] - H1
-       34. k0' <- Zq
-       35. s_prime = array[L]
-       36. s_prime[0] <- Zq
-       37. gamma0[0] <- Zq
-       38. w0 <- Zq
-       39. z[0] <- Zq
+    31. // Process bit 0 (with k* component)
+    32. C[0][0] = Com[0]
+    33. C[0][1] = Com[0] - H1
+    34. k0' <- Zq
+    35. s_prime = array[L]
+    36. s_prime[0] <- Zq
+    37. gamma0[0] <- Zq
+    38. w0 <- Zq
+    39. z[0] <- Zq
 
-       40. if i[0] == 0:
-       41.     C'[0][0] = H2 * k0' + H3 * s_prime[0]
-       42.     C'[0][1] = H2 * w0 + H3 * z[0] - C[0][1] * gamma0[0]
-       43. else:
-       44.     C'[0][0] = H2 * w0 + H3 * z[0] - C[0][0] * gamma0[0]
-       45.     C'[0][1] = H2 * k0' + H3 * s_prime[0]
+    40. if i[0] == 0:
+    41.     C'[0][0] = H2 * k0' + H3 * s_prime[0]
+    42.     C'[0][1] = H2 * w0 + H3 * z[0] - C[0][1] * gamma0[0]
+    43. else:
+    44.     C'[0][0] = H2 * w0 + H3 * z[0] - C[0][0] * gamma0[0]
+    45.     C'[0][1] = H2 * k0' + H3 * s_prime[0]
 
-       46. // Process remaining bits
-       47. For j = 1 to L-1:
-       48.     C[j][0] = Com[j]
-       49.     C[j][1] = Com[j] - H1
-       50.     s_prime[j] <- Zq
-       51.     gamma0[j] <- Zq
-       52.     z[j] <- Zq
-       53.
-       54.     if i[j] == 0:
-       55.         C'[j][0] = H3 * s_prime[j]
-       56.         C'[j][1] = H3 * z[j] - C[j][1] * gamma0[j]
-       57.     else:
-       58.         C'[j][0] = H3 * z[j] - C[j][0] * gamma0[j]
-       59.         C'[j][1] = H3 * s_prime[j]
+    46. // Process remaining bits
+    47. For j = 1 to L-1:
+    48.     C[j][0] = Com[j]
+    49.     C[j][1] = Com[j] - H1
+    50.     s_prime[j] <- Zq
+    51.     gamma0[j] <- Zq
+    52.     z[j] <- Zq
+    53.
+    54.     if i[j] == 0:
+    55.         C'[j][0] = H3 * s_prime[j]
+    56.         C'[j][1] = H3 * z[j] - C[j][1] * gamma0[j]
+    57.     else:
+    58.         C'[j][0] = H3 * z[j] - C[j][0] * gamma0[j]
+    59.         C'[j][1] = H3 * s_prime[j]
 
-       60. // Compute K' commitment
-       61. K' = Sum(Com[j] * 2^j for j in [L])
-       62. r* = Sum(s[j] * 2^j for j in [L])
-       63. k' <- Zq
-       64. s' <- Zq
-       65. C = H1 * (-c') + H2 * k' + H3 * s'
+    60. // Compute K' commitment
+    61. K' = Sum(Com[j] * 2^j for j in [L])
+    62. r* = Sum(s[j] * 2^j for j in [L])
+    63. k' <- Zq
+    64. s' <- Zq
+    65. C = H1 * (-c') + H2 * k' + H3 * s'
 
-       66. // Generate challenge using transcript
-       67. transcript = CreateTranscript("spend")
-       68. AddToTranscript(transcript, k)
-       69. AddToTranscript(transcript, A')
-       70. AddToTranscript(transcript, B_bar)
-       71. AddToTranscript(transcript, A1)
-       72. AddToTranscript(transcript, A2)
-       73. For j = 0 to L-1:
-       74.     AddToTranscript(transcript, Com[j])
-       75. For j = 0 to L-1:
-       76.     AddToTranscript(transcript, C'[j][0])
-       77.     AddToTranscript(transcript, C'[j][1])
-       78. AddToTranscript(transcript, C)
-       79. gamma = GetChallenge(transcript)
+    66. // Generate challenge using transcript
+    67. transcript = CreateTranscript("spend")
+    68. AddToTranscript(transcript, k)
+    69. AddToTranscript(transcript, A')
+    70. AddToTranscript(transcript, B_bar)
+    71. AddToTranscript(transcript, A1)
+    72. AddToTranscript(transcript, A2)
+    73. For j = 0 to L-1:
+    74.     AddToTranscript(transcript, Com[j])
+    75. For j = 0 to L-1:
+    76.     AddToTranscript(transcript, C'[j][0])
+    77.     AddToTranscript(transcript, C'[j][1])
+    78. AddToTranscript(transcript, C)
+    79. gamma = GetChallenge(transcript)
 
-       80. // Compute responses
-       81. e_bar = -gamma * e + e'
-       82. r2_bar = gamma * r2 + r2'
-       83. r3_bar = gamma * r3 + r3'
-       84. c_bar = -gamma * c + c'
-       85. r_bar = -gamma * r + r'
+    80. // Compute responses
+    81. e_bar = -gamma * e + e'
+    82. r2_bar = gamma * r2 + r2'
+    83. r3_bar = gamma * r3 + r3'
+    84. c_bar = -gamma * c + c'
+    85. r_bar = -gamma * r + r'
 
-       86. // Complete range proof responses
-       87. z_final = array[L][2]
-       88. gamma0_final = array[L]
-       89.
-       90. // For bit 0
-       91. if i[0] == 0:
-       92.     gamma0_final[0] = gamma0[0]
-       93.     gamma1 = gamma - gamma0[0]
-       94.     w00 = gamma0_final[0] * k* + k0'
-       95.     w01 = w0
-       96.     z_final[0][0] = gamma0_final[0] * s[0] + s_prime[0]
-       97.     z_final[0][1] = z[0]
-       98. else:
-       99.     gamma0_final[0] = gamma - gamma0[0]
-       100.     w00 = w0
-       101.     w01 = gamma0_final[0] * k* + k0'
-       102.     z_final[0][0] = z[0]
-       103.     z_final[0][1] = gamma0_final[0] * s[0] + s_prime[0]
+    86. // Complete range proof responses
+    87. z_final = array[L][2]
+    88. gamma0_final = array[L]
+    89.
+    90. // For bit 0
+    91. if i[0] == 0:
+    92.     gamma0_final[0] = gamma - gamma0[0]
+    94.     w00 = gamma0_final[0] * k* + k0'
+    95.     w01 = w0
+    96.     z_final[0][0] = gamma0_final[0] * s[0] + s_prime[0]
+    97.     z_final[0][1] = z[0]
+    98. else:
+    99.     gamma0_final[0] = gamma0[0]
+    100.    w00 = w0
+    101.    w01 = (gamma - gamma_final[0]) * k* + k'[0]
+    102.    z_final[0][0] = z[0]
+    103.    z_final[0][1] = (gamma - gamma0_final[0]) * s[0] + s_prime[0]
 
-       104. // For remaining bits
-       105. For j = 1 to L-1:
-       106.     if i[j] == 0:
-       107.         gamma0_final[j] = gamma0[j]
-       108.         z_final[j][0] = gamma0_final[j] * s[j] + s_prime[j]
-       109.         z_final[j][1] = z[j]
-       110.     else:
-       111.         gamma0_final[j] = gamma - gamma0[j]
-       112.         z_final[j][0] = z[j]
-       113.         z_final[j][1] = gamma0_final[j] * s[j] + s_prime[j]
+    104. // For remaining bits
+    105. For j = 1 to L-1:
+    106.     if i[j] == 0:
+    107.         gamma0_final[j] = gamma - gamma0[j]
+    108.         z_final[j][0] = gamma0_final[j] * s[j] + s_prime[j]
+    109.         z_final[j][1] = z[j]
+    110.     else:
+    111.         gamma0_final[j] = gamma0[j]
+    112.         z_final[j][0] = z[j]
+    113.         z_final[j][1] = (gamma - gamma0_final[j]) * s[j] + s_prime[j]
 
-       114. k_bar = gamma * k* + k'
-       115. s_bar = gamma * r* + s'
+    114. k_bar = gamma * k* + k'
+    115. s_bar = gamma * r* + s'
 
-       116. // Construct proof
-       117. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar,
-       118.                    r2_bar, r3_bar, c_bar, r_bar,
-       119.                    w00, w01, gamma0_final, z_final,
-       120.                    k_bar, s_bar)
-       121. state = (k*, r*, m)
-       122. return (proof, state)
+    116. // Construct proof
+    117. proof = (k, s, A', B_bar, Com, gamma, e_bar,
+    118.          r2_bar, r3_bar, c_bar, r_bar,
+    119.          w00, w01, gamma0_final, z_final,
+    120.          k_bar, s_bar)
+    121. state = (k*, r*, m)
+    122. return (proof, state)
 
 3.4.2.  Issuer: Spend Verification and Refund
 

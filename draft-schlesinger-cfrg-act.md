@@ -404,8 +404,8 @@ VerifyIssuance(pk, request, response, state):
     4. // Verify proof
     6. X_A = G + H1 * c + K
     7. X_G = G * e + pk
-    8. Y_A = A * z + X_A * (-gamma_resp)
-    9. Y_G = G * z + X_G * (-gamma_resp)
+    8. Y_A = A * z - X_A * gamma_resp
+    9. Y_G = G * z - X_G * gamma_resp
     10. transcript_resp = CreateTranscript("respond")
     11. AddToTranscript(transcript_resp, c)
     12. AddToTranscript(transcript_resp, e)
@@ -540,38 +540,37 @@ ProveSpend(token, s):
     89.
     90. // For bit 0
     91. if i[0] == 0:
-    92.     gamma0_final[0] = gamma0[0]
-    93.     gamma1 = gamma - gamma0[0]
+    92.     gamma0_final[0] = gamma - gamma0[0]
     94.     w00 = gamma0_final[0] * k* + k0'
     95.     w01 = w0
     96.     z_final[0][0] = gamma0_final[0] * s[0] + s_prime[0]
     97.     z_final[0][1] = z[0]
     98. else:
-    99.     gamma0_final[0] = gamma - gamma0[0]
-    100.     w00 = w0
-    101.     w01 = gamma0_final[0] * k* + k0'
-    102.     z_final[0][0] = z[0]
-    103.     z_final[0][1] = gamma0_final[0] * s[0] + s_prime[0]
+    99.     gamma0_final[0] = gamma0[0]
+    100.    w00 = w0
+    101.    w01 = (gamma - gamma_final[0]) * k* + k'[0]
+    102.    z_final[0][0] = z[0]
+    103.    z_final[0][1] = (gamma - gamma0_final[0]) * s[0] + s_prime[0]
 
     104. // For remaining bits
     105. For j = 1 to L-1:
     106.     if i[j] == 0:
-    107.         gamma0_final[j] = gamma0[j]
+    107.         gamma0_final[j] = gamma - gamma0[j]
     108.         z_final[j][0] = gamma0_final[j] * s[j] + s_prime[j]
     109.         z_final[j][1] = z[j]
     110.     else:
-    111.         gamma0_final[j] = gamma - gamma0[j]
+    111.         gamma0_final[j] = gamma0[j]
     112.         z_final[j][0] = z[j]
-    113.         z_final[j][1] = gamma0_final[j] * s[j] + s_prime[j]
+    113.         z_final[j][1] = (gamma - gamma0_final[j]) * s[j] + s_prime[j]
 
     114. k_bar = gamma * k* + k'
     115. s_bar = gamma * r* + s'
 
     116. // Construct proof
-    117. proof = SpendProof(k, s, A', B_bar, Com, gamma, e_bar,
-    118.                    r2_bar, r3_bar, c_bar, r_bar,
-    119.                    w00, w01, gamma0_final, z_final,
-    120.                    k_bar, s_bar)
+    117. proof = (k, s, A', B_bar, Com, gamma, e_bar,
+    118.          r2_bar, r3_bar, c_bar, r_bar,
+    119.          w00, w01, gamma0_final, z_final,
+    120.          k_bar, s_bar)
     121. state = (k*, r*, m)
     122. return (proof, state)
 ~~~
