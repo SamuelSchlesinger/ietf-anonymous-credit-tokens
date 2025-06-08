@@ -86,8 +86,8 @@ only once.
 
 Anonymous Credit Tokens are designed for modern web services requiring rate
 limiting, usage-based billing, or resource allocation while respecting user
-privacy. Example applications include API credit systems, privacy-preserving
-micropayments, and anonymous ticketing systems.
+privacy. Example applications include rate limiting, API credits, and
+privacy-preserving micropayments.
 
 This document is a product of the Crypto Forum Research Group (CFRG) in the
 IRTF.
