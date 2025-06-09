@@ -21,8 +21,7 @@ cryptographic nullifiers that preserve privacy while ensuring each token is used
 only once. 
        Anonymous Credit Tokens are designed for modern web services requiring rate
 limiting, usage-based billing, or resource allocation while respecting user
-privacy. Example applications include rate limiting, API credits, and
-privacy-preserving micropayments. 
+privacy. Example applications include rate limiting and API credits. 
        This document is a product of the Crypto Forum Research Group (CFRG) in the
 IRTF. 
     " name="description">
@@ -1118,8 +1117,7 @@ cryptographic nullifiers that preserve privacy while ensuring each token is used
 only once.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 <p id="section-abstract-3">Anonymous Credit Tokens are designed for modern web services requiring rate
 limiting, usage-based billing, or resource allocation while respecting user
-privacy. Example applications include rate limiting, API credits, and
-privacy-preserving micropayments.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
+privacy. Example applications include rate limiting and API credits.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
 <p id="section-abstract-4">This document is a product of the Crypto Forum Research Group (CFRG) in the
 IRTF.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
 </section>
@@ -1353,9 +1351,6 @@ IRTF.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.6.2.1">
                     <p id="section-toc.1-1.5.2.6.2.1.1"><a href="#section-5.6.1" class="auto internal xref">5.6.1</a>.  <a href="#name-performance-characteristics" class="internal xref">Performance Characteristics</a></p>
 </li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.6.2.2">
-                    <p id="section-toc.1-1.5.2.6.2.2.1"><a href="#section-5.6.2" class="auto internal xref">5.6.2</a>.  <a href="#name-parameter-trade-offs" class="internal xref">Parameter Trade-offs</a></p>
-</li>
                 </ul>
 </li>
             </ul>
@@ -1475,7 +1470,7 @@ regulation.<a href="#section-1-1" class="pilcrow">¶</a></p>
 cryptographic protocol that enables credit-based systems without client
 tracking. Built on keyed-verification anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> and
 privately verifiable BBS-style signatures <span>[<a href="#BBS" class="cite xref">BBS</a>]</span>, the protocol allows services
-to issue, track, and spend credits while maintaining complete client anonymity.<a href="#section-1-2" class="pilcrow">¶</a></p>
+to issue, track, and spend credits while maintaining client privacy.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <div id="key-properties">
 <section id="section-1.1">
         <h3 id="name-key-properties">
@@ -1491,7 +1486,7 @@ information-theoretic, not merely computational.<a href="#section-1.1-2.1.1" cla
 </li>
           <li id="section-1.1-2.2">
             <p id="section-1.1-2.2.1"><strong>Partial Spending</strong>: Clients can spend any amount up to their balance and
-receive anonymous change, enabling flexible micropayment scenarios without
+receive anonymous change, enabling flexible redemption scenarios without
 revealing their total balance.<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-1.1-2.3">
@@ -1503,6 +1498,11 @@ linking it to issuance.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
             <p id="section-1.1-2.4.1"><strong>Balance Privacy</strong>: During spending, only the amount being spent is
 revealed, not the total balance in the token, protecting clients from
 balance-based profiling.<a href="#section-1.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-1.1-2.5">
+            <p id="section-1.1-2.5.1"><strong>Performance</strong>: The protocol's operations must be performant enough to
+make it useful in modern web systems. This protocol has performance
+characteristics which make it suitable for a large number of applications.<a href="#section-1.1-2.5.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -1536,10 +1536,6 @@ identity. This enables:<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
                 <p id="section-1.2-2.2.2.4.1">Protection against competitive analysis through usage monitoring<a href="#section-1.2-2.2.2.4.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
-</li>
-          <li class="normal" id="section-1.2-2.3">
-            <p id="section-1.2-2.3.1"><strong>Privacy-Preserving Micropayments</strong>: Clients can purchase credit bundles and
-spend them over time without creating a transaction history.<a href="#section-1.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2929,36 +2925,24 @@ implementations <span class="bcp14">MAY</span> use the following internal error 
         <h3 id="name-parameter-selection">
 <a href="#section-5.6" class="section-number selfRef">5.6. </a><a href="#name-parameter-selection" class="section-name selfRef">Parameter Selection</a>
         </h3>
-<p id="section-5.6-1">The bit length L is configurable and determines the range of credit values (0
-to 2^L - 1). The choice of L involves several trade-offs:<a href="#section-5.6-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-5.6-2">
-<li id="section-5.6-2.1">
-            <p id="section-5.6-2.1.1"><strong>Range</strong>: Larger L supports higher credit values<a href="#section-5.6-2.1.1" class="pilcrow">¶</a></p>
+<p id="section-5.6-1">Implementations <span class="bcp14">MUST</span> choose L based on their maximum credit requirements and
+performance constraints. Note that L <span class="bcp14">MUST</span> be less than 252 to fit within the
+Ristretto group order.<a href="#section-5.6-1" class="pilcrow">¶</a></p>
+<p id="section-5.6-2">The bit length L is configurable and determines the range of credit values (0
+to 2^L - 1). The choice of L involves several trade-offs:<a href="#section-5.6-2" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.6-3">
+<li id="section-5.6-3.1">
+            <p id="section-5.6-3.1.1"><strong>Range</strong>: Larger L supports higher credit values<a href="#section-5.6-3.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.6-2.2">
-            <p id="section-5.6-2.2.1"><strong>Performance</strong>: Proof size and verification time scale linearly with L<a href="#section-5.6-2.2.1" class="pilcrow">¶</a></p>
+          <li id="section-5.6-3.2">
+            <p id="section-5.6-3.2.1"><strong>Performance</strong>: Proof size and verification time scale linearly with L<a href="#section-5.6-3.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-5.6-2.3">
-            <p id="section-5.6-2.3.1"><strong>Security</strong>: L must be less than the bit length of the group order (252 bits for Ristretto)<a href="#section-5.6-2.3.1" class="pilcrow">¶</a></p>
+          <li id="section-5.6-3.3">
+            <p id="section-5.6-3.3.1"><strong>Security</strong>: L must be less than the bit length of the group order (252 bits for Ristretto)<a href="#section-5.6-3.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-5.6-3">Common configurations:<a href="#section-5.6-3" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-5.6-4.1">
-            <p id="section-5.6-4.1.1">L = 32: Suitable for small credit systems (up to ~4 billion credits)<a href="#section-5.6-4.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-5.6-4.2">
-            <p id="section-5.6-4.2.1">L = 64: Suitable for medium-scale systems (up to ~18 quintillion credits)<a href="#section-5.6-4.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-5.6-4.3">
-            <p id="section-5.6-4.3.1">L = 128: Suitable for large-scale systems with effectively unlimited credit range<a href="#section-5.6-4.3.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-5.6-4.4">
-            <p id="section-5.6-4.4.1">L = 256: Maximum practical value, but with doubled proof sizes compared to L = 128<a href="#section-5.6-4.4.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<p id="section-5.6-5">The implementation <span class="bcp14">MUST</span> enforce L &lt; 252 to ensure proper scalar arithmetic
-within the group order.<a href="#section-5.6-5" class="pilcrow">¶</a></p>
+<p id="section-5.6-4">The implementation <span class="bcp14">MUST</span> enforce L &lt; 252 to ensure proper scalar arithmetic
+within the group order.<a href="#section-5.6-4" class="pilcrow">¶</a></p>
 <div id="performance-characteristics">
 <section id="section-5.6.1">
           <h4 id="name-performance-characteristics">
@@ -2970,10 +2954,13 @@ within the group order.<a href="#section-5.6-5" class="pilcrow">¶</a></p>
               <p id="section-5.6.1-2.1.1"><strong>Issuance</strong>:<a href="#section-5.6.1-2.1.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.6.1-2.1.2.1">
-                  <p id="section-5.6.1-2.1.2.1.1">Client: 3 scalar multiplications + 1 hash<a href="#section-5.6.1-2.1.2.1.1" class="pilcrow">¶</a></p>
+                  <p id="section-5.6.1-2.1.2.1.1">Client Request: 2 Group Operations, 4 Group Exponentiations, 2 Scalar Additions, 1 Scalar Multiplication, 1 Hash<a href="#section-5.6.1-2.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-5.6.1-2.1.2.2">
-                  <p id="section-5.6.1-2.1.2.2.1">Issuer: 1 exponentiation + 3 scalar multiplications + 1 hash<a href="#section-5.6.1-2.1.2.2.1" class="pilcrow">¶</a></p>
+                  <p id="section-5.6.1-2.1.2.2.1">Issuer Response: 5 Group Operations, 8 Group Exponetiations, 3 Scalar Additions, 1 Scalar Multiplication, 2 Hashes<a href="#section-5.6.1-2.1.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.6.1-2.1.2.3">
+                  <p id="section-5.6.1-2.1.2.3.1">Client Credit Token Construction: 5 Group Operations, 5 Group Exponentiations, 1 Hash<a href="#section-5.6.1-2.1.2.3.1" class="pilcrow">¶</a></p>
 </li>
               </ul>
 </li>
@@ -2981,10 +2968,13 @@ within the group order.<a href="#section-5.6-5" class="pilcrow">¶</a></p>
               <p id="section-5.6.1-2.2.1"><strong>Spending</strong>:<a href="#section-5.6.1-2.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.6.1-2.2.2.1">
-                  <p id="section-5.6.1-2.2.2.1.1">Client: O(L) scalar multiplications for range proof + O(1) for sigma protocol<a href="#section-5.6.1-2.2.2.1.1" class="pilcrow">¶</a></p>
+                  <p id="section-5.6.1-2.2.2.1.1">Client Request: 17 + 4 * L Group Operations, 27 + 8 * L Group Exponentiations, 13 + 5 * L Scalar Additions, 12 + L * 3 Scalar Multiplications<a href="#section-5.6.1-2.2.2.1.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-5.6.1-2.2.2.2">
-                  <p id="section-5.6.1-2.2.2.2.1">Issuer: O(L) scalar multiplications for verification<a href="#section-5.6.1-2.2.2.2.1" class="pilcrow">¶</a></p>
+                  <p id="section-5.6.1-2.2.2.2.1">Issuer Response: 16 + 4 * L Group Operations, 24 + 5 * L Group Exponentiations, 4 + L Scalar Additions, 1 Scalar Multiplication<a href="#section-5.6.1-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-5.6.1-2.2.2.3">
+                  <p id="section-5.6.1-2.2.2.3.1">Client Credit Token Construction: 3 Group Operations, 5 Group Exponentiations, L Scalar Additions, L Scalar Multiplications<a href="#section-5.6.1-2.2.2.3.1" class="pilcrow">¶</a></p>
 </li>
               </ul>
 </li>
@@ -2995,7 +2985,7 @@ within the group order.<a href="#section-5.6-5" class="pilcrow">¶</a></p>
                   <p id="section-5.6.1-2.3.2.1.1">Token size: 5 × 32 bytes = 160 bytes (independent of L)<a href="#section-5.6.1-2.3.2.1.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-5.6.1-2.3.2.2">
-                  <p id="section-5.6.1-2.3.2.2.1">Spend proof size: O(L) × 32 bytes (approximately 32L bytes)<a href="#section-5.6.1-2.3.2.2.1" class="pilcrow">¶</a></p>
+                  <p id="section-5.6.1-2.3.2.2.1">Spend proof size: 32 * (14 + 4 * L)<a href="#section-5.6.1-2.3.2.2.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-5.6.1-2.3.2.3">
                   <p id="section-5.6.1-2.3.2.3.1">Nullifier database: 32 bytes per spent token<a href="#section-5.6.1-2.3.2.3.1" class="pilcrow">¶</a></p>
@@ -3003,73 +2993,6 @@ within the group order.<a href="#section-5.6-5" class="pilcrow">¶</a></p>
               </ul>
 </li>
           </ol>
-<p id="section-5.6.1-3">The proof size scales linearly with L:<a href="#section-5.6.1-3" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-5.6.1-4.1">
-              <p id="section-5.6.1-4.1.1">L = 32: ~1KB spend proof<a href="#section-5.6.1-4.1.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-5.6.1-4.2">
-              <p id="section-5.6.1-4.2.1">L = 64: ~2KB spend proof<a href="#section-5.6.1-4.2.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-5.6.1-4.3">
-              <p id="section-5.6.1-4.3.1">L = 128: ~4KB spend proof<a href="#section-5.6.1-4.3.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-5.6.1-4.4">
-              <p id="section-5.6.1-4.4.1">L = 256: ~8KB spend proof<a href="#section-5.6.1-4.4.1" class="pilcrow">¶</a></p>
-</li>
-          </ul>
-</section>
-</div>
-<div id="parameter-trade-offs">
-<section id="section-5.6.2">
-          <h4 id="name-parameter-trade-offs">
-<a href="#section-5.6.2" class="section-number selfRef">5.6.2. </a><a href="#name-parameter-trade-offs" class="section-name selfRef">Parameter Trade-offs</a>
-          </h4>
-<table class="center" id="table-1">
-            <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
-<thead>
-              <tr>
-                <th class="text-left" rowspan="1" colspan="1">Parameter</th>
-                <th class="text-left" rowspan="1" colspan="1">Value</th>
-                <th class="text-left" rowspan="1" colspan="1">Maximum Credit Value</th>
-                <th class="text-left" rowspan="1" colspan="1">Spend Proof Size</th>
-                <th class="text-left" rowspan="1" colspan="1">Use Case</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">L</td>
-                <td class="text-left" rowspan="1" colspan="1">32</td>
-                <td class="text-left" rowspan="1" colspan="1">4,294,967,295</td>
-                <td class="text-left" rowspan="1" colspan="1">~1 KB</td>
-                <td class="text-left" rowspan="1" colspan="1">Small-scale systems, API rate limiting</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">L</td>
-                <td class="text-left" rowspan="1" colspan="1">64</td>
-                <td class="text-left" rowspan="1" colspan="1">1.8 × 10^19</td>
-                <td class="text-left" rowspan="1" colspan="1">~2 KB</td>
-                <td class="text-left" rowspan="1" colspan="1">Medium-scale systems, micropayments</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">L</td>
-                <td class="text-left" rowspan="1" colspan="1">128</td>
-                <td class="text-left" rowspan="1" colspan="1">3.4 × 10^38</td>
-                <td class="text-left" rowspan="1" colspan="1">~4 KB</td>
-                <td class="text-left" rowspan="1" colspan="1">Large-scale systems, general purpose</td>
-              </tr>
-              <tr>
-                <td class="text-left" rowspan="1" colspan="1">L</td>
-                <td class="text-left" rowspan="1" colspan="1">192</td>
-                <td class="text-left" rowspan="1" colspan="1">6.3 × 10^57</td>
-                <td class="text-left" rowspan="1" colspan="1">~6 KB</td>
-                <td class="text-left" rowspan="1" colspan="1">Very large values, future-proofing</td>
-              </tr>
-            </tbody>
-          </table>
-<p id="section-5.6.2-2">Implementations <span class="bcp14">SHOULD</span> choose L based on their maximum credit requirements and
-performance constraints. Note that L <span class="bcp14">MUST</span> be less than 252 to fit within the
-Ristretto group order.<a href="#section-5.6.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>

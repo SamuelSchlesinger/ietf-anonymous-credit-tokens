@@ -86,8 +86,7 @@ only once.
 
 Anonymous Credit Tokens are designed for modern web services requiring rate
 limiting, usage-based billing, or resource allocation while respecting user
-privacy. Example applications include rate limiting, API credits, and
-privacy-preserving micropayments.
+privacy. Example applications include rate limiting and API credits.
 
 This document is a product of the Crypto Forum Research Group (CFRG) in the
 IRTF.
@@ -108,7 +107,7 @@ Anonymous Credit Tokens (ACT) helps to resolve this tension by providing a
 cryptographic protocol that enables credit-based systems without client
 tracking. Built on keyed-verification anonymous credentials {{KVAC}} and
 privately verifiable BBS-style signatures {{BBS}}, the protocol allows services
-to issue, track, and spend credits while maintaining complete client anonymity.
+to issue, track, and spend credits while maintaining client privacy.
 
 ## Key Properties
 
@@ -120,7 +119,7 @@ privacy-preserving credit systems:
    information-theoretic, not merely computational.
 
 2. **Partial Spending**: Clients can spend any amount up to their balance and
-   receive anonymous change, enabling flexible micropayment scenarios without
+   receive anonymous change, enabling flexible redemption scenarios without
    revealing their total balance.
 
 3. **Double-Spend Prevention**: Cryptographic nullifiers ensure each credit
@@ -130,6 +129,10 @@ privacy-preserving credit systems:
 4. **Balance Privacy**: During spending, only the amount being spent is
    revealed, not the total balance in the token, protecting clients from
    balance-based profiling.
+
+5. **Performance**: The protocol's operations must be performant enough to
+   make it useful in modern web systems. This protocol has performance
+   characteristics which make it suitable for a large number of applications.
 
 ## Use Cases
 
@@ -145,9 +148,6 @@ Anonymous Credit Tokens can be applied to various scenarios:
   - Anonymous API usage for privacy-sensitive applications
   - Usage-based billing without tracking individual request patterns
   - Protection against competitive analysis through usage monitoring
-
-- **Privacy-Preserving Micropayments**: Clients can purchase credit bundles and
-  spend them over time without creating a transaction history.
 
 ## Protocol Overview
 
@@ -1183,19 +1183,16 @@ implementations MAY use the following internal error codes:
 
 ## Parameter Selection
 
+Implementations MUST choose L based on their maximum credit requirements and
+performance constraints. Note that L MUST be less than 252 to fit within the
+Ristretto group order.
+
 The bit length L is configurable and determines the range of credit values (0
 to 2^L - 1). The choice of L involves several trade-offs:
 
 1. **Range**: Larger L supports higher credit values
 2. **Performance**: Proof size and verification time scale linearly with L
 3. **Security**: L must be less than the bit length of the group order (252 bits for Ristretto)
-
-Common configurations:
-
-- L = 32: Suitable for small credit systems (up to ~4 billion credits)
-- L = 64: Suitable for medium-scale systems (up to ~18 quintillion credits)
-- L = 128: Suitable for large-scale systems with effectively unlimited credit range
-- L = 256: Maximum practical value, but with doubled proof sizes compared to L = 128
 
 The implementation MUST enforce L < 252 to ensure proper scalar arithmetic
 within the group order.
@@ -1205,37 +1202,22 @@ within the group order.
 The protocol has the following computational complexity:
 
 1. **Issuance**:
-   - Client: 3 scalar multiplications + 1 hash
-   - Issuer: 1 exponentiation + 3 scalar multiplications + 1 hash
+
+   - Client Request: 2 Group Operations, 4 Group Exponentiations, 2 Scalar Additions, 1 Scalar Multiplication, 1 Hash
+   - Issuer Response: 5 Group Operations, 8 Group Exponetiations, 3 Scalar Additions, 1 Scalar Multiplication, 2 Hashes
+   - Client Credit Token Construction: 5 Group Operations, 5 Group Exponentiations, 1 Hash
 
 2. **Spending**:
-   - Client: O(L) scalar multiplications for range proof + O(1) for sigma protocol
-   - Issuer: O(L) scalar multiplications for verification
+
+   - Client Request: 17 + 4 * L Group Operations, 27 + 8 * L Group Exponentiations, 13 + 5 * L Scalar Additions, 12 + L * 3 Scalar Multiplications
+   - Issuer Response: 16 + 4 * L Group Operations, 24 + 5 * L Group Exponentiations, 4 + L Scalar Additions, 1 Scalar Multiplication
+   - Client Credit Token Construction: 3 Group Operations, 5 Group Exponentiations, L Scalar Additions, L Scalar Multiplications
 
 3. **Storage**:
+
    - Token size: 5 × 32 bytes = 160 bytes (independent of L)
-   - Spend proof size: O(L) × 32 bytes (approximately 32L bytes)
+   - Spend proof size: 32 * (14 + 4 * L)
    - Nullifier database: 32 bytes per spent token
-
-The proof size scales linearly with L:
-
-- L = 32: ~1KB spend proof
-- L = 64: ~2KB spend proof
-- L = 128: ~4KB spend proof
-- L = 256: ~8KB spend proof
-
-### Parameter Trade-offs
-
-| Parameter | Value | Maximum Credit Value | Spend Proof Size | Use Case |
-|-----------|-------|---------------------|------------------|-----------|
-| L | 32 | 4,294,967,295 | ~1 KB | Small-scale systems, API rate limiting |
-| L | 64 | 1.8 × 10^19 | ~2 KB | Medium-scale systems, micropayments |
-| L | 128 | 3.4 × 10^38 | ~4 KB | Large-scale systems, general purpose |
-| L | 192 | 6.3 × 10^57 | ~6 KB | Very large values, future-proofing |
-
-Implementations SHOULD choose L based on their maximum credit requirements and
-performance constraints. Note that L MUST be less than 252 to fit within the
-Ristretto group order.
 
 # Security Considerations
 
