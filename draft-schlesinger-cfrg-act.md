@@ -119,7 +119,7 @@ privacy-preserving credit systems:
    information-theoretic, not merely computational.
 
 2. **Partial Spending**: Clients can spend any amount up to their balance and
-   receive anonymous change, enabling flexible redemption scenarios without
+   receive anonymous change, enabling flexible spending without
    revealing their total balance.
 
 3. **Double-Spend Prevention**: Cryptographic nullifiers ensure each credit
@@ -221,8 +221,8 @@ This document uses the following notation:
 - `0x` prefix: Hexadecimal values
 
 - We use additive notation for group operations, so group elements are added
-  together like `a + b` and exponentiation of a group element by a scalar
-  element is written as `a * n`, with group element `a` and scalar `n`.
+  together like `a + b` and scalar multiplication of a group element by a scalar
+  is written as `a * n`, with group element `a` and scalar `n`.
 
 ## Data Types
 
@@ -241,7 +241,7 @@ key parameters are:
 
 - **q**: The prime order of the group (2^252 + 27742317777372353535851937790883648493)
 - **G**: The standard generator of the Ristretto group
-- **L**: The bit length for credit values (configurable, typically 128 bits)
+- **L**: The bit length for credit values
 
 # Protocol Specification
 
@@ -325,7 +325,9 @@ parameter collision and MUST NOT be used. When parameters need to be updated
 (e.g., for security reasons or protocol upgrades), a new version date MUST be
 used, creating entirely new parameters.
 
-The OneWayMap is the one referenced in {{RFC9496}} in section 4.3.4.
+The OneWayMap function is defined in {{RFC9496}} Section 4.3.4, which provides a
+cryptographically secure mapping from uniformly random byte strings to valid
+Ristretto255 points.
 
 ## Key Generation
 
@@ -1201,6 +1203,11 @@ within the group order.
 
 The protocol has the following computational complexity:
 
+**Notation for Operations:**
+- **Group Operations**: Point additions in the Ristretto255 group (e.g., P + Q)
+- **Group Exponentiations**: Scalar multiplication of group elements (e.g., P * s)
+- **Scalar Additions/Multiplications**: Arithmetic operations modulo the group order q
+
 1. **Issuance**:
 
 | Operation | Group Operations | Group Exponentiations | Scalar Additions | Scalar Multiplications | Hashes |
@@ -1228,6 +1235,14 @@ Note: L is the configurable bit length for credit values.
 | Nullifier database entry | 32 bytes per spent token |
 
 Note: Token size is independent of L.
+
+4. **Memory Requirements** (during protocol execution):
+
+| Operation | Peak Memory Usage |
+|-----------|------------------|
+| Token Issuance | ~1 KB |
+| Spend Proof Generation | ~8 KB (for L=128) |
+| Spend Proof Verification | ~8 KB (for L=128) |
 
 # Security Considerations
 
@@ -1357,9 +1372,8 @@ The protocol ensures:
    **Mitigations**:
 
    - MUST use constant-time scalar arithmetic libraries
-   - MUST use constant-time conditional selection for range proof bit operations
+   - MUST use constant-time conditional selection for range proof conditionals
    - MUST avoid early-exit conditions based on secret values
-   - SHOULD use blinding techniques for particularly sensitive operations
    - Critical constant-time operations include:
      * Scalar multiplication and addition
      * Binary decomposition in range proofs
@@ -1372,16 +1386,13 @@ The protocol ensures:
 
    - Database corruption allowing nullifier deletion
    - Race conditions in concurrent nullifier checks
-   - Rollback attacks reverting nullifier storage
 
    **Mitigations**:
 
    - MUST use ACID-compliant database transactions
    - MUST check nullifier uniqueness within the same transaction as insertion
    - SHOULD implement append-only audit logs for nullifier operations
-   - SHOULD use cryptographic commitments (e.g., Merkle trees) for integrity
    - MUST implement proper database backup and recovery procedures
-   - SHOULD monitor for anomalous nullifier patterns
 
 4. **Protocol Message Attacks**: Malformed or replayed messages can compromise security.
 
@@ -1393,10 +1404,9 @@ The protocol ensures:
 
    **Mitigations**:
 
-   - MUST validate all received points (non-identity, proper encoding)
-   - MUST include session identifiers in transcripts to prevent replay
+   - Nullifiers and the associated proofs obviate replay attacks.
+   - MUST validate all received points
    - MUST use deterministic encoding for all protocol messages
-   - SHOULD implement message sequence numbering
    - MUST reject messages with unexpected fields or formats
 
 5. **State Management Vulnerabilities**: Improper state handling can lead to security breaches.
@@ -1410,7 +1420,7 @@ The protocol ensures:
    **Mitigations**:
 
    - MUST use separate state objects for each protocol session
-   - MUST zero all sensitive data (keys, nonces, intermediate values) after use
+   - MUST zeroize all sensitive data (keys, nonces, intermediate values) after use
    - SHOULD use memory protection mechanisms (e.g., mlock) for sensitive data
    - MUST implement proper error handling that doesn't leak state information
    - SHOULD use explicit state machines for protocol flow
@@ -1445,7 +1455,7 @@ The protocol ensures:
 ### 3. Token Linking Attack
 **Scenario**: An issuer attempts to link transactions by analyzing patterns in nullifiers, amounts, or timing.
 
-**Prevention**: Nullifiers are cryptographically random and unlinkable. However, implementations SHOULD add random delays and amount obfuscation where possible.
+**Prevention**: Nullifiers are cryptographically random and unlinkable. However, implementations MAY add random delays and amount obfuscation where possible.
 
 ## Protocol Composition and State Management
 
@@ -1496,7 +1506,9 @@ TODO
 
 # Implementation Status
 
-This section records the status of known implementations of the protocol defined by this specification at the time of posting of this Internet-Draft, and is based on a proposal described in RFC 7942.
+This section records the status of known implementations of the protocol
+defined by this specification at the time of posting of this Internet-Draft,
+and is based on a proposal described in RFC 7942.
 
 ## anonymous-credit-tokens
 
@@ -1514,8 +1526,43 @@ Contact: sgschlesinger@gmail.com
 
 URL: https://github.com/SamuelSchlesinger/anonymous-credit-tokens
 
+# Terminology Glossary
+
+This glossary provides quick definitions of key terms used throughout this document:
+
+**ACT (Anonymous Credit Tokens)**: The privacy-preserving authentication protocol specified in this document.
+
+**Blind Signature**: A cryptographic signature where the signer signs a message without seeing its content.
+
+**Change Token**: A new token issued for the remaining balance after a partial spend.
+
+**Credit**: A numerical unit of authorization that can be spent by clients.
+
+**Domain Separator**: A unique string used to ensure cryptographic isolation between different deployments.
+
+**Element**: A point in the Ristretto255 elliptic curve group.
+
+**Issuer**: The entity that creates and signs credit tokens.
+
+**Nullifier**: A unique value revealed during spending that prevents double-spending of the same token.
+
+**Partial Spending**: The ability to spend less than the full value of a token and receive change.
+
+**Scalar**: An integer modulo the group order q, used in cryptographic operations.
+
+**Sigma Protocol**: An interactive zero-knowledge proof protocol following a commit-challenge-response pattern.
+
+**Token**: A cryptographic credential containing a BBS signature and associated data (A, e, k, r, c).
+
+**Unlinkability**: The property that transactions cannot be correlated with each other or with token issuance.
+
 # Acknowledgments
 
-The authors would like to thank the Crypto Forum Research Group for their valuable feedback and suggestions. Special thanks to the contributors who provided implementation guidance and security analysis.
+The authors would like to thank the Crypto Forum Research Group for their
+valuable feedback and suggestions. Special thanks to the contributors who
+provided implementation guidance and security analysis.
 
-This work builds upon the foundational research in anonymous credentials and zero-knowledge proofs by numerous researchers in the cryptographic community, particularly the work on BBS signatures by Boneh, Boyen, and Shacham, and keyed-verification anonymous credentials by Chase, Meiklejohn, and Zaverucha.
+This work builds upon the foundational research in anonymous credentials and
+zero-knowledge proofs by numerous researchers in the cryptographic community,
+particularly the work on BBS signatures by Boneh, Boyen, and Shacham, and
+keyed-verification anonymous credentials by Chase, Meiklejohn, and Zaverucha.

@@ -42,10 +42,7 @@ normative:
   RFC8174:
   RFC8949:
   RFC9380:
-  RISTRETTO:
-    title: "The Ristretto Group"
-    target: https://ristretto.group/
-    date: false
+  RFC9496:
   BLAKE3:
     title: "BLAKE3: One Function, Fast Everywhere"
     target: https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf
@@ -77,8 +74,8 @@ informative:
 This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
 authentication protocol that enables numerical credit systems without tracking
 individual clients. Based on keyed-verification anonymous credentials and
-BBS-style signatures, the protocol allows issuers to grant credits that clients
-can later spend anonymously.
+privately verifiable BBS-style signatures, the protocol allows issuers to grant
+credits that clients can later spend anonymously.
 
 The protocol's key features include: (1) unlinkable transactions - the issuer
 cannot correlate credit issuance with spending or link multiple transactions by
@@ -89,8 +86,7 @@ only once.
 
 Anonymous Credit Tokens are designed for modern web services requiring rate
 limiting, usage-based billing, or resource allocation while respecting user
-privacy. Example applications include API credit systems, privacy-preserving
-micropayments, and anonymous ticketing systems.
+privacy. Example applications include rate limiting and API credits.
 
 This document is a product of the Crypto Forum Research Group (CFRG) in the
 IRTF.
@@ -107,11 +103,11 @@ identities and creating detailed logs of client behavior, raising significant
 privacy concerns in an era of increasing data protection awareness and
 regulation.
 
-Anonymous Credit Tokens (ACT) resolve this tension by providing a
+Anonymous Credit Tokens (ACT) helps to resolve this tension by providing a
 cryptographic protocol that enables credit-based systems without client
 tracking. Built on keyed-verification anonymous credentials {{KVAC}} and
-BBS-style signatures {{BBS}}, the protocol allows services to issue,
-track, and spend credits while maintaining complete client anonymity.
+privately verifiable BBS-style signatures {{BBS}}, the protocol allows services
+to issue, track, and spend credits while maintaining client privacy.
 
 ## Key Properties
 
@@ -123,7 +119,7 @@ privacy-preserving credit systems:
    information-theoretic, not merely computational.
 
 2. **Partial Spending**: Clients can spend any amount up to their balance and
-   receive anonymous change, enabling flexible micropayment scenarios without
+   receive anonymous change, enabling flexible spending without
    revealing their total balance.
 
 3. **Double-Spend Prevention**: Cryptographic nullifiers ensure each credit
@@ -133,6 +129,10 @@ privacy-preserving credit systems:
 4. **Balance Privacy**: During spending, only the amount being spent is
    revealed, not the total balance in the token, protecting clients from
    balance-based profiling.
+
+5. **Performance**: The protocol's operations must be performant enough to
+   make it useful in modern web systems. This protocol has performance
+   characteristics which make it suitable for a large number of applications.
 
 ## Use Cases
 
@@ -149,19 +149,11 @@ Anonymous Credit Tokens can be applied to various scenarios:
   - Usage-based billing without tracking individual request patterns
   - Protection against competitive analysis through usage monitoring
 
-- **Privacy-Preserving Micropayments**: Clients can purchase credit bundles and
-  spend them over time without creating a transaction history.
-
-- **Anonymous Ticketing**: Event organizers can issue transferable tickets that
-  can be verified without tracking ownership changes.
-
-- **Resource Allocation**: Cloud services can allocate computational resources
-  using credits while preserving client privacy.
-
 ## Protocol Overview
 
 The protocol involves two parties: an issuer (typically a service provider) and
-clients (users of the service). The interaction follows three main phases:
+clients (typically users of the service). The interaction follows three main
+phases:
 
 1. **Setup**: The issuer generates a key pair and publishes the public key.
 
@@ -172,7 +164,7 @@ clients (users of the service). The interaction follows three main phases:
 3. **Spending**: To spend credits, the client reveals the nullifier and proves
    possession of a valid token with sufficient balance. The issuer verifies the
    proof, checks the nullifier hasn't been used before, and issues a new token for
-   any remaining balance.
+   any remaining balance, which remains hidden from the issuer.
 
 ## Design Goals
 
@@ -188,14 +180,15 @@ The protocol is designed with the following goals:
   for high-volume web services.
 
 - **Simplicity**: The protocol should be straightforward to implement and
-  integrate into existing systems.
+  integrate into existing systems relative to other comparable solutions.
 
 ## Relation to Existing Work
 
 This protocol builds upon several cryptographic primitives:
 
 - **BBS Signatures** {{BBS}}: The core signature scheme that enables efficient
-  proofs of possession.
+  proofs of possession. We use a variant which is privately verifiable, which
+  makes our security assumptions more conservative and our protocol more efficient.
 
 - **Sigma Protocols** {{ORRU-SIGMA}}: The zero-knowledge proof framework used
   for spending proofs.
@@ -228,26 +221,27 @@ This document uses the following notation:
 - `0x` prefix: Hexadecimal values
 
 - We use additive notation for group operations, so group elements are added
-  together like `a + b` and exponentiation of a group element by a scalar
-element is written as `a * n`, with group element `a` and scalar `n`.
+  together like `a + b` and scalar multiplication of a group element by a scalar
+  is written as `a * n`, with group element `a` and scalar `n`.
 
 ## Data Types
 
 The protocol uses the following data types:
 
 - **Scalar**: An integer modulo the group order q
-- **Element**: A point on the Ristretto curve
+- **Element**: An element of the Ristretto255 group
 - **ByteString**: A sequence of bytes
 
 ## Cryptographic Parameters
 
-The protocol uses the Ristretto group {{RISTRETTO}}, which provides a
-prime-order group abstraction over Curve25519. It would be easy to adapt this
-approach to using any other prime order group. The key parameters are:
+The protocol uses the Ristretto group {{RFC9496}}, which provides a prime-order
+group abstraction over Curve25519. It would be easy to adapt this approach to
+using any other prime order group based on the contents of this document. The
+key parameters are:
 
 - **q**: The prime order of the group (2^252 + 27742317777372353535851937790883648493)
 - **G**: The standard generator of the Ristretto group
-- **L**: The bit length for credit values (configurable, typically 128 bits)
+- **L**: The bit length for credit values
 
 # Protocol Specification
 
@@ -262,12 +256,13 @@ Parameters:
   - L: Bit length for credit values (configurable, must satisfy L <= 252)
 ~~~
 
-The generators H1, H2, and H3 MUST be generated deterministically from a
+The generators H1, H2, and H3 SHOULD be generated deterministically from a
 nothing-up-my-sleeve value to ensure they are independent of each other and of
-G. This prevents attacks where malicious parameters could compromise security,
-for instance by the discrete logarithms of `H1`, `H2`, or `H3` being known, or
-them having known relationships between each other like `H1^10 = H2`. Note that
-these generators are independent of the choice of L:
+G. They MAY be generated uniformly randomly, otherwise. This prevents attacks
+where malicious parameters could compromise security, for instance by the
+discrete logarithms of `H1`, `H2`, or `H3` being known, or them having known
+relationships between each other. Note that these generators are independent of
+the choice of L:
 
 ~~~
 GenerateParameters(domain_separator):
@@ -293,11 +288,11 @@ HashToRistretto255(seed, counter):
 
   Steps:
     1. hasher = BLAKE3.new()
-    2. hasher.update("ACT-v1:HashToRistretto255")
+    2. hasher.update(domain_separator)
     3. hasher.update(seed)
     4. hasher.update(counter.to_le_bytes(4))
     5. uniform_bytes = hasher.finalize_xof(64)
-    6. P = Ristretto255::from_uniform_bytes(uniform_bytes)
+    6. P = OneWayMap(uniform_bytes)
     7. return P
 ~~~
 
@@ -329,6 +324,10 @@ Using generic or unstructured domain separators creates security risks through
 parameter collision and MUST NOT be used. When parameters need to be updated
 (e.g., for security reasons or protocol upgrades), a new version date MUST be
 used, creating entirely new parameters.
+
+The OneWayMap function is defined in {{RFC9496}} Section 4.3.4, which provides a
+cryptographically secure mapping from uniformly random byte strings to valid
+Ristretto255 points.
 
 ## Key Generation
 
@@ -405,7 +404,7 @@ Issue(sk, request, c):
     8.     return INVALID
     9. // Create BBS signature on (c, k, r)
     10. e <- Zq
-    11. A = (G + H1 * c + K)^(1/(e + sk))  // K = H2 * k + H3 * r
+    11. A = (G + H1 * c + K) * (1/(e + sk))  // K = H2 * k + H3 * r
     12. // Generate proof of correct computation
     13. alpha <- Zq
     14. Y_A = A * alpha
@@ -659,7 +658,7 @@ IssueRefund(sk, K'):
     1. // Create new BBS signature on remaining balance
     2. e* <- Zq
     3. X_A* = G + K'
-    4. A* = X_A* ^ (1/(e* + sk))
+    4. A* = X_A* * (1/(e* + sk))
 
     5. // Generate proof of correct computation
     6. alpha <- Zq
@@ -1186,19 +1185,16 @@ implementations MAY use the following internal error codes:
 
 ## Parameter Selection
 
+Implementations MUST choose L based on their maximum credit requirements and
+performance constraints. Note that L MUST be less than 252 to fit within the
+Ristretto group order.
+
 The bit length L is configurable and determines the range of credit values (0
 to 2^L - 1). The choice of L involves several trade-offs:
 
 1. **Range**: Larger L supports higher credit values
 2. **Performance**: Proof size and verification time scale linearly with L
 3. **Security**: L must be less than the bit length of the group order (252 bits for Ristretto)
-
-Common configurations:
-
-- L = 32: Suitable for small credit systems (up to ~4 billion credits)
-- L = 64: Suitable for medium-scale systems (up to ~18 quintillion credits)
-- L = 128: Suitable for large-scale systems with effectively unlimited credit range
-- L = 256: Maximum practical value, but with doubled proof sizes compared to L = 128
 
 The implementation MUST enforce L < 252 to ensure proper scalar arithmetic
 within the group order.
@@ -1207,38 +1203,46 @@ within the group order.
 
 The protocol has the following computational complexity:
 
+**Notation for Operations:**
+- **Group Operations**: Point additions in the Ristretto255 group (e.g., P + Q)
+- **Group Exponentiations**: Scalar multiplication of group elements (e.g., P * s)
+- **Scalar Additions/Multiplications**: Arithmetic operations modulo the group order q
+
 1. **Issuance**:
-   - Client: 3 scalar multiplications + 1 hash
-   - Issuer: 1 exponentiation + 3 scalar multiplications + 1 hash
+
+| Operation | Group Operations | Group Exponentiations | Scalar Additions | Scalar Multiplications | Hashes |
+|-----------|------------------|-----------------------|------------------|------------------------|--------|
+| Client Request | 2 | 4 | 2 | 1 | 1 |
+| Issuer Response | 5 | 8 | 3 | 1 | 2 |
+| Client Credit Token Construction | 5 | 5 | 0 | 0 | 1 |
 
 2. **Spending**:
-   - Client: O(L) scalar multiplications for range proof + O(1) for sigma protocol
-   - Issuer: O(L) scalar multiplications for verification
+
+| Operation | Group Operations | Group Exponentiations | Scalar Additions | Scalar Multiplications |
+|-----------|------------------|-----------------------|------------------|------------------------|
+| Client Request | 17 + 4L | 27 + 8L | 13 + 5L | 12 + 3L |
+| Issuer Response | 16 + 4L | 24 + 5L | 4 + L | 1 |
+| Client Credit Token Construction | 3 | 5 | L | L |
+
+Note: L is the configurable bit length for credit values.
 
 3. **Storage**:
-   - Token size: 5 × 32 bytes = 160 bytes (independent of L)
-   - Spend proof size: O(L) × 32 bytes (approximately 32L bytes)
-   - Nullifier database: 32 bytes per spent token
 
-The proof size scales linearly with L:
+| Component | Size |
+|-----------|------|
+| Token size | 160 bytes (5 × 32 bytes) |
+| Spend proof size | 32 × (14 + 4L) bytes |
+| Nullifier database entry | 32 bytes per spent token |
 
-- L = 32: ~1KB spend proof
-- L = 64: ~2KB spend proof
-- L = 128: ~4KB spend proof
-- L = 256: ~8KB spend proof
+Note: Token size is independent of L.
 
-### Parameter Trade-offs
+4. **Memory Requirements** (during protocol execution):
 
-| Parameter | Value | Maximum Credit Value | Spend Proof Size | Use Case |
-|-----------|-------|---------------------|------------------|-----------|
-| L | 32 | 4,294,967,295 | ~1 KB | Small-scale systems, API rate limiting |
-| L | 64 | 1.8 × 10^19 | ~2 KB | Medium-scale systems, micropayments |
-| L | 128 | 3.4 × 10^38 | ~4 KB | Large-scale systems, general purpose |
-| L | 192 | 6.3 × 10^57 | ~6 KB | Very large values, future-proofing |
-
-Implementations SHOULD choose L based on their maximum credit requirements and
-performance constraints. Note that L MUST be less than 252 to fit within the
-Ristretto group order.
+| Operation | Peak Memory Usage |
+|-----------|------------------|
+| Token Issuance | ~1 KB |
+| Spend Proof Generation | ~8 KB (for L=128) |
+| Spend Proof Verification | ~8 KB (for L=128) |
 
 # Security Considerations
 
@@ -1302,9 +1306,9 @@ The protocol provides the following security guarantees:
 
 The security of Anonymous Credit Tokens relies on:
 
-1. **Discrete Logarithm Problem (DLP)**: Given g, h ∈ G, it is computationally infeasible to find x such that h = g^x.
+1. **Discrete Logarithm Problem (DLP)**: Given g, h ∈ G, it is computationally infeasible to find x such that h = g * x.
 
-2. **Decisional Diffie-Hellman (DDH) Assumption**: Given (g, g^a, g^b, g^c) for random a, b, c, it is computationally infeasible to determine whether c = ab or c is random.
+2. **Decisional Diffie-Hellman (DDH) Assumption**: Given (g, g * a, g * b, g * c) for random a, b, c, it is computationally infeasible to determine whether c = ab or c is random.
 
 3. **Random Oracle Model**: The BLAKE3 hash function H is modeled as a random oracle, providing:
    - Collision resistance
@@ -1349,11 +1353,12 @@ The protocol ensures:
 
 ### Critical Security Requirements
 
-1. **RNG Failures**: Weak randomness can completely break the protocol's security. 
-   
+1. **RNG Failures**: Weak randomness can completely break the protocol's security.
+
    **Attack Vector**: Predictable or repeated nonces in proofs can allow complete recovery of secret values including private keys and token contents.
-   
+
    **Mitigations**:
+
    - MUST use cryptographically secure RNGs (e.g., OS-provided entropy sources)
    - MUST reseed after fork() operations to prevent nonce reuse
    - MUST implement forward-secure RNG state management
@@ -1361,14 +1366,14 @@ The protocol ensures:
    - MUST zeroize RNG state on process termination
 
 2. **Timing Attacks**: Variable-time operations can leak information about secret values.
-   
+
    **Attack Vector**: Timing variations in scalar arithmetic or bit operations can reveal secret bit patterns, potentially exposing credit balances or allowing token forgery.
-   
+
    **Mitigations**:
+
    - MUST use constant-time scalar arithmetic libraries
-   - MUST use constant-time conditional selection for range proof bit operations
+   - MUST use constant-time conditional selection for range proof conditionals
    - MUST avoid early-exit conditions based on secret values
-   - SHOULD use blinding techniques for particularly sensitive operations
    - Critical constant-time operations include:
      * Scalar multiplication and addition
      * Binary decomposition in range proofs
@@ -1376,56 +1381,60 @@ The protocol ensures:
      * Challenge verification comparisons
 
 3. **Nullifier Database Attacks**: Corruption or manipulation of the nullifier database enables double-spending.
-   
+
    **Attack Vectors**:
+
    - Database corruption allowing nullifier deletion
    - Race conditions in concurrent nullifier checks
-   - Rollback attacks reverting nullifier storage
-   
+
    **Mitigations**:
+
    - MUST use ACID-compliant database transactions
    - MUST check nullifier uniqueness within the same transaction as insertion
    - SHOULD implement append-only audit logs for nullifier operations
-   - SHOULD use cryptographic commitments (e.g., Merkle trees) for integrity
    - MUST implement proper database backup and recovery procedures
-   - SHOULD monitor for anomalous nullifier patterns
 
 4. **Protocol Message Attacks**: Malformed or replayed messages can compromise security.
-   
+
    **Attack Vectors**:
+
    - Message replay attacks
    - Parameter substitution attacks
    - Malformed point attacks
-   
+
    **Mitigations**:
-   - MUST validate all received points (non-identity, proper encoding)
-   - MUST include session identifiers in transcripts to prevent replay
+
+   - Nullifiers and the associated proofs obviate replay attacks.
+   - MUST validate all received points
    - MUST use deterministic encoding for all protocol messages
-   - SHOULD implement message sequence numbering
    - MUST reject messages with unexpected fields or formats
 
 5. **State Management Vulnerabilities**: Improper state handling can lead to security breaches.
-   
+
    **Attack Vectors**:
+
    - State confusion between protocol sessions
    - Memory disclosure of sensitive state
    - Incomplete state cleanup
-   
+
    **Mitigations**:
+
    - MUST use separate state objects for each protocol session
-   - MUST zero all sensitive data (keys, nonces, intermediate values) after use
+   - MUST zeroize all sensitive data (keys, nonces, intermediate values) after use
    - SHOULD use memory protection mechanisms (e.g., mlock) for sensitive data
    - MUST implement proper error handling that doesn't leak state information
    - SHOULD use explicit state machines for protocol flow
 
 6. **Concurrency and Race Conditions**: Parallel operations can introduce vulnerabilities.
-   
+
    **Attack Vectors**:
+
    - TOCTOU (Time-of-check to time-of-use) vulnerabilities in nullifier checking
    - Race conditions in balance updates
    - Concurrent modification of shared state
-   
+
    **Mitigations**:
+
    - MUST use appropriate locking for all shared resources
    - MUST perform nullifier check and insertion atomically
    - SHOULD document thread-safety guarantees
@@ -1446,7 +1455,7 @@ The protocol ensures:
 ### 3. Token Linking Attack
 **Scenario**: An issuer attempts to link transactions by analyzing patterns in nullifiers, amounts, or timing.
 
-**Prevention**: Nullifiers are cryptographically random and unlinkable. However, implementations SHOULD add random delays and amount obfuscation where possible.
+**Prevention**: Nullifiers are cryptographically random and unlinkable. However, implementations MAY add random delays and amount obfuscation where possible.
 
 ## Protocol Composition and State Management
 
@@ -1463,6 +1472,7 @@ lost. Implementations SHOULD:
 ### Session Management
 
 Each protocol session (issuance or spend/refund) MUST:
+
 - Use fresh randomness
 - Complete without interruption
 - Not reuse any random values across sessions
@@ -1496,7 +1506,9 @@ TODO
 
 # Implementation Status
 
-This section records the status of known implementations of the protocol defined by this specification at the time of posting of this Internet-Draft, and is based on a proposal described in RFC 7942.
+This section records the status of known implementations of the protocol
+defined by this specification at the time of posting of this Internet-Draft,
+and is based on a proposal described in RFC 7942.
 
 ## anonymous-credit-tokens
 
@@ -1514,8 +1526,43 @@ Contact: sgschlesinger@gmail.com
 
 URL: https://github.com/SamuelSchlesinger/anonymous-credit-tokens
 
+# Terminology Glossary
+
+This glossary provides quick definitions of key terms used throughout this document:
+
+**ACT (Anonymous Credit Tokens)**: The privacy-preserving authentication protocol specified in this document.
+
+**Blind Signature**: A cryptographic signature where the signer signs a message without seeing its content.
+
+**Change Token**: A new token issued for the remaining balance after a partial spend.
+
+**Credit**: A numerical unit of authorization that can be spent by clients.
+
+**Domain Separator**: A unique string used to ensure cryptographic isolation between different deployments.
+
+**Element**: A point in the Ristretto255 elliptic curve group.
+
+**Issuer**: The entity that creates and signs credit tokens.
+
+**Nullifier**: A unique value revealed during spending that prevents double-spending of the same token.
+
+**Partial Spending**: The ability to spend less than the full value of a token and receive change.
+
+**Scalar**: An integer modulo the group order q, used in cryptographic operations.
+
+**Sigma Protocol**: An interactive zero-knowledge proof protocol following a commit-challenge-response pattern.
+
+**Token**: A cryptographic credential containing a BBS signature and associated data (A, e, k, r, c).
+
+**Unlinkability**: The property that transactions cannot be correlated with each other or with token issuance.
+
 # Acknowledgments
 
-The authors would like to thank the Crypto Forum Research Group for their valuable feedback and suggestions. Special thanks to the contributors who provided implementation guidance and security analysis.
+The authors would like to thank the Crypto Forum Research Group for their
+valuable feedback and suggestions. Special thanks to the contributors who
+provided implementation guidance and security analysis.
 
-This work builds upon the foundational research in anonymous credentials and zero-knowledge proofs by numerous researchers in the cryptographic community, particularly the work on BBS signatures by Boneh, Boyen, and Shacham, and keyed-verification anonymous credentials by Chase, Meiklejohn, and Zaverucha.
+This work builds upon the foundational research in anonymous credentials and
+zero-knowledge proofs by numerous researchers in the cryptographic community,
+particularly the work on BBS signatures by Boneh, Boyen, and Shacham, and
+keyed-verification anonymous credentials by Chase, Meiklejohn, and Zaverucha.
