@@ -402,7 +402,7 @@ Issue(sk, request, c):
     8.     return INVALID
     9. // Create BBS signature on (c, k, r)
     10. e <- Zq
-    11. A = (G + H1 * c + K)^(1/(e + sk))  // K = H2 * k + H3 * r
+    11. A = (G + H1 * c + K) * (1/(e + sk))  // K = H2 * k + H3 * r
     12. // Generate proof of correct computation
     13. alpha <- Zq
     14. Y_A = A * alpha
@@ -656,7 +656,7 @@ IssueRefund(sk, K'):
     1. // Create new BBS signature on remaining balance
     2. e* <- Zq
     3. X_A* = G + K'
-    4. A* = X_A* ^ (1/(e* + sk))
+    4. A* = X_A* * (1/(e* + sk))
 
     5. // Generate proof of correct computation
     6. alpha <- Zq
@@ -1291,9 +1291,9 @@ The protocol provides the following security guarantees:
 
 The security of Anonymous Credit Tokens relies on:
 
-1. **Discrete Logarithm Problem (DLP)**: Given g, h ∈ G, it is computationally infeasible to find x such that h = g^x.
+1. **Discrete Logarithm Problem (DLP)**: Given g, h ∈ G, it is computationally infeasible to find x such that h = g * x.
 
-2. **Decisional Diffie-Hellman (DDH) Assumption**: Given (g, g^a, g^b, g^c) for random a, b, c, it is computationally infeasible to determine whether c = ab or c is random.
+2. **Decisional Diffie-Hellman (DDH) Assumption**: Given (g, g * a, g * b, g * c) for random a, b, c, it is computationally infeasible to determine whether c = ab or c is random.
 
 3. **Random Oracle Model**: The BLAKE3 hash function H is modeled as a random oracle, providing:
    - Collision resistance
