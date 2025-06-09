@@ -1444,7 +1444,7 @@ The protocol ensures:
 ### 2. Balance Inflation Attack
 **Scenario**: An attacker attempts to create a proof claiming to have more credits than actually issued by manipulating the range proof.
 
-**Prevention**: The cryptographic soundness of the range proof prevents this attack. Implementations MUST correctly validate all L bits of the range proof.
+**Prevention**: The cryptographic soundness of the range proof prevents this attack.
 
 ### 3. Token Linking Attack
 **Scenario**: An issuer attempts to link transactions by analyzing patterns in nullifiers, amounts, or timing.
@@ -1453,13 +1453,13 @@ The protocol ensures:
 
 ## Protocol Composition and State Management
 
-### Atomicity Requirements
+### State Management Requirements
 
-Before they make a spend request or an issue request, the client MUST store their
-private state (the nullifier, the blinding factor, and the new balance)
+Before they make a spend request or an issue request, the client MUST store
+their private state (the nullifier, the blinding factor, and the new balance)
 durably.
 
-In a deployment, the spend and refund operations MUST be treated as an atomic
+For the issuer, the spend and refund operations MUST be treated as an atomic
 transaction. However, even more is required. If a nullifier associated with a
 given spend is persisted to the database, clients MUST be able to access the
 associated refund. If they cannot access this, then they can lose access to the
@@ -1477,7 +1477,6 @@ constrained this could be useful.
 Each protocol session (issuance or spend/refund) MUST:
 
 - Use fresh randomness
-- Complete without interruption
 - Not reuse any random values across sessions
 
 ### Version Negotiation
