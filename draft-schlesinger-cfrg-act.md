@@ -1176,11 +1176,8 @@ While detailed error messages should not be exposed to untrusted parties,
 implementations MAY use the following internal error codes:
 
 - `INVALID_PROOF`: Proof verification failed
-- `INSUFFICIENT_BALANCE`: Attempting to spend more than available credits
 - `NULLIFIER_REUSE`: Double-spend attempt detected
 - `MALFORMED_REQUEST`: Request format is invalid
-- `INVALID_SIGNATURE`: BBS signature verification failed
-- `RANGE_PROOF_FAILED`: Range proof verification failed
 - `INVALID_AMOUNT`: Credit amount exceeds maximum (2^L - 1)
 
 ## Parameter Selection
