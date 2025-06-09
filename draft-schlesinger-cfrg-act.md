@@ -1203,21 +1203,31 @@ The protocol has the following computational complexity:
 
 1. **Issuance**:
 
-   - Client Request: 2 Group Operations, 4 Group Exponentiations, 2 Scalar Additions, 1 Scalar Multiplication, 1 Hash
-   - Issuer Response: 5 Group Operations, 8 Group Exponetiations, 3 Scalar Additions, 1 Scalar Multiplication, 2 Hashes
-   - Client Credit Token Construction: 5 Group Operations, 5 Group Exponentiations, 1 Hash
+| Operation | Group Operations | Group Exponentiations | Scalar Additions | Scalar Multiplications | Hashes |
+|-----------|------------------|-----------------------|------------------|------------------------|--------|
+| Client Request | 2 | 4 | 2 | 1 | 1 |
+| Issuer Response | 5 | 8 | 3 | 1 | 2 |
+| Client Credit Token Construction | 5 | 5 | 0 | 0 | 1 |
 
 2. **Spending**:
 
-   - Client Request: 17 + 4 * L Group Operations, 27 + 8 * L Group Exponentiations, 13 + 5 * L Scalar Additions, 12 + L * 3 Scalar Multiplications
-   - Issuer Response: 16 + 4 * L Group Operations, 24 + 5 * L Group Exponentiations, 4 + L Scalar Additions, 1 Scalar Multiplication
-   - Client Credit Token Construction: 3 Group Operations, 5 Group Exponentiations, L Scalar Additions, L Scalar Multiplications
+| Operation | Group Operations | Group Exponentiations | Scalar Additions | Scalar Multiplications |
+|-----------|------------------|-----------------------|------------------|------------------------|
+| Client Request | 17 + 4L | 27 + 8L | 13 + 5L | 12 + 3L |
+| Issuer Response | 16 + 4L | 24 + 5L | 4 + L | 1 |
+| Client Credit Token Construction | 3 | 5 | L | L |
+
+Note: L is the configurable bit length for credit values.
 
 3. **Storage**:
 
-   - Token size: 5 × 32 bytes = 160 bytes (independent of L)
-   - Spend proof size: 32 * (14 + 4 * L)
-   - Nullifier database: 32 bytes per spent token
+| Component | Size |
+|-----------|------|
+| Token size | 160 bytes (5 × 32 bytes) |
+| Spend proof size | 32 × (14 + 4L) bytes |
+| Nullifier database entry | 32 bytes per spent token |
+
+Note: Token size is independent of L.
 
 # Security Considerations
 

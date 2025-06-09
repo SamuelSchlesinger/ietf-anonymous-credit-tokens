@@ -2952,47 +2952,117 @@ within the group order.<a href="#section-5.6-4" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-5.6.1-2">
 <li id="section-5.6.1-2.1">
               <p id="section-5.6.1-2.1.1"><strong>Issuance</strong>:<a href="#section-5.6.1-2.1.1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-5.6.1-2.1.2.1">
-                  <p id="section-5.6.1-2.1.2.1.1">Client Request: 2 Group Operations, 4 Group Exponentiations, 2 Scalar Additions, 1 Scalar Multiplication, 1 Hash<a href="#section-5.6.1-2.1.2.1.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-5.6.1-2.1.2.2">
-                  <p id="section-5.6.1-2.1.2.2.1">Issuer Response: 5 Group Operations, 8 Group Exponetiations, 3 Scalar Additions, 1 Scalar Multiplication, 2 Hashes<a href="#section-5.6.1-2.1.2.2.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-5.6.1-2.1.2.3">
-                  <p id="section-5.6.1-2.1.2.3.1">Client Credit Token Construction: 5 Group Operations, 5 Group Exponentiations, 1 Hash<a href="#section-5.6.1-2.1.2.3.1" class="pilcrow">¶</a></p>
-</li>
-              </ul>
-</li>
-            <li id="section-5.6.1-2.2">
-              <p id="section-5.6.1-2.2.1"><strong>Spending</strong>:<a href="#section-5.6.1-2.2.1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-5.6.1-2.2.2.1">
-                  <p id="section-5.6.1-2.2.2.1.1">Client Request: 17 + 4 * L Group Operations, 27 + 8 * L Group Exponentiations, 13 + 5 * L Scalar Additions, 12 + L * 3 Scalar Multiplications<a href="#section-5.6.1-2.2.2.1.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-5.6.1-2.2.2.2">
-                  <p id="section-5.6.1-2.2.2.2.1">Issuer Response: 16 + 4 * L Group Operations, 24 + 5 * L Group Exponentiations, 4 + L Scalar Additions, 1 Scalar Multiplication<a href="#section-5.6.1-2.2.2.2.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-5.6.1-2.2.2.3">
-                  <p id="section-5.6.1-2.2.2.3.1">Client Credit Token Construction: 3 Group Operations, 5 Group Exponentiations, L Scalar Additions, L Scalar Multiplications<a href="#section-5.6.1-2.2.2.3.1" class="pilcrow">¶</a></p>
-</li>
-              </ul>
-</li>
-            <li id="section-5.6.1-2.3">
-              <p id="section-5.6.1-2.3.1"><strong>Storage</strong>:<a href="#section-5.6.1-2.3.1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-5.6.1-2.3.2.1">
-                  <p id="section-5.6.1-2.3.2.1.1">Token size: 5 × 32 bytes = 160 bytes (independent of L)<a href="#section-5.6.1-2.3.2.1.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-5.6.1-2.3.2.2">
-                  <p id="section-5.6.1-2.3.2.2.1">Spend proof size: 32 * (14 + 4 * L)<a href="#section-5.6.1-2.3.2.2.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-5.6.1-2.3.2.3">
-                  <p id="section-5.6.1-2.3.2.3.1">Nullifier database: 32 bytes per spent token<a href="#section-5.6.1-2.3.2.3.1" class="pilcrow">¶</a></p>
-</li>
-              </ul>
 </li>
           </ol>
+<table class="center" id="table-1">
+            <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Operation</th>
+                <th class="text-left" rowspan="1" colspan="1">Group Operations</th>
+                <th class="text-left" rowspan="1" colspan="1">Group Exponentiations</th>
+                <th class="text-left" rowspan="1" colspan="1">Scalar Additions</th>
+                <th class="text-left" rowspan="1" colspan="1">Scalar Multiplications</th>
+                <th class="text-left" rowspan="1" colspan="1">Hashes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Client Request</td>
+                <td class="text-left" rowspan="1" colspan="1">2</td>
+                <td class="text-left" rowspan="1" colspan="1">4</td>
+                <td class="text-left" rowspan="1" colspan="1">2</td>
+                <td class="text-left" rowspan="1" colspan="1">1</td>
+                <td class="text-left" rowspan="1" colspan="1">1</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Issuer Response</td>
+                <td class="text-left" rowspan="1" colspan="1">5</td>
+                <td class="text-left" rowspan="1" colspan="1">8</td>
+                <td class="text-left" rowspan="1" colspan="1">3</td>
+                <td class="text-left" rowspan="1" colspan="1">1</td>
+                <td class="text-left" rowspan="1" colspan="1">2</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Client Credit Token Construction</td>
+                <td class="text-left" rowspan="1" colspan="1">5</td>
+                <td class="text-left" rowspan="1" colspan="1">5</td>
+                <td class="text-left" rowspan="1" colspan="1">0</td>
+                <td class="text-left" rowspan="1" colspan="1">0</td>
+                <td class="text-left" rowspan="1" colspan="1">1</td>
+              </tr>
+            </tbody>
+          </table>
+<ol start="1" type="1" class="normal type-1" id="section-5.6.1-4">
+<li id="section-5.6.1-4.1">
+              <p id="section-5.6.1-4.1.1"><strong>Spending</strong>:<a href="#section-5.6.1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+<table class="center" id="table-2">
+            <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Operation</th>
+                <th class="text-left" rowspan="1" colspan="1">Group Operations</th>
+                <th class="text-left" rowspan="1" colspan="1">Group Exponentiations</th>
+                <th class="text-left" rowspan="1" colspan="1">Scalar Additions</th>
+                <th class="text-left" rowspan="1" colspan="1">Scalar Multiplications</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Client Request</td>
+                <td class="text-left" rowspan="1" colspan="1">17 + 4L</td>
+                <td class="text-left" rowspan="1" colspan="1">27 + 8L</td>
+                <td class="text-left" rowspan="1" colspan="1">13 + 5L</td>
+                <td class="text-left" rowspan="1" colspan="1">12 + 3L</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Issuer Response</td>
+                <td class="text-left" rowspan="1" colspan="1">16 + 4L</td>
+                <td class="text-left" rowspan="1" colspan="1">24 + 5L</td>
+                <td class="text-left" rowspan="1" colspan="1">4 + L</td>
+                <td class="text-left" rowspan="1" colspan="1">1</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Client Credit Token Construction</td>
+                <td class="text-left" rowspan="1" colspan="1">3</td>
+                <td class="text-left" rowspan="1" colspan="1">5</td>
+                <td class="text-left" rowspan="1" colspan="1">L</td>
+                <td class="text-left" rowspan="1" colspan="1">L</td>
+              </tr>
+            </tbody>
+          </table>
+<p id="section-5.6.1-6">Note: L is the configurable bit length for credit values.<a href="#section-5.6.1-6" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-5.6.1-7">
+<li id="section-5.6.1-7.1">
+              <p id="section-5.6.1-7.1.1"><strong>Storage</strong>:<a href="#section-5.6.1-7.1.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+<table class="center" id="table-3">
+            <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">Component</th>
+                <th class="text-left" rowspan="1" colspan="1">Size</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Token size</td>
+                <td class="text-left" rowspan="1" colspan="1">160 bytes (5 × 32 bytes)</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Spend proof size</td>
+                <td class="text-left" rowspan="1" colspan="1">32 × (14 + 4L) bytes</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">Nullifier database entry</td>
+                <td class="text-left" rowspan="1" colspan="1">32 bytes per spent token</td>
+              </tr>
+            </tbody>
+          </table>
+<p id="section-5.6.1-9">Note: Token size is independent of L.<a href="#section-5.6.1-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
