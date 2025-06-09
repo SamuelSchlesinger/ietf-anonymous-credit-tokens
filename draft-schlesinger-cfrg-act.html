@@ -1893,7 +1893,7 @@ Issue(sk, request, c):
     8.     return INVALID
     9. // Create BBS signature on (c, k, r)
     10. e &lt;- Zq
-    11. A = (G + H1 * c + K)^(1/(e + sk))  // K = H2 * k + H3 * r
+    11. A = (G + H1 * c + K) * (1/(e + sk))  // K = H2 * k + H3 * r
     12. // Generate proof of correct computation
     13. alpha &lt;- Zq
     14. Y_A = A * alpha
@@ -2174,7 +2174,7 @@ IssueRefund(sk, K'):
     1. // Create new BBS signature on remaining balance
     2. e* &lt;- Zq
     3. X_A* = G + K'
-    4. A* = X_A* ^ (1/(e* + sk))
+    4. A* = X_A* * (1/(e* + sk))
 
     5. // Generate proof of correct computation
     6. alpha &lt;- Zq
@@ -3203,10 +3203,10 @@ No other information about c, r, or the token is revealed.<a href="#section-6.1.
 <p id="section-6.2-1">The security of Anonymous Credit Tokens relies on:<a href="#section-6.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.2-2">
 <li id="section-6.2-2.1">
-            <p id="section-6.2-2.1.1"><strong>Discrete Logarithm Problem (DLP)</strong>: Given g, h ∈ G, it is computationally infeasible to find x such that h = g^x.<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.2-2.1.1"><strong>Discrete Logarithm Problem (DLP)</strong>: Given g, h ∈ G, it is computationally infeasible to find x such that h = g * x.<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.2-2.2">
-            <p id="section-6.2-2.2.1"><strong>Decisional Diffie-Hellman (DDH) Assumption</strong>: Given (g, g^a, g^b, g^c) for random a, b, c, it is computationally infeasible to determine whether c = ab or c is random.<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-6.2-2.2.1"><strong>Decisional Diffie-Hellman (DDH) Assumption</strong>: Given (g, g * a, g * b, g * c) for random a, b, c, it is computationally infeasible to determine whether c = ab or c is random.<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.2-2.3">
             <p id="section-6.2-2.3.1"><strong>Random Oracle Model</strong>: The BLAKE3 hash function H is modeled as a random oracle, providing:<a href="#section-6.2-2.3.1" class="pilcrow">¶</a></p>
