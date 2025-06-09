@@ -75,10 +75,10 @@ This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
 authentication protocol that enables numerical credit systems without tracking
 individual clients. Based on keyed-verification anonymous credentials and
 privately verifiable BBS-style signatures, the protocol allows issuers to grant
-credits that clients can later spend anonymously.
+tokens containing credits that clients can later spend anonymously with that issuer.
 
 The protocol's key features include: (1) unlinkable transactions - the issuer
-cannot correlate credit issuance with spending or link multiple transactions by
+cannot correlate credit issuance with spending, or link multiple spends by
 the same client, (2) partial spending - clients can spend a portion of their
 credits and receive anonymous change, and (3) double-spend prevention through
 cryptographic nullifiers that preserve privacy while ensuring each token is used
@@ -118,19 +118,18 @@ privacy-preserving credit systems:
    or connect multiple transactions by the same client. This property is
    information-theoretic, not merely computational.
 
-2. **Partial Spending**: Clients can spend any amount up to their balance and
-   receive anonymous change, enabling flexible spending without
-   revealing their total balance.
+2. **Partial Spending**: Clients can spend any amount up to their balance 
+   and receive anonymous change without revealing their previous or current
+   balance, enabling flexible spending.
 
-3. **Double-Spend Prevention**: Cryptographic nullifiers ensure each credit
-   is spent only once, without revealing which token is being spent or
-   linking it to issuance.
+3. **Double-Spend Prevention**: Cryptographic nullifiers ensure each token
+   is used only once, without linking it to issuance.
 
 4. **Balance Privacy**: During spending, only the amount being spent is
    revealed, not the total balance in the token, protecting clients from
    balance-based profiling.
 
-5. **Performance**: The protocol's operations must be performant enough to
+5. **Performance**: The protocol's operations are performant enough to
    make it useful in modern web systems. This protocol has performance
    characteristics which make it suitable for a large number of applications.
 
@@ -161,10 +160,10 @@ phases:
    a blind signature on the credit value and a client-chosen nullifier,
    producing a credit token.
 
-3. **Spending**: To spend credits, the client reveals the nullifier and proves
-   possession of a valid token with sufficient balance. The issuer verifies the
-   proof, checks the nullifier hasn't been used before, and issues a new token for
-   any remaining balance, which remains hidden from the issuer.
+3. **Spending**: To spend credits, the client reveals a nullifier and proves
+   possession of a valid token associated with that nullifier having sufficient 
+   balance. The issuer verifies the proof, checks the nullifier hasn't been used        before, and issues a new token (which remains hidden from the issuer) for any   
+   remaining balance.
 
 ## Design Goals
 
@@ -187,7 +186,7 @@ The protocol is designed with the following goals:
 This protocol builds upon several cryptographic primitives:
 
 - **BBS Signatures** {{BBS}}: The core signature scheme that enables efficient
-  proofs of possession. We use a variant which is privately verifiable, which
+  proofs of possession. We use a variant that is privately verifiable, which
   makes our security assumptions more conservative and our protocol more efficient.
 
 - **Sigma Protocols** {{ORRU-SIGMA}}: The zero-knowledge proof framework used
@@ -210,7 +209,7 @@ This document uses the following notation:
 
 - `||`: Concatenation of byte strings
 
-- `x <- S`: Sampling x uniformly at random from the set S
+- `x <- S`: Sampling x uniformly from the set S
 
 - `x := y`: Assignment of the value y to the variable x
 
