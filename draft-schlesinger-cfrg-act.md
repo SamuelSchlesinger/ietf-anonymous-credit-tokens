@@ -1455,13 +1455,22 @@ The protocol ensures:
 
 ### Atomicity Requirements
 
-The spend and refund operations MUST be treated as an atomic transaction. If
-the refund fails after a spend proof is accepted, credits could be permanently
-lost. Implementations SHOULD:
+Before they make a spend request or an issue request, the client MUST store their
+private state (the nullifier, the blinding factor, and the new balance)
+durably.
 
-1. Use two-phase commit or similar mechanisms
-2. Implement rollback capabilities for failed refunds
-3. Log all state transitions for recovery
+In a deployment, the spend and refund operations MUST be treated as an atomic
+transaction. However, even more is required. If a nullifier associated with a
+given spend is persisted to the database, clients MUST be able to access the
+associated refund. If they cannot access this, then they can lose access to the
+rest of their credits. For performance reasons, an issuer SHOULD automatically
+clean these up after some expiry, but if they do so, they MUST inform the
+client of this policy so the client can ensure they can retry to retrieve the
+rest of their credits in time. Issuers MAY implement functionality to notify
+the issuer that the refund request was processed, so they can delete the refund
+record. It is not clear that this is worth the cost relative to just cleaning
+them up in bulk at some specified expiration date, however if you are memory
+constrained this could be useful.
 
 ### Session Management
 
@@ -1528,7 +1537,7 @@ This glossary provides quick definitions of key terms used throughout this docum
 
 **Blind Signature**: A cryptographic signature where the signer signs a message without seeing its content.
 
-**Change Token**: A new token issued for the remaining balance after a partial spend.
+**Refund**: The refund issued for the remaining balance after a partial spend.
 
 **Credit**: A numerical unit of authorization that can be spent by clients.
 
