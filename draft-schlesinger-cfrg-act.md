@@ -1261,9 +1261,6 @@ Note: The issuer must be trusted not to:
 - Refuse valid spend proofs
 - Manipulate the nullifier database
 
-The protocol does not protect against a malicious issuer, only ensures privacy
-from an honest-but-curious issuer.
-
 ### Security Properties
 
 The protocol provides the following security guarantees:
