@@ -255,13 +255,9 @@ Parameters:
   - L: Bit length for credit values (configurable, must satisfy L <= 252)
 ~~~
 
-The generators H1, H2, and H3 SHOULD be generated deterministically from a
+The generators H1, H2, and H3 MUST be generated deterministically from a
 nothing-up-my-sleeve value to ensure they are independent of each other and of
-G. They MAY be generated uniformly randomly, otherwise. This prevents attacks
-where malicious parameters could compromise security, for instance by the
-discrete logarithms of `H1`, `H2`, or `H3` being known, or them having known
-relationships between each other. Note that these generators are independent of
-the choice of L:
+G. This prevents attacks whereby malicious parameters could compromise security. Note that these generators are independent of the choice of L.
 
 ~~~
 GenerateParameters(domain_separator):
@@ -295,7 +291,7 @@ HashToRistretto255(seed, counter):
     7. return P
 ~~~
 
-The domain\_separator MUST be unique for each deployment to ensure
+The domain_separator MUST be unique for each deployment to ensure
 cryptographic isolation between different services. The domain separator SHOULD
 follow this structured format:
 
@@ -337,7 +333,7 @@ KeyGen():
   Input: None
   Output:
     - sk: Private key (Scalar)
-    - pk: Public key (Element)
+    - pk: Public key (Group Element)
 
   Steps:
     1. x <- Zq
@@ -355,9 +351,7 @@ issuer:
 ### Client: Issuance Request
 
 ~~~
-IssueRequest(pk):
-  Input:
-    - pk: Issuer's public key
+IssueRequest():
   Output:
     - request: Issuance request
     - state: Client state for later verification
@@ -388,7 +382,7 @@ Issue(sk, request, c):
   Input:
     - sk: Issuer's private key
     - request: Client's issuance request
-    - c: Credit amount to issue
+    - c: Credit amount to issue (c > 0)
   Output:
     - response: Issuance response or INVALID
 
@@ -462,7 +456,7 @@ VerifyIssuance(pk, request, response, state):
 ## Token Spending
 
 The spending protocol allows a client to spend s credits from a token
-containing c credits (where s <= c):
+containing c credits (where 0 < s <= c):
 
 ### Client: Spend Proof Generation
 
@@ -470,7 +464,7 @@ containing c credits (where s <= c):
 ProveSpend(token, s):
   Input:
     - token: Credit token (A, e, k, r, c)
-    - s: Amount to spend (0 <= s <= c)
+    - s: Amount to spend (0 < s <= c)
   Output:
     - proof: Spend proof
     - state: Client state for receiving change
@@ -1248,56 +1242,20 @@ Note: Token size is independent of L.
 
 We consider a setting with:
 
-- A single trusted issuer (multiple issuers can operate independently)
-- Potentially malicious clients who may attempt to forge tokens or double-spend
-- An adversary who can observe all network communications
-- Clients who desire privacy from the issuer regarding their spending patterns
-
-Note: The issuer must be trusted not to:
-
-- Issue tokens without proper authorization
-- Create tokens for themselves without limit
-- Refuse valid spend proofs
-- Manipulate the nullifier database
+- Multiple issuers who can operate independently, though malicious issuers may collude with each other
+- Potentially malicious clients who may attempt to spend more credits than they should (whether by forging tokens, spending more credits than a token has, or double-spending a token)
 
 ### Security Properties
 
 The protocol provides the following security guarantees:
 
-1. **Unforgeability**: No probabilistic polynomial-time (PPT) adversary can
-   create a valid credit token without the issuer's cooperation. Formally, for
-   any PPT adversary A:
+1. **Unforgeability**: For an honest isser I, no probabilistic polynomial-time (PPT) adversary controlling a set of malicious clients and other malicious issuers can spend more tokens than have been issued by I.
 
-   ```
-   Pr[A(pk, params) -> valid_token] ≤ negl(λ)
-   ```
-
-   where λ is the security parameter.
-
-2. **Unlinkability**: The issuer cannot link:
-   - A spending transaction to the original issuance
-   - Multiple spending transactions by the same client
-   - This property is information theoretic in nature.
-
-3. **Balance Security**: No PPT adversary can spend more credits than issued. Specifically:
-   - Credits cannot be created from nothing
-   - The sum of spent credits cannot exceed issued credits
-   - Each token can only be fully spent once (via nullifier checking)
-
-4. **Zero-Knowledge**: The spending proof reveals only:
-   - The nullifier k
-   - The amount being spent s
-   - That the client possesses sufficient balance (c ≥ s)
-
-   No other information about c, r, or the token is revealed.
-
-5. **Nullifier Binding**: The nullifier k is cryptographically bound to the token through the BBS signature. An adversary cannot:
-   - Use a nullifier from one token with a different token
-   - Modify the nullifier without invalidating the signature
+2. **Anonymity/Unlinkability**: For an honest client C, no adversary controlling a set of malicious issuers and other malicious clients can link a token issuance/refund to C with a token spend by C. This property is information-theoretic in nature.
 
 ## Cryptographic Assumptions
 
-The security of Anonymous Credit Tokens relies on:
+Security relies on:
 
 1. **Discrete Logarithm Problem (DLP)**: Given g, h ∈ G, it is computationally infeasible to find x such that h = g * x.
 
