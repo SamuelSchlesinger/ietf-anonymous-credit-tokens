@@ -66,7 +66,10 @@ informative:
     title: "Keyed-Verification Anonymous Credentials"
     target: https://eprint.iacr.org/2013/516.pdf
     date: 2014
-
+  TZ23:
+    title: "Revisiting BBS Signatures"
+    target: https://eprint.iacr.org/2023/275
+    date: 2023
 ...
 
 --- abstract
@@ -187,7 +190,7 @@ This protocol builds upon several cryptographic primitives:
 
 - **BBS Signatures** {{BBS}}: The core signature scheme that enables efficient
   proofs of possession. We use a variant that is privately verifiable, which
-  makes our security assumptions more conservative and our protocol more efficient.
+  avoids the need for pairings and makes our protocol more efficient.
 
 - **Sigma Protocols** {{ORRU-SIGMA}}: The zero-knowledge proof framework used
   for spending proofs.
@@ -1249,7 +1252,7 @@ We consider a setting with:
 
 The protocol provides the following security guarantees:
 
-1. **Unforgeability**: For an honest isser I, no probabilistic polynomial-time (PPT) adversary controlling a set of malicious clients and other malicious issuers can spend more tokens than have been issued by I.
+1. **Unforgeability**: For an honest isser I, no probabilistic polynomial-time (PPT) adversary controlling a set of malicious clients and other malicious issuers can spend more credits than have been issued by I.
 
 2. **Anonymity/Unlinkability**: For an honest client C, no adversary controlling a set of malicious issuers and other malicious clients can link a token issuance/refund to C with a token spend by C. This property is information-theoretic in nature.
 
@@ -1257,34 +1260,15 @@ The protocol provides the following security guarantees:
 
 Security relies on:
 
-1. **Discrete Logarithm Problem (DLP)**: Given g, h ∈ G, it is computationally infeasible to find x such that h = g * x.
+1. **The q-SDH Assumption** in the Ristretto255 group. We refer to {TZ23} for the formal definition.
 
-2. **Decisional Diffie-Hellman (DDH) Assumption**: Given (g, g * a, g * b, g * c) for random a, b, c, it is computationally infeasible to determine whether c = ab or c is random.
-
-3. **Random Oracle Model**: The BLAKE3 hash function H is modeled as a random oracle, providing:
-   - Collision resistance
-   - Pre-image resistance
-   - Unpredictability
-
-4. **Sigma Protocol Security**: The underlying sigma protocols satisfy {{ORRU-SIGMA}}:
-   - Completeness: Honest proofs always verify
-   - Special soundness: From two accepting transcripts with the same commitment but different challenges, one can extract the witness
-   - Honest-verifier zero-knowledge: The proof reveals nothing beyond the validity of the statement
-
-5. **Fiat-Shamir Security**: The non-interactive proofs are secure in the random oracle model {{ORRU-FS}}:
-   - The transcript includes all public values to prevent malleability
-   - Domain separation prevents cross-protocol attacks; deployments MUST use unique domain separators to prevent parameter collision attacks between different services
-   - Length-prefixing prevents ambiguity in parsing
+2. **Random Oracle Model**: The BLAKE3 hash function H is modeled as a random oracle.
 
 ## Privacy Properties
 
 The protocol provides the following privacy guarantees:
 
-1. **Unlinkability**: The issuer cannot link a token to its issuance request or
-   link multiple spends by the same client.
-
-2. **Balance Privacy**: The amount of credits in a token is not revealed during
-   spending (only that it's sufficient for the transaction).
+1. **Unlinkability**: The issuer cannot link a token issuance/refund to a later spend of that token.
 
 However, the protocol does NOT provide:
 
@@ -1296,9 +1280,7 @@ However, the protocol does NOT provide:
 
 The protocol ensures:
 
-1. **Unforgeability**: Clients cannot create valid tokens without the issuer's cooperation.
-2. **Non-Transferability**: While tokens can be shared, this requires sharing the entire token state.
-3. **Double-Spend Prevention**: Each token can only be fully spent once due to nullifier checking.
+1. **Unforgeability**: Clients cannot spend more credits than they have been issued by the issuer.
 
 ## Implementation Vulnerabilities and Mitigations
 
@@ -1345,20 +1327,16 @@ The protocol ensures:
    - SHOULD implement append-only audit logs for nullifier operations
    - MUST implement proper database backup and recovery procedures
 
-4. **Protocol Message Attacks**: Malformed or replayed messages can compromise security.
+4. **Eavesdropping/Message Modification Attacks**: A network-level adversary can copy spend proofs or modify messages sent between an honest client and issuer.
 
    **Attack Vectors**:
 
-   - Message replay attacks
-   - Parameter substitution attacks
-   - Malformed point attacks
+   - Eavesdropping and copying of proofs
+   - Message modifications causing protocol failure
 
    **Mitigations**:
 
-   - Nullifiers and the associated proofs obviate replay attacks.
-   - MUST validate all received points
-   - MUST use deterministic encoding for all protocol messages
-   - MUST reject messages with unexpected fields or formats
+   - Client and issuer MUST use TLS 1.3 or above when communicating.
 
 5. **State Management Vulnerabilities**: Improper state handling can lead to security breaches.
 
