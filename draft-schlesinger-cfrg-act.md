@@ -121,7 +121,7 @@ privacy-preserving credit systems:
    or connect multiple transactions by the same client. This property is
    information-theoretic, not merely computational.
 
-2. **Partial Spending**: Clients can spend any amount up to their balance 
+2. **Partial Spending**: Clients can spend any amount up to their balance
    and receive anonymous change without revealing their previous or current
    balance, enabling flexible spending.
 
@@ -164,8 +164,8 @@ phases:
    producing a credit token.
 
 3. **Spending**: To spend credits, the client reveals a nullifier and proves
-   possession of a valid token associated with that nullifier having sufficient 
-   balance. The issuer verifies the proof, checks the nullifier hasn't been used        before, and issues a new token (which remains hidden from the issuer) for any   
+   possession of a valid token associated with that nullifier having sufficient
+   balance. The issuer verifies the proof, checks the nullifier hasn't been used        before, and issues a new token (which remains hidden from the issuer) for any
    remaining balance.
 
 ## Design Goals
@@ -270,7 +270,7 @@ GenerateParameters(domain_separator):
     - params: System parameters (H1, H2, H3)
 
   Steps:
-    1. seed = BLAKE3(domain_separator)
+    1. seed = BLAKE3(LengthPrefixed(domain_separator))
     2. counter = 0
     3. H1 = HashToRistretto255(seed, counter++)
     4. H2 = HashToRistretto255(seed, counter++)
@@ -286,9 +286,9 @@ HashToRistretto255(seed, counter):
 
   Steps:
     1. hasher = BLAKE3.new()
-    2. hasher.update(domain_separator)
-    3. hasher.update(seed)
-    4. hasher.update(counter.to_le_bytes(4))
+    2. hasher.update(LengthPrefixed(domain_separator))
+    3. hasher.update(LengthPrefixed(seed))
+    4. hasher.update(LengthPrefixed(counter.to_le_bytes(4)))
     5. uniform_bytes = hasher.finalize_xof(64)
     6. P = OneWayMap(uniform_bytes)
     7. return P
@@ -804,6 +804,7 @@ VerifySpendProof(sk, proof):
 ### Protocol Version
 
 The protocol version string for domain separation is:
+
 ~~~
 PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
 ~~~
@@ -829,11 +830,11 @@ CreateTranscript(label):
 
   Steps:
     1. hasher = BLAKE3.new()
-    2. hasher.update(PROTOCOL_VERSION)
-    3. hasher.update(Encode(H1))
-    4. hasher.update(Encode(H2))
-    5. hasher.update(Encode(H3))
-    6. hasher.update(len(label).to_be_bytes() || label)
+    2. hasher.update(LengthPrefixed(PROTOCOL_VERSION))
+    3. hasher.update(LengthPrefixed(Encode(H1)))
+    4. hasher.update(LengthPrefixed(Encode(H2)))
+    5. hasher.update(LengthPrefixed(Encode(H3)))
+    6. hasher.update(LengthPrefixed(label))
     7. return transcript with hasher
 
 AddToTranscript(transcript, value):
@@ -843,7 +844,7 @@ AddToTranscript(transcript, value):
 
   Steps:
     1. encoded = Encode(value)
-    2. transcript.hasher.update(len(encoded).to_be_bytes() || encoded)
+    2. transcript.hasher.update(LengthPrefixed(encoded))
 
 GetChallenge(transcript):
   Input:
@@ -852,12 +853,13 @@ GetChallenge(transcript):
     - challenge: Scalar challenge value
 
   Steps:
-    1. seed = transcript.hasher.finalize()
-    2. rng = ChaCha20RNG(seed)
-    3. return Scalar.random(rng)
+    1. hash = transcript.hasher.output(64)  // 64 bytes of output
+    3. challenge = from_little_endian_bytes(hash) mod q
+    4. return challenge
 ~~~
 
 This approach ensures:
+
 - Domain separation through the label and protocol version
 - Inclusion of all public parameters to prevent parameter substitution attacks
 - Proper ordering with length prefixes to prevent ambiguity
@@ -879,6 +881,20 @@ Encode(value):
     2.     return value.compress()  // 32 bytes, compressed Ristretto point
     3. If value is a Scalar:
     4.     return value.to_bytes_le()  // 32 bytes, little-endian
+~~~
+
+The following function provides consistent length-prefixing for hash inputs:
+
+~~~
+LengthPrefixed(data):
+  Input:
+    - data: ByteString to be length-prefixed
+  Output:
+    - prefixed: ByteString with length prefix
+
+  Steps:
+    1. length = len(data)
+    2. return length.to_be_bytes(8) || data  // 8-byte big-endian length prefix
 ~~~
 
 Note: Implementations MAY use standard serialization formats (e.g. CBOR) for
@@ -1197,11 +1213,12 @@ within the group order.
 The protocol has the following computational complexity:
 
 **Notation for Operations:**
+
 - **Group Operations**: Point additions in the Ristretto255 group (e.g., P + Q)
 - **Group Exponentiations**: Scalar multiplication of group elements (e.g., P * s)
 - **Scalar Additions/Multiplications**: Arithmetic operations modulo the group order q
 
-1. **Issuance**:
+- **Issuance**:
 
 | Operation | Group Operations | Group Exponentiations | Scalar Additions | Scalar Multiplications | Hashes |
 |-----------|------------------|-----------------------|------------------|------------------------|--------|
@@ -1209,7 +1226,7 @@ The protocol has the following computational complexity:
 | Issuer Response | 5 | 8 | 3 | 1 | 2 |
 | Client Credit Token Construction | 5 | 5 | 0 | 0 | 1 |
 
-2. **Spending**:
+- **Spending**:
 
 | Operation | Group Operations | Group Exponentiations | Scalar Additions | Scalar Multiplications |
 |-----------|------------------|-----------------------|------------------|------------------------|
@@ -1219,7 +1236,7 @@ The protocol has the following computational complexity:
 
 Note: L is the configurable bit length for credit values.
 
-3. **Storage**:
+- **Storage**:
 
 | Component | Size |
 |-----------|------|
@@ -1228,14 +1245,6 @@ Note: L is the configurable bit length for credit values.
 | Nullifier database entry | 32 bytes per spent token |
 
 Note: Token size is independent of L.
-
-4. **Memory Requirements** (during protocol execution):
-
-| Operation | Peak Memory Usage |
-|-----------|------------------|
-| Token Issuance | ~1 KB |
-| Spend Proof Generation | ~8 KB (for L=128) |
-| Spend Proof Verification | ~8 KB (for L=128) |
 
 # Security Considerations
 

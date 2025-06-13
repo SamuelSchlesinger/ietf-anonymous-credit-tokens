@@ -5,7 +5,7 @@
 CFRG                                                      S. Schlesinger
 Internet-Draft                                                   J. Katz
 Intended status: Informational                                    Google
-Expires: 11 December 2025                                    9 June 2025
+Expires: 15 December 2025                                   13 June 2025
 
 
                         Anonymous Credit Tokens
@@ -17,16 +17,15 @@ Abstract
    preserving authentication protocol that enables numerical credit
    systems without tracking individual clients.  Based on keyed-
    verification anonymous credentials and privately verifiable BBS-style
-   signatures, the protocol allows issuers to grant credits that clients
-   can later spend anonymously.
+   signatures, the protocol allows issuers to grant tokens containing
+   credits that clients can later spend anonymously with that issuer.
 
    The protocol's key features include: (1) unlinkable transactions -
-   the issuer cannot correlate credit issuance with spending or link
-   multiple transactions by the same client, (2) partial spending -
-   clients can spend a portion of their credits and receive anonymous
-   change, and (3) double-spend prevention through cryptographic
-   nullifiers that preserve privacy while ensuring each token is used
-   only once.
+   the issuer cannot correlate credit issuance with spending, or link
+   multiple spends by the same client, (2) partial spending - clients
+   can spend a portion of their credits and receive anonymous change,
+   and (3) double-spend prevention through cryptographic nullifiers that
+   preserve privacy while ensuring each token is used only once.
 
    Anonymous Credit Tokens are designed for modern web services
    requiring rate limiting, usage-based billing, or resource allocation
@@ -69,7 +68,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 11 December 2025.
+   This Internet-Draft will expire on 15 December 2025.
 
 Copyright Notice
 
@@ -147,7 +146,7 @@ Table of Contents
        6.6.2.  2.  Balance Inflation Attack
        6.6.3.  3.  Token Linking Attack
      6.7.  Protocol Composition and State Management
-       6.7.1.  Atomicity Requirements
+       6.7.1.  State Management Requirements
        6.7.2.  Session Management
        6.7.3.  Version Negotiation
      6.8.  Quantum Resistance
@@ -189,21 +188,20 @@ Table of Contents
        This property is information-theoretic, not merely computational.
 
    2.  *Partial Spending*: Clients can spend any amount up to their
-       balance and receive anonymous change, enabling flexible spending
-       without revealing their total balance.
+       balance and receive anonymous change without revealing their
+       previous or current balance, enabling flexible spending.
 
    3.  *Double-Spend Prevention*: Cryptographic nullifiers ensure each
-       credit is spent only once, without revealing which token is being
-       spent or linking it to issuance.
+       token is used only once, without linking it to issuance.
 
    4.  *Balance Privacy*: During spending, only the amount being spent
        is revealed, not the total balance in the token, protecting
        clients from balance-based profiling.
 
-   5.  *Performance*: The protocol's operations must be performant
-       enough to make it useful in modern web systems.  This protocol
-       has performance characteristics which make it suitable for a
-       large number of applications.
+   5.  *Performance*: The protocol's operations are performant enough to
+       make it useful in modern web systems.  This protocol has
+       performance characteristics which make it suitable for a large
+       number of applications.
 
 1.2.  Use Cases
 
@@ -240,11 +238,11 @@ Table of Contents
        issuer creates a blind signature on the credit value and a
        client-chosen nullifier, producing a credit token.
 
-   3.  *Spending*: To spend credits, the client reveals the nullifier
-       and proves possession of a valid token with sufficient balance.
-       The issuer verifies the proof, checks the nullifier hasn't been
-       used before, and issues a new token for any remaining balance,
-       which remains hidden from the issuer.
+   3.  *Spending*: To spend credits, the client reveals a nullifier and
+       proves possession of a valid token associated with that nullifier
+       having sufficient balance.  The issuer verifies the proof, checks
+       the nullifier hasn't been used before, and issues a new token
+       (which remains hidden from the issuer) for any remaining balance.
 
 1.4.  Design Goals
 
@@ -268,9 +266,9 @@ Table of Contents
    This protocol builds upon several cryptographic primitives:
 
    *  *BBS Signatures* [BBS]: The core signature scheme that enables
-      efficient proofs of possession.  We use a variant which is
-      privately verifiable, which makes our security assumptions more
-      conservative and our protocol more efficient.
+      efficient proofs of possession.  We use a variant that is
+      privately verifiable, which avoids the need for pairings and makes
+      our protocol more efficient.
 
    *  *Sigma Protocols* [ORRU-SIGMA]: The zero-knowledge proof framework
       used for spending proofs.
@@ -296,7 +294,7 @@ Table of Contents
 
    *  ||: Concatenation of byte strings
 
-   *  x <- S: Sampling x uniformly at random from the set S
+   *  x <- S: Sampling x uniformly from the set S
 
    *  x := y: Assignment of the value y to the variable x
 
@@ -346,14 +344,11 @@ Parameters:
   - H1, H2, H3: Additional generators for commitments
   - L: Bit length for credit values (configurable, must satisfy L <= 252)
 
-   The generators H1, H2, and H3 SHOULD be generated deterministically
+   The generators H1, H2, and H3 MUST be generated deterministically
    from a nothing-up-my-sleeve value to ensure they are independent of
-   each other and of G.  They MAY be generated uniformly randomly,
-   otherwise.  This prevents attacks where malicious parameters could
-   compromise security, for instance by the discrete logarithms of H1,
-   H2, or H3 being known, or them having known relationships between
-   each other.  Note that these generators are independent of the choice
-   of L:
+   each other and of G.  This prevents attacks whereby malicious
+   parameters could compromise security.  Note that these generators are
+   independent of the choice of L.
 
    GenerateParameters(domain_separator):
      Input:
@@ -362,7 +357,7 @@ Parameters:
        - params: System parameters (H1, H2, H3)
 
      Steps:
-       1. seed = BLAKE3(domain_separator)
+       1. seed = BLAKE3(LengthPrefixed(domain_separator))
        2. counter = 0
        3. H1 = HashToRistretto255(seed, counter++)
        4. H2 = HashToRistretto255(seed, counter++)
@@ -378,9 +373,9 @@ Parameters:
 
      Steps:
        1. hasher = BLAKE3.new()
-       2. hasher.update(domain_separator)
-       3. hasher.update(seed)
-       4. hasher.update(counter.to_le_bytes(4))
+       2. hasher.update(LengthPrefixed(domain_separator))
+       3. hasher.update(LengthPrefixed(seed))
+       4. hasher.update(LengthPrefixed(counter.to_le_bytes(4)))
        5. uniform_bytes = hasher.finalize_xof(64)
        6. P = OneWayMap(uniform_bytes)
        7. return P
@@ -431,7 +426,7 @@ domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deploym
      Input: None
      Output:
        - sk: Private key (Scalar)
-       - pk: Public key (Element)
+       - pk: Public key (Group Element)
 
      Steps:
        1. x <- Zq
@@ -447,9 +442,7 @@ domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deploym
 
 3.3.1.  Client: Issuance Request
 
-   IssueRequest(pk):
-     Input:
-       - pk: Issuer's public key
+   IssueRequest():
      Output:
        - request: Issuance request
        - state: Client state for later verification
@@ -478,7 +471,7 @@ domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deploym
      Input:
        - sk: Issuer's private key
        - request: Client's issuance request
-       - c: Credit amount to issue
+       - c: Credit amount to issue (c > 0)
      Output:
        - response: Issuance response or INVALID
 
@@ -549,14 +542,14 @@ domain_separator = "ACT-v1:" || organization || ":" || service || ":" || deploym
 3.4.  Token Spending
 
    The spending protocol allows a client to spend s credits from a token
-   containing c credits (where s <= c):
+   containing c credits (where 0 < s <= c):
 
 3.4.1.  Client: Spend Proof Generation
 
 ProveSpend(token, s):
   Input:
     - token: Credit token (A, e, k, r, c)
-    - s: Amount to spend (0 <= s <= c)
+    - s: Amount to spend (0 < s <= c)
   Output:
     - proof: Spend proof
     - state: Client state for receiving change
@@ -882,9 +875,9 @@ VerifySpendProof(sk, proof):
 
 3.5.1.  Protocol Version
 
-   The protocol version string for domain separation is: ~~~
+   The protocol version string for domain separation is:
+
    PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
-   ~~~
 
    This version string MUST be used consistently across all
    implementations for interoperability.  The curve specification is
@@ -898,46 +891,51 @@ VerifySpendProof(sk, proof):
    framework [ORRU-SIGMA], challenges are generated using a transcript
    that accumulates all protocol messages:
 
-  CreateTranscript(label):
-    Input:
-      - label: ASCII string identifying the proof type
-    Output:
-      - transcript: A new transcript object
+   CreateTranscript(label):
+     Input:
+       - label: ASCII string identifying the proof type
+     Output:
+       - transcript: A new transcript object
 
-    Steps:
-      1. hasher = BLAKE3.new()
-      2. hasher.update(PROTOCOL_VERSION)
-      3. hasher.update(Encode(H1))
-      4. hasher.update(Encode(H2))
-      5. hasher.update(Encode(H3))
-      6. hasher.update(len(label).to_be_bytes() || label)
-      7. return transcript with hasher
+     Steps:
+       1. hasher = BLAKE3.new()
+       2. hasher.update(LengthPrefixed(PROTOCOL_VERSION))
+       3. hasher.update(LengthPrefixed(Encode(H1)))
+       4. hasher.update(LengthPrefixed(Encode(H2)))
+       5. hasher.update(LengthPrefixed(Encode(H3)))
+       6. hasher.update(LengthPrefixed(label))
+       7. return transcript with hasher
 
-  AddToTranscript(transcript, value):
-    Input:
-      - transcript: Existing transcript
-      - value: Element or Scalar to add
+   AddToTranscript(transcript, value):
+     Input:
+       - transcript: Existing transcript
+       - value: Element or Scalar to add
 
-    Steps:
-      1. encoded = Encode(value)
-      2. transcript.hasher.update(len(encoded).to_be_bytes() || encoded)
+     Steps:
+       1. encoded = Encode(value)
+       2. transcript.hasher.update(LengthPrefixed(encoded))
 
-  GetChallenge(transcript):
-    Input:
-      - transcript: Completed transcript
-    Output:
-      - challenge: Scalar challenge value
+   GetChallenge(transcript):
+     Input:
+       - transcript: Completed transcript
+     Output:
+       - challenge: Scalar challenge value
 
-    Steps:
-      1. seed = transcript.hasher.finalize()
-      2. rng = ChaCha20RNG(seed)
-      3. return Scalar.random(rng)
+     Steps:
+       1. hash = transcript.hasher.output(64)  // 64 bytes of output
+       3. challenge = from_little_endian_bytes(hash) mod q
+       4. return challenge
 
-   This approach ensures: - Domain separation through the label and
-   protocol version - Inclusion of all public parameters to prevent
-   parameter substitution attacks - Proper ordering with length prefixes
-   to prevent ambiguity - Deterministic challenge generation from the
-   complete transcript
+   This approach ensures:
+
+   *  Domain separation through the label and protocol version
+
+   *  Inclusion of all public parameters to prevent parameter
+      substitution attacks
+
+   *  Proper ordering with length prefixes to prevent ambiguity
+
+   *  Deterministic challenge generation from the complete transcript
 
 3.5.3.  Encoding Functions
 
@@ -954,6 +952,19 @@ Encode(value):
     2.     return value.compress()  // 32 bytes, compressed Ristretto point
     3. If value is a Scalar:
     4.     return value.to_bytes_le()  // 32 bytes, little-endian
+
+   The following function provides consistent length-prefixing for hash
+   inputs:
+
+LengthPrefixed(data):
+  Input:
+    - data: ByteString to be length-prefixed
+  Output:
+    - prefixed: ByteString with length prefix
+
+  Steps:
+    1. length = len(data)
+    2. return length.to_be_bytes(8) || data  // 8-byte big-endian length prefix
 
    Note: Implementations MAY use standard serialization formats (e.g.
    CBOR) for complex structures, but MUST ensure deterministic encoding
@@ -1295,13 +1306,18 @@ Encode(value):
 
    The protocol has the following computational complexity:
 
-   *Notation for Operations:* - *Group Operations*: Point additions in
-   the Ristretto255 group (e.g., P + Q) - *Group Exponentiations*:
-   Scalar multiplication of group elements (e.g., P * s) - *Scalar
-   Additions/Multiplications*: Arithmetic operations modulo the group
-   order q
+   *Notation for Operations:*
 
-   1.  *Issuance*:
+   *  *Group Operations*: Point additions in the Ristretto255 group
+      (e.g., P + Q)
+
+   *  *Group Exponentiations*: Scalar multiplication of group elements
+      (e.g., P * s)
+
+   *  *Scalar Additions/Multiplications*: Arithmetic operations modulo
+      the group order q
+
+   *  *Issuance*:
 
    +============+==========+===============+=========+===============+======+
    |Operation   |Group     |Group          |Scalar   |Scalar         |Hashes|
@@ -1320,7 +1336,7 @@ Encode(value):
 
                                   Table 1
 
-   1.  *Spending*:
+   *  *Spending*:
 
     +============+==========+===============+=========+===============+
     |Operation   |Group     |Group          |Scalar   |Scalar         |
@@ -1341,7 +1357,7 @@ Encode(value):
 
    Note: L is the configurable bit length for credit values.
 
-   1.  *Storage*:
+   *  *Storage*:
 
           +==========================+==========================+
           | Component                | Size                     |
@@ -1357,20 +1373,6 @@ Encode(value):
 
    Note: Token size is independent of L.
 
-   1.  *Memory Requirements* (during protocol execution):
-
-             +==========================+===================+
-             | Operation                | Peak Memory Usage |
-             +==========================+===================+
-             | Token Issuance           | ~1 KB             |
-             +--------------------------+-------------------+
-             | Spend Proof Generation   | ~8 KB (for L=128) |
-             +--------------------------+-------------------+
-             | Spend Proof Verification | ~8 KB (for L=128) |
-             +--------------------------+-------------------+
-
-                                 Table 4
-
 6.  Security Considerations
 
 6.1.  Security Model and Definitions
@@ -1379,131 +1381,43 @@ Encode(value):
 
    We consider a setting with:
 
-   *  A single trusted issuer (multiple issuers can operate
-      independently)
+   *  Multiple issuers who can operate independently, though malicious
+      issuers may collude with each other
 
-   *  Potentially malicious clients who may attempt to forge tokens or
-      double-spend
-
-   *  An adversary who can observe all network communications
-
-   *  Clients who desire privacy from the issuer regarding their
-      spending patterns
-
-   Note: The issuer must be trusted not to:
-
-   *  Issue tokens without proper authorization
-
-   *  Create tokens for themselves without limit
-
-   *  Refuse valid spend proofs
-
-   *  Manipulate the nullifier database
-
-   The protocol does not protect against a malicious issuer, only
-   ensures privacy from an honest-but-curious issuer.
+   *  Potentially malicious clients who may attempt to spend more
+      credits than they should (whether by forging tokens, spending more
+      credits than a token has, or double-spending a token)
 
 6.1.2.  Security Properties
 
    The protocol provides the following security guarantees:
 
-   1.  *Unforgeability*: No probabilistic polynomial-time (PPT)
-       adversary can create a valid credit token without the issuer's
-       cooperation.  Formally, for any PPT adversary A:
+   1.  *Unforgeability*: For an honest isser I, no probabilistic
+       polynomial-time (PPT) adversary controlling a set of malicious
+       clients and other malicious issuers can spend more credits than
+       have been issued by I.
 
-       Pr[A(pk, params) -> valid_token] ≤ negl(λ)
-
-       where λ is the security parameter.
-
-   2.  *Unlinkability*: The issuer cannot link:
-
-       *  A spending transaction to the original issuance
-
-       *  Multiple spending transactions by the same client
-
-       *  This property is information theoretic in nature.
-
-   3.  *Balance Security*: No PPT adversary can spend more credits than
-       issued.  Specifically:
-
-       *  Credits cannot be created from nothing
-
-       *  The sum of spent credits cannot exceed issued credits
-
-       *  Each token can only be fully spent once (via nullifier
-          checking)
-
-   4.  *Zero-Knowledge*: The spending proof reveals only:
-
-       *  The nullifier k
-
-       *  The amount being spent s
-
-       *  That the client possesses sufficient balance (c ≥ s)
-
-       No other information about c, r, or the token is revealed.
-
-   5.  *Nullifier Binding*: The nullifier k is cryptographically bound
-       to the token through the BBS signature.  An adversary cannot:
-
-       *  Use a nullifier from one token with a different token
-
-       *  Modify the nullifier without invalidating the signature
+   2.  *Anonymity/Unlinkability*: For an honest client C, no adversary
+       controlling a set of malicious issuers and other malicious
+       clients can link a token issuance/refund to C with a token spend
+       by C.  This property is information-theoretic in nature.
 
 6.2.  Cryptographic Assumptions
 
-   The security of Anonymous Credit Tokens relies on:
+   Security relies on:
 
-   1.  *Discrete Logarithm Problem (DLP)*: Given g, h ∈ G, it is
-       computationally infeasible to find x such that h = g * x.
+   1.  *The q-SDH Assumption* in the Ristretto255 group.  We refer to
+       {TZ23} for the formal definition.
 
-   2.  *Decisional Diffie-Hellman (DDH) Assumption*: Given (g, g * a, g
-       * b, g * c) for random a, b, c, it is computationally infeasible
-       to determine whether c = ab or c is random.
-
-   3.  *Random Oracle Model*: The BLAKE3 hash function H is modeled as a
-       random oracle, providing:
-
-       *  Collision resistance
-
-       *  Pre-image resistance
-
-       *  Unpredictability
-
-   4.  *Sigma Protocol Security*: The underlying sigma protocols satisfy
-       [ORRU-SIGMA]:
-
-       *  Completeness: Honest proofs always verify
-
-       *  Special soundness: From two accepting transcripts with the
-          same commitment but different challenges, one can extract the
-          witness
-
-       *  Honest-verifier zero-knowledge: The proof reveals nothing
-          beyond the validity of the statement
-
-   5.  *Fiat-Shamir Security*: The non-interactive proofs are secure in
-       the random oracle model [ORRU-FS]:
-
-       *  The transcript includes all public values to prevent
-          malleability
-
-       *  Domain separation prevents cross-protocol attacks; deployments
-          MUST use unique domain separators to prevent parameter
-          collision attacks between different services
-
-       *  Length-prefixing prevents ambiguity in parsing
+   2.  *Random Oracle Model*: The BLAKE3 hash function H is modeled as a
+       random oracle.
 
 6.3.  Privacy Properties
 
    The protocol provides the following privacy guarantees:
 
-   1.  *Unlinkability*: The issuer cannot link a token to its issuance
-       request or link multiple spends by the same client.
-
-   2.  *Balance Privacy*: The amount of credits in a token is not
-       revealed during spending (only that it's sufficient for the
-       transaction).
+   1.  *Unlinkability*: The issuer cannot link a token issuance/refund
+       to a later spend of that token.
 
    However, the protocol does NOT provide:
 
@@ -1519,14 +1433,8 @@ Encode(value):
 
    The protocol ensures:
 
-   1.  *Unforgeability*: Clients cannot create valid tokens without the
-       issuer's cooperation.
-
-   2.  *Non-Transferability*: While tokens can be shared, this requires
-       sharing the entire token state.
-
-   3.  *Double-Spend Prevention*: Each token can only be fully spent
-       once due to nullifier checking.
+   1.  *Unforgeability*: Clients cannot spend more credits than they
+       have been issued by the issuer.
 
 6.5.  Implementation Vulnerabilities and Mitigations
 
@@ -1600,26 +1508,20 @@ Encode(value):
 
        *  MUST implement proper database backup and recovery procedures
 
-   4.  *Protocol Message Attacks*: Malformed or replayed messages can
-       compromise security.
+   4.  *Eavesdropping/Message Modification Attacks*: A network-level
+       adversary can copy spend proofs or modify messages sent between
+       an honest client and issuer.
 
        *Attack Vectors*:
 
-       *  Message replay attacks
+       *  Eavesdropping and copying of proofs
 
-       *  Parameter substitution attacks
-
-       *  Malformed point attacks
+       *  Message modifications causing protocol failure
 
        *Mitigations*:
 
-       *  Nullifiers and the associated proofs obviate replay attacks.
-
-       *  MUST validate all received points
-
-       *  MUST use deterministic encoding for all protocol messages
-
-       *  MUST reject messages with unexpected fields or formats
+       *  Client and issuer MUST use TLS 1.3 or above when
+          communicating.
 
    5.  *State Management Vulnerabilities*: Improper state handling can
        lead to security breaches.
@@ -1688,8 +1590,7 @@ Encode(value):
    more credits than actually issued by manipulating the range proof.
 
    *Prevention*: The cryptographic soundness of the range proof prevents
-   this attack.  Implementations MUST correctly validate all L bits of
-   the range proof.
+   this attack.
 
 6.6.3.  3.  Token Linking Attack
 
@@ -1702,25 +1603,32 @@ Encode(value):
 
 6.7.  Protocol Composition and State Management
 
-6.7.1.  Atomicity Requirements
+6.7.1.  State Management Requirements
 
-   The spend and refund operations MUST be treated as an atomic
-   transaction.  If the refund fails after a spend proof is accepted,
-   credits could be permanently lost.  Implementations SHOULD:
+   Before they make a spend request or an issue request, the client MUST
+   store their private state (the nullifier, the blinding factor, and
+   the new balance) durably.
 
-   1.  Use two-phase commit or similar mechanisms
-
-   2.  Implement rollback capabilities for failed refunds
-
-   3.  Log all state transitions for recovery
+   For the issuer, the spend and refund operations MUST be treated as an
+   atomic transaction.  However, even more is required.  If a nullifier
+   associated with a given spend is persisted to the database, clients
+   MUST be able to access the associated refund.  If they cannot access
+   this, then they can lose access to the rest of their credits.  For
+   performance reasons, an issuer SHOULD automatically clean these up
+   after some expiry, but if they do so, they MUST inform the client of
+   this policy so the client can ensure they can retry to retrieve the
+   rest of their credits in time.  Issuers MAY implement functionality
+   to notify the issuer that the refund request was processed, so they
+   can delete the refund record.  It is not clear that this is worth the
+   cost relative to just cleaning them up in bulk at some specified
+   expiration date, however if you are memory constrained this could be
+   useful.
 
 6.7.2.  Session Management
 
    Each protocol session (issuance or spend/refund) MUST:
 
    *  Use fresh randomness
-
-   *  Complete without interruption
 
    *  Not reuse any random values across sessions
 
@@ -1797,6 +1705,9 @@ Encode(value):
               Signatures", RFC 9474, DOI 10.17487/RFC9474, October 2023,
               <https://www.rfc-editor.org/rfc/rfc9474>.
 
+   [TZ23]     "Revisiting BBS Signatures", 2023,
+              <https://eprint.iacr.org/2023/275>.
+
 Appendix A.  Test Vectors
 
    This appendix provides test vectors for implementers to verify their
@@ -1837,8 +1748,8 @@ Appendix C.  Terminology Glossary
    *Blind Signature*: A cryptographic signature where the signer signs a
    message without seeing its content.
 
-   *Change Token*: A new token issued for the remaining balance after a
-   partial spend.
+   *Refund*: The refund issued for the remaining balance after a partial
+   spend.
 
    *Credit*: A numerical unit of authorization that can be spent by
    clients.
