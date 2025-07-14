@@ -8,24 +8,27 @@
 <meta content="Samuel Schlesinger" name="author">
 <meta content="Jonathan Katz" name="author">
 <meta content="
-       This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
-authentication protocol that enables numerical credit systems without tracking
-individual clients. Based on keyed-verification anonymous credentials and
-privately verifiable BBS-style signatures, the protocol allows issuers to grant
-tokens containing credits that clients can later spend anonymously with that issuer. 
-       The protocol's key features include: (1) unlinkable transactions - the issuer
-cannot correlate credit issuance with spending, or link multiple spends by
-the same client, (2) partial spending - clients can spend a portion of their
-credits and receive anonymous change, and (3) double-spend prevention through
-cryptographic nullifiers that preserve privacy while ensuring each token is used
-only once. 
-       Anonymous Credit Tokens are designed for modern web services requiring rate
-limiting, usage-based billing, or resource allocation while respecting user
-privacy. Example applications include rate limiting and API credits. 
-       This document is a product of the Crypto Forum Research Group (CFRG) in the
-IRTF. 
+       This document specifies Anonymous Credit Tokens (ACT), a
+privacy-preserving authentication protocol that enables numerical
+credit systems without tracking individual clients. Based on
+keyed-verification anonymous credentials and privately verifiable
+BBS-style signatures, the protocol allows issuers to grant tokens
+containing credits that clients can later spend anonymously with
+that issuer. 
+       The protocol's key features include: (1) unlinkable transactions -
+the issuer cannot correlate credit issuance with spending, or link
+multiple spends by the same client, (2) partial spending - clients
+can spend a portion of their credits and receive anonymous change,
+and (3) double-spend prevention through cryptographic nullifiers
+that preserve privacy while ensuring each token is used only once. 
+       Anonymous Credit Tokens are designed for modern web services
+requiring rate limiting, usage-based billing, or resource allocation
+while respecting user privacy. Example applications include rate
+limiting and API credits. 
+       This document is a product of the Crypto Forum Research Group (CFRG)
+in the IRTF. 
     " name="description">
-<meta content="xml2rfc 3.28.1" name="generator">
+<meta content="xml2rfc 3.29.0" name="generator">
 <meta content="anonymous credentials" name="keyword">
 <meta content="privacy" name="keyword">
 <meta content="cryptography" name="keyword">
@@ -34,17 +37,17 @@ IRTF.
 <meta content="keyed verification" name="keyword">
 <meta content="draft-schlesinger-cfrg-act-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.28.1
-    Python 3.9.6
+  xml2rfc 3.29.0
+    Python 3.12.3
     ConfigArgParse 1.7.1
     google-i18n-address 3.1.1
     intervaltree 3.1.0
     Jinja2 3.1.6
-    lxml 5.4.0
+    lxml 6.0.0
     platformdirs 4.3.8
     pycountry 24.6.1
     PyYAML 6.0.2
-    requests 2.32.3
+    requests 2.32.4
     setuptools 80.9.0
     wcwidth 0.2.13
 -->
@@ -1065,11 +1068,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">ACT</td>
-<td class="right">June 2025</td>
+<td class="right">July 2025</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Schlesinger &amp; Katz</td>
-<td class="center">Expires 15 December 2025</td>
+<td class="center">Expires 15 January 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1082,12 +1085,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-schlesinger-cfrg-act-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2025-06-13" class="published">13 June 2025</time>
+<time datetime="2025-07-14" class="published">14 July 2025</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Informational</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2025-12-15">15 December 2025</time></dd>
+<dd class="expires"><time datetime="2026-01-15">15 January 2026</time></dd>
 <dt class="label-authors">Authors:</dt>
 <dd class="authors">
 <div class="author">
@@ -1104,22 +1107,25 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">Anonymous Credit Tokens</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
-authentication protocol that enables numerical credit systems without tracking
-individual clients. Based on keyed-verification anonymous credentials and
-privately verifiable BBS-style signatures, the protocol allows issuers to grant
-tokens containing credits that clients can later spend anonymously with that issuer.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">The protocol's key features include: (1) unlinkable transactions - the issuer
-cannot correlate credit issuance with spending, or link multiple spends by
-the same client, (2) partial spending - clients can spend a portion of their
-credits and receive anonymous change, and (3) double-spend prevention through
-cryptographic nullifiers that preserve privacy while ensuring each token is used
-only once.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
-<p id="section-abstract-3">Anonymous Credit Tokens are designed for modern web services requiring rate
-limiting, usage-based billing, or resource allocation while respecting user
-privacy. Example applications include rate limiting and API credits.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
-<p id="section-abstract-4">This document is a product of the Crypto Forum Research Group (CFRG) in the
-IRTF.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document specifies Anonymous Credit Tokens (ACT), a
+privacy-preserving authentication protocol that enables numerical
+credit systems without tracking individual clients. Based on
+keyed-verification anonymous credentials and privately verifiable
+BBS-style signatures, the protocol allows issuers to grant tokens
+containing credits that clients can later spend anonymously with
+that issuer.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">The protocol's key features include: (1) unlinkable transactions -
+the issuer cannot correlate credit issuance with spending, or link
+multiple spends by the same client, (2) partial spending - clients
+can spend a portion of their credits and receive anonymous change,
+and (3) double-spend prevention through cryptographic nullifiers
+that preserve privacy while ensuring each token is used only once.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-3">Anonymous Credit Tokens are designed for modern web services
+requiring rate limiting, usage-based billing, or resource allocation
+while respecting user privacy. Example applications include rate
+limiting and API credits.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
+<p id="section-abstract-4">This document is a product of the Crypto Forum Research Group (CFRG)
+in the IRTF.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1156,7 +1162,7 @@ IRTF.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 15 December 2025.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 15 January 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1462,49 +1468,52 @@ IRTF.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">Modern web services face a fundamental tension between operational needs and
-user privacy. Services need to implement rate limiting to prevent abuse,
-charge for API usage to sustain operations, and allocate computational
-resources fairly. However, traditional approaches require tracking client
-identities and creating detailed logs of client behavior, raising significant
-privacy concerns in an era of increasing data protection awareness and
-regulation.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">Anonymous Credit Tokens (ACT) helps to resolve this tension by providing a
-cryptographic protocol that enables credit-based systems without client
-tracking. Built on keyed-verification anonymous credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> and
-privately verifiable BBS-style signatures <span>[<a href="#BBS" class="cite xref">BBS</a>]</span>, the protocol allows services
-to issue, track, and spend credits while maintaining client privacy.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-1">Modern web services face a fundamental tension between operational
+needs and user privacy. Services need to implement rate limiting to
+prevent abuse, charge for API usage to sustain operations, and
+allocate computational resources fairly. However, traditional
+approaches require tracking client identities and creating detailed
+logs of client behavior, raising significant privacy concerns in an
+era of increasing data protection awareness and regulation.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">Anonymous Credit Tokens (ACT) helps to resolve this tension by
+providing a cryptographic protocol that enables credit-based systems
+without client tracking. Built on keyed-verification anonymous
+credentials <span>[<a href="#KVAC" class="cite xref">KVAC</a>]</span> and privately verifiable BBS-style signatures
+<span>[<a href="#BBS" class="cite xref">BBS</a>]</span>, the protocol allows services to issue, track, and spend
+credits while maintaining client privacy.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <div id="key-properties">
 <section id="section-1.1">
         <h3 id="name-key-properties">
 <a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-key-properties" class="section-name selfRef">Key Properties</a>
         </h3>
-<p id="section-1.1-1">The protocol provides four essential properties that make it suitable for
-privacy-preserving credit systems:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-1">The protocol provides four essential properties that make it
+suitable for privacy-preserving credit systems:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-1.1-2">
 <li id="section-1.1-2.1">
-            <p id="section-1.1-2.1.1"><strong>Unlinkability</strong>: The issuer cannot link credit issuance to spending,
-or connect multiple transactions by the same client. This property is
-information-theoretic, not merely computational.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.1.1"><strong>Unlinkability</strong>: The issuer cannot link credit issuance to
+spending, or connect multiple transactions by the same client.
+This property is information-theoretic, not merely computational.<a href="#section-1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-1.1-2.2">
-            <p id="section-1.1-2.2.1"><strong>Partial Spending</strong>: Clients can spend any amount up to their balance
-and receive anonymous change without revealing their previous or current
+            <p id="section-1.1-2.2.1"><strong>Partial Spending</strong>: Clients can spend any amount up to their
+balance and receive anonymous change without revealing their
+previous or current
 balance, enabling flexible spending.<a href="#section-1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-1.1-2.3">
-            <p id="section-1.1-2.3.1"><strong>Double-Spend Prevention</strong>: Cryptographic nullifiers ensure each token
-is used only once, without linking it to issuance.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.3.1"><strong>Double-Spend Prevention</strong>: Cryptographic nullifiers ensure each
+token is used only once, without linking it to issuance.<a href="#section-1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-1.1-2.4">
-            <p id="section-1.1-2.4.1"><strong>Balance Privacy</strong>: During spending, only the amount being spent is
-revealed, not the total balance in the token, protecting clients from
-balance-based profiling.<a href="#section-1.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.4.1"><strong>Balance Privacy</strong>: During spending, only the amount being spent
+is revealed, not the total balance in the token, protecting
+clients from balance-based profiling.<a href="#section-1.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-1.1-2.5">
-            <p id="section-1.1-2.5.1"><strong>Performance</strong>: The protocol's operations are performant enough to
-make it useful in modern web systems. This protocol has performance
-characteristics which make it suitable for a large number of applications.<a href="#section-1.1-2.5.1" class="pilcrow">¶</a></p>
+            <p id="section-1.1-2.5.1"><strong>Performance</strong>: The protocol's operations are performant enough
+to make it useful in modern web systems. This protocol has
+performance characteristics which make it suitable for a large
+number of applications.<a href="#section-1.1-2.5.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -1517,16 +1526,17 @@ characteristics which make it suitable for a large number of applications.<a hre
 <p id="section-1.2-1">Anonymous Credit Tokens can be applied to various scenarios:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.2-2.1">
-            <p id="section-1.2-2.1.1"><strong>Rate Limiting</strong>: Services can issue daily credit allowances that clients
-spend anonymously for API calls or resource access.<a href="#section-1.2-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.2-2.1.1"><strong>Rate Limiting</strong>: Services can issue daily credit allowances that
+clients spend anonymously for API calls or resource access.<a href="#section-1.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.2-2.2">
-            <p id="section-1.2-2.2.1"><strong>API Credits</strong>: API providers can sell credit packages that developers use to
-pay for API requests without creating a detailed usage history linked to their
-identity. This enables:<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-1.2-2.2.1"><strong>API Credits</strong>: API providers can sell credit packages that
+developers use to pay for API requests without creating a detailed
+usage history linked to their identity. This enables:<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.2-2.2.2.1">
-                <p id="section-1.2-2.2.2.1.1">Pre-paid API access without requiring credit cards for each transaction<a href="#section-1.2-2.2.2.1.1" class="pilcrow">¶</a></p>
+                <p id="section-1.2-2.2.2.1.1">Pre-paid API access without requiring credit cards for each
+transaction<a href="#section-1.2-2.2.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-1.2-2.2.2.2">
                 <p id="section-1.2-2.2.2.2.1">Anonymous API usage for privacy-sensitive applications<a href="#section-1.2-2.2.2.2.1" class="pilcrow">¶</a></p>
@@ -1547,23 +1557,26 @@ identity. This enables:<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
         <h3 id="name-protocol-overview">
 <a href="#section-1.3" class="section-number selfRef">1.3. </a><a href="#name-protocol-overview" class="section-name selfRef">Protocol Overview</a>
         </h3>
-<p id="section-1.3-1">The protocol involves two parties: an issuer (typically a service provider) and
-clients (typically users of the service). The interaction follows three main
-phases:<a href="#section-1.3-1" class="pilcrow">¶</a></p>
+<p id="section-1.3-1">The protocol involves two parties: an issuer (typically a service
+provider) and clients (typically users of the service). The
+interaction follows three main phases:<a href="#section-1.3-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-1.3-2">
 <li id="section-1.3-2.1">
-            <p id="section-1.3-2.1.1"><strong>Setup</strong>: The issuer generates a key pair and publishes the public key.<a href="#section-1.3-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-1.3-2.1.1"><strong>Setup</strong>: The issuer generates a key pair and publishes the
+public key.<a href="#section-1.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-1.3-2.2">
-            <p id="section-1.3-2.2.1"><strong>Issuance</strong>: A client requests credits from the issuer. The issuer creates
-a blind signature on the credit value and a client-chosen nullifier,
-producing a credit token.<a href="#section-1.3-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-1.3-2.2.1"><strong>Issuance</strong>: A client requests credits from the issuer. The
+issuer creates a blind signature on the credit value and a
+client-chosen nullifier, producing a credit token.<a href="#section-1.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-1.3-2.3">
-            <p id="section-1.3-2.3.1"><strong>Spending</strong>: To spend credits, the client reveals a nullifier and proves
-possession of a valid token associated with that nullifier having sufficient
-balance. The issuer verifies the proof, checks the nullifier hasn't been used        before, and issues a new token (which remains hidden from the issuer) for any
-remaining balance.<a href="#section-1.3-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.3-2.3.1"><strong>Spending</strong>: To spend credits, the client reveals a nullifier
+and proves possession of a valid token associated with that
+nullifier having sufficient balance. The issuer verifies the
+proof, checks the nullifier hasn't been used before, and issues a
+new token (which remains hidden from the issuer) for any remaining
+balance.<a href="#section-1.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -3146,7 +3159,7 @@ within the group order.<a href="#section-5.6-4" class="pilcrow">¶</a></p>
 <p id="section-6.2-1">Security relies on:<a href="#section-6.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.2-2">
 <li id="section-6.2-2.1">
-            <p id="section-6.2-2.1.1"><strong>The q-SDH Assumption</strong> in the Ristretto255 group. We refer to {TZ23} for the formal definition.<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.2-2.1.1"><strong>The q-SDH Assumption</strong> in the Ristretto255 group. We refer to <span>[<a href="#TZ23" class="cite xref">TZ23</a>]</span> for the formal definition.<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.2-2.2">
             <p id="section-6.2-2.2.1"><strong>Random Oracle Model</strong>: The BLAKE3 hash function H is modeled as a random oracle.<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>

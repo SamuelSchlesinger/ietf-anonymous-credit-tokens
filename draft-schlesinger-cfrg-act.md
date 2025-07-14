@@ -74,99 +74,109 @@ informative:
 
 --- abstract
 
-This document specifies Anonymous Credit Tokens (ACT), a privacy-preserving
-authentication protocol that enables numerical credit systems without tracking
-individual clients. Based on keyed-verification anonymous credentials and
-privately verifiable BBS-style signatures, the protocol allows issuers to grant
-tokens containing credits that clients can later spend anonymously with that issuer.
+This document specifies Anonymous Credit Tokens (ACT), a
+privacy-preserving authentication protocol that enables numerical
+credit systems without tracking individual clients. Based on
+keyed-verification anonymous credentials and privately verifiable
+BBS-style signatures, the protocol allows issuers to grant tokens
+containing credits that clients can later spend anonymously with
+that issuer.
 
-The protocol's key features include: (1) unlinkable transactions - the issuer
-cannot correlate credit issuance with spending, or link multiple spends by
-the same client, (2) partial spending - clients can spend a portion of their
-credits and receive anonymous change, and (3) double-spend prevention through
-cryptographic nullifiers that preserve privacy while ensuring each token is used
-only once.
+The protocol's key features include: (1) unlinkable transactions -
+the issuer cannot correlate credit issuance with spending, or link
+multiple spends by the same client, (2) partial spending - clients
+can spend a portion of their credits and receive anonymous change,
+and (3) double-spend prevention through cryptographic nullifiers
+that preserve privacy while ensuring each token is used only once.
 
-Anonymous Credit Tokens are designed for modern web services requiring rate
-limiting, usage-based billing, or resource allocation while respecting user
-privacy. Example applications include rate limiting and API credits.
+Anonymous Credit Tokens are designed for modern web services
+requiring rate limiting, usage-based billing, or resource allocation
+while respecting user privacy. Example applications include rate
+limiting and API credits.
 
-This document is a product of the Crypto Forum Research Group (CFRG) in the
-IRTF.
+This document is a product of the Crypto Forum Research Group (CFRG)
+in the IRTF.
 
 --- middle
 
 # Introduction
 
-Modern web services face a fundamental tension between operational needs and
-user privacy. Services need to implement rate limiting to prevent abuse,
-charge for API usage to sustain operations, and allocate computational
-resources fairly. However, traditional approaches require tracking client
-identities and creating detailed logs of client behavior, raising significant
-privacy concerns in an era of increasing data protection awareness and
-regulation.
+Modern web services face a fundamental tension between operational
+needs and user privacy. Services need to implement rate limiting to
+prevent abuse, charge for API usage to sustain operations, and
+allocate computational resources fairly. However, traditional
+approaches require tracking client identities and creating detailed
+logs of client behavior, raising significant privacy concerns in an
+era of increasing data protection awareness and regulation.
 
-Anonymous Credit Tokens (ACT) helps to resolve this tension by providing a
-cryptographic protocol that enables credit-based systems without client
-tracking. Built on keyed-verification anonymous credentials {{KVAC}} and
-privately verifiable BBS-style signatures {{BBS}}, the protocol allows services
-to issue, track, and spend credits while maintaining client privacy.
+Anonymous Credit Tokens (ACT) helps to resolve this tension by
+providing a cryptographic protocol that enables credit-based systems
+without client tracking. Built on keyed-verification anonymous
+credentials {{KVAC}} and privately verifiable BBS-style signatures
+{{BBS}}, the protocol allows services to issue, track, and spend
+credits while maintaining client privacy.
 
 ## Key Properties
 
-The protocol provides four essential properties that make it suitable for
-privacy-preserving credit systems:
+The protocol provides four essential properties that make it
+suitable for privacy-preserving credit systems:
 
-1. **Unlinkability**: The issuer cannot link credit issuance to spending,
-   or connect multiple transactions by the same client. This property is
-   information-theoretic, not merely computational.
+1. **Unlinkability**: The issuer cannot link credit issuance to
+   spending, or connect multiple transactions by the same client.
+   This property is information-theoretic, not merely computational.
 
-2. **Partial Spending**: Clients can spend any amount up to their balance
-   and receive anonymous change without revealing their previous or current
+2. **Partial Spending**: Clients can spend any amount up to their
+   balance and receive anonymous change without revealing their
+   previous or current
    balance, enabling flexible spending.
 
-3. **Double-Spend Prevention**: Cryptographic nullifiers ensure each token
-   is used only once, without linking it to issuance.
+3. **Double-Spend Prevention**: Cryptographic nullifiers ensure each
+   token is used only once, without linking it to issuance.
 
-4. **Balance Privacy**: During spending, only the amount being spent is
-   revealed, not the total balance in the token, protecting clients from
-   balance-based profiling.
+4. **Balance Privacy**: During spending, only the amount being spent
+   is revealed, not the total balance in the token, protecting
+   clients from balance-based profiling.
 
-5. **Performance**: The protocol's operations are performant enough to
-   make it useful in modern web systems. This protocol has performance
-   characteristics which make it suitable for a large number of applications.
+5. **Performance**: The protocol's operations are performant enough
+   to make it useful in modern web systems. This protocol has
+   performance characteristics which make it suitable for a large
+   number of applications.
 
 ## Use Cases
 
 Anonymous Credit Tokens can be applied to various scenarios:
 
-- **Rate Limiting**: Services can issue daily credit allowances that clients
-  spend anonymously for API calls or resource access.
+- **Rate Limiting**: Services can issue daily credit allowances that
+  clients spend anonymously for API calls or resource access.
 
-- **API Credits**: API providers can sell credit packages that developers use to
-  pay for API requests without creating a detailed usage history linked to their
-  identity. This enables:
-  - Pre-paid API access without requiring credit cards for each transaction
+- **API Credits**: API providers can sell credit packages that
+  developers use to pay for API requests without creating a detailed
+  usage history linked to their identity. This enables:
+  - Pre-paid API access without requiring credit cards for each
+    transaction
   - Anonymous API usage for privacy-sensitive applications
   - Usage-based billing without tracking individual request patterns
   - Protection against competitive analysis through usage monitoring
 
 ## Protocol Overview
 
-The protocol involves two parties: an issuer (typically a service provider) and
-clients (typically users of the service). The interaction follows three main
-phases:
+The protocol involves two parties: an issuer (typically a service
+provider) and clients (typically users of the service). The
+interaction follows three main phases:
 
-1. **Setup**: The issuer generates a key pair and publishes the public key.
+1. **Setup**: The issuer generates a key pair and publishes the
+   public key.
 
-2. **Issuance**: A client requests credits from the issuer. The issuer creates
-   a blind signature on the credit value and a client-chosen nullifier,
-   producing a credit token.
+2. **Issuance**: A client requests credits from the issuer. The
+   issuer creates a blind signature on the credit value and a
+   client-chosen nullifier, producing a credit token.
 
-3. **Spending**: To spend credits, the client reveals a nullifier and proves
-   possession of a valid token associated with that nullifier having sufficient
-   balance. The issuer verifies the proof, checks the nullifier hasn't been used        before, and issues a new token (which remains hidden from the issuer) for any
-   remaining balance.
+3. **Spending**: To spend credits, the client reveals a nullifier
+   and proves possession of a valid token associated with that
+   nullifier having sufficient balance. The issuer verifies the
+   proof, checks the nullifier hasn't been used before, and issues a
+   new token (which remains hidden from the issuer) for any remaining
+   balance.
 
 ## Design Goals
 
@@ -1269,7 +1279,7 @@ The protocol provides the following security guarantees:
 
 Security relies on:
 
-1. **The q-SDH Assumption** in the Ristretto255 group. We refer to {TZ23} for the formal definition.
+1. **The q-SDH Assumption** in the Ristretto255 group. We refer to {{TZ23}} for the formal definition.
 
 2. **Random Oracle Model**: The BLAKE3 hash function H is modeled as a random oracle.
 

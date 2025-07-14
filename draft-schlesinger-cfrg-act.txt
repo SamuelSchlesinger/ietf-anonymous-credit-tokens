@@ -5,7 +5,7 @@
 CFRG                                                      S. Schlesinger
 Internet-Draft                                                   J. Katz
 Intended status: Informational                                    Google
-Expires: 15 December 2025                                   13 June 2025
+Expires: 15 January 2026                                    14 July 2025
 
 
                         Anonymous Credit Tokens
@@ -68,7 +68,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 15 December 2025.
+   This Internet-Draft will expire on 15 January 2026.
 
 Copyright Notice
 
@@ -1407,7 +1407,7 @@ LengthPrefixed(data):
    Security relies on:
 
    1.  *The q-SDH Assumption* in the Ristretto255 group.  We refer to
-       {TZ23} for the formal definition.
+       [TZ23] for the formal definition.
 
    2.  *Random Oracle Model*: The BLAKE3 hash function H is modeled as a
        random oracle.
