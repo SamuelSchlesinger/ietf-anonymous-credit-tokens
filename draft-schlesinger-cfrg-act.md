@@ -816,7 +816,7 @@ VerifySpendProof(sk, proof):
 The protocol version string for domain separation is:
 
 ~~~
-PROTOCOL_VERSION = "curve25519-ristretto anonymous-credentials v1.0"
+PROTOCOL_VERSION = "curve25519-ristretto anonymous-credits v1.0"
 ~~~
 
 This version string MUST be used consistently across all implementations for
